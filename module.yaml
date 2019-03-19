@@ -1,0 +1,17 @@
+notests *default:
+  build:
+    target: Vostok.ServiceDiscovery.sln
+    configuration: NoTests
+    tool:
+      name: dotnet
+
+  install:
+    - Vostok.ServiceDiscovery/bin/Release/netstandard2.0/Vostok.ServiceDiscovery.dll
+
+  deps:
+    - vostok.devtools
+
+full-build > notests:
+  build:
+    target: Vostok.ServiceDiscovery.sln
+    configuration: Release
