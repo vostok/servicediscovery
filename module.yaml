@@ -10,10 +10,18 @@ notests *default:
     - module vostok.servicediscovery.abstractions
 
   deps:
+    - vostok.logging.abstractions
+    - vostok.zookeeper.client.abstractions
     - vostok.servicediscovery.abstractions
     - vostok.devtools
+    - vostok.commons.threading/src
+    - vostok.commons.time/src
 
 full-build > notests:
+  deps:
+    - vostok.logging.console
+    - vostok.zookeeper.localensemble
+    - vostok.zookeeper.client
   build:
     target: Vostok.ServiceDiscovery.sln
     configuration: Release
