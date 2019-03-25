@@ -76,9 +76,29 @@ namespace Vostok.ServiceDiscovery
             {
                 while (isRunning)
                 {
+                    var budget = TimeBudget.StartNew(settings.MinimumTimeBetweenIterations);
+
                     await BeaconTaskIteration().ConfigureAwait(false);
+
+                    if (!budget.HasExpired)
+                        await Task.Delay(budget.Remaining).ConfigureAwait(false);
                 }
             }
+        }
+
+        private async Task BeaconTaskIteration()
+        {
+            try
+            {
+                await EnsureNodeExists().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                log.Error(exception, "Failed beacon iteration.");
+            }
+
+            var waitTimeout = nodeCreatedOnceSignal.Get() ? settings.IterationTimeSpan : 1.Seconds();
+            await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }
 
         private void OnCompleted()
@@ -107,26 +127,6 @@ namespace Vostok.ServiceDiscovery
             if (type == NodeChangedEventType.Created && path.Equals(environmentNodePath)
                 || type == NodeChangedEventType.Deleted && path.Equals(replicaNodePath))
                 checkNodeSignal.Set();
-        }
-
-        private async Task BeaconTaskIteration()
-        {
-            var budget = TimeBudget.StartNew(settings.MinimumTimeBetweenIterations);
-
-            try
-            {
-                await EnsureNodeExists().ConfigureAwait(false);
-            }
-            catch (Exception exception)
-            {
-                log.Error(exception, "Failed beacon iteration.");
-            }
-
-            var waitTimeout = nodeCreatedOnceSignal.Get() ? settings.IterationTimeSpan : 1.Seconds();
-            await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
-
-            if (!budget.HasExpired)
-                await Task.Delay(budget.Remaining).ConfigureAwait(false);
         }
 
         private async Task EnsureNodeExists()
