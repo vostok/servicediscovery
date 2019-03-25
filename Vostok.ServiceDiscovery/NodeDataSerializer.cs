@@ -19,10 +19,10 @@ namespace Vostok.ServiceDiscovery
         public static Dictionary<string, string> Deserialize(byte[] data)
         {
             var content = Encoding.UTF8.GetString(data);
-            var lines = content.Split(new [] {LinesDelimiter}, StringSplitOptions.RemoveEmptyEntries);
+            var lines = content.Split(new[] {LinesDelimiter}, StringSplitOptions.RemoveEmptyEntries);
             return lines
                 .Where(line => !string.IsNullOrEmpty(line))
-                .Select(line => line.Split(new[] { LinesDelimiter }, 2, StringSplitOptions.RemoveEmptyEntries))
+                .Select(line => line.Split(new[] {LinesDelimiter}, 2, StringSplitOptions.RemoveEmptyEntries))
                 .Where(lineParts => lineParts.Length == 2)
                 .ToDictionary(
                     lineParts => lineParts[0].Trim(),

@@ -18,20 +18,18 @@ namespace Vostok.ServiceDiscovery
         private readonly string serviceNodePath;
         private readonly string replicaNodePath;
         private readonly byte[] replicaNodeData;
-
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
-        private long lastConnectedTimestamp;
-
         private readonly ServiceBeaconSettings settings;
-        private volatile Task beaconTask;
         private readonly ReplicaInfo replicaInfo;
-        private volatile AtomicBoolean isRunning = false;
-        private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
         private readonly ILog log;
+        private long lastConnectedTimestamp;
+        private volatile Task beaconTask;
+        private volatile AtomicBoolean isRunning = false;
+        private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
-        public ServiceBeacon(ReplicaInfo replicaInfo, IZooKeeperClient zooKeeperClient, ILog log, ServiceBeaconSettings settings)
+        public ServiceBeacon(IZooKeeperClient zooKeeperClient, ReplicaInfo replicaInfo, ServiceBeaconSettings settings, ILog log)
         {
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
             this.replicaInfo = replicaInfo;
@@ -39,9 +37,9 @@ namespace Vostok.ServiceDiscovery
             this.settings = settings;
 
             var pathBuilder = new PathBuilder(settings.ZooKeeperNodePath);
-            environmentNodePath = pathBuilder.BuildEnvironmentPath(replicaInfo.Envoronment);
-            serviceNodePath = pathBuilder.BuildServicePath(replicaInfo.Envoronment, replicaInfo.Service);
-            replicaNodePath = pathBuilder.BuildReplicaPath(replicaInfo.Envoronment, replicaInfo.Service, replicaInfo.Replica);
+            environmentNodePath = pathBuilder.BuildEnvironmentPath(replicaInfo.Environment);
+            serviceNodePath = pathBuilder.BuildServicePath(replicaInfo.Environment, replicaInfo.Service);
+            replicaNodePath = pathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Service, replicaInfo.Replica);
             replicaNodeData = NodeDataSerializer.Serialize(replicaInfo.ToDictionary());
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
@@ -149,18 +147,18 @@ namespace Vostok.ServiceDiscovery
                         $"and has owner session id = {exists.Stat.EphemeralOwner:x16}, " +
                         $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
                         $"But it was created recently (at {nodeCreationTime}) so we won't touch it. " +
-                        $"This may indicate several beacons with same zone, service and URL!");
+                        "This may indicate several beacons with same zone, service and URL!");
 
                     return;
                 }
 
                 log.Warn(
                     $"Node with path '{replicaNodePath}' already exists, " +
-                    $"but looks like a stale one from ourselves. " +
+                    "but looks like a stale one from ourselves. " +
                     $"It has owner session id = {exists.Stat.EphemeralOwner:x16}, " +
                     $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
                     $"It was created at {nodeCreationTime}. " +
-                    $"Will delete it and create a new one.");
+                    "Will delete it and create a new one.");
 
                 DropNodeIfExists();
             }
