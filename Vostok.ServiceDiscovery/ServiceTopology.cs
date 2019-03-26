@@ -12,7 +12,7 @@ namespace Vostok.ServiceDiscovery
         /// <inheritdoc />
         [ItemNotNull]
         public IReadOnlyList<Uri> Replicas { get; }
-        
+
         /// <inheritdoc />
         [NotNull]
         public IReadOnlyDictionary<string, string> Data { get; }

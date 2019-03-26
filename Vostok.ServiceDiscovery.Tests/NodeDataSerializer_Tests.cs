@@ -30,8 +30,8 @@ namespace Vostok.ServiceDiscovery.Tests
             {
                 {"a", "a-value"},
                 {"asdf", "complex = value"},
-                {"a.b.c", "dsfds sdf sdf sdf sd   ,. ,ds . . , .,  ;; ; ;" },
-                {"with some spaces  ", "   " }
+                {"a.b.c", "dsfds sdf sdf sdf sd   ,. ,ds . . , .,  ;; ; ;"},
+                {"with some spaces  ", "   "}
             };
 
             var serialized = NodeDataSerializer.Serialize(dict);
@@ -47,19 +47,20 @@ namespace Vostok.ServiceDiscovery.Tests
             {
                 {"a", "a-value"},
                 {"b", null},
-                {"c", "" },
-                {"d", " " }
+                {"c", ""},
+                {"d", " "}
             };
 
             var serialized = NodeDataSerializer.Serialize(dict);
             var deserialized = NodeDataSerializer.Deserialize(serialized);
 
-            deserialized.Should().BeEquivalentTo(
-                new Dictionary<string, string>
-                {
-                    {"a", "a-value"},
-                    {"d", " " }
-                });
+            deserialized.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"a", "a-value"},
+                        {"d", " "}
+                    });
         }
     }
 }

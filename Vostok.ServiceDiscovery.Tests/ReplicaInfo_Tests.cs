@@ -19,8 +19,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 .BeEquivalentTo(
                     new Dictionary<string, string>
                     {
-                        {"Process name", "Vostok.App.1" },
-                        {"Process ID", "4242" }
+                        {"Process name", "Vostok.App.1"},
+                        {"Process ID", "4242"}
                     });
         }
     }
