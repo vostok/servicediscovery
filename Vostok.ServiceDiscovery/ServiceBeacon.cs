@@ -104,7 +104,7 @@ namespace Vostok.ServiceDiscovery
                 log.Error(exception, "Failed beacon iteration.");
             }
 
-            var waitTimeout = nodeCreatedOnceSignal.Get() ? settings.IterationPeriod : 1.Seconds();
+            var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet() ? settings.IterationPeriod : 1.Seconds();
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }
 
