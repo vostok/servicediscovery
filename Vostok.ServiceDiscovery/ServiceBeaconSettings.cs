@@ -4,6 +4,9 @@ using Vostok.Commons.Time;
 
 namespace Vostok.ServiceDiscovery
 {
+    /// <summary>
+    /// Represents <see cref="ServiceBeacon"/> settings.
+    /// </summary>
     [PublicAPI]
     public class ServiceBeaconSettings
     {
@@ -11,6 +14,6 @@ namespace Vostok.ServiceDiscovery
 
         public TimeSpan MinimumTimeBetweenIterations { get; set; } = 500.Milliseconds();
 
-        public TimeSpan IterationTimeSpan { get; set; } = 1.Minutes();
+        public TimeSpan IterationPeriod { get; set; } = 1.Minutes();
     }
 }

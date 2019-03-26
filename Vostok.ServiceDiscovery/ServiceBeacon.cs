@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Extensions;
 using Vostok.Commons.Threading;
 using Vostok.Commons.Time;
@@ -12,6 +13,8 @@ using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 
 namespace Vostok.ServiceDiscovery
 {
+    /// <inheritdoc />
+    [PublicAPI]
     public class ServiceBeacon : IServiceBeacon
     {
         private readonly string environmentNodePath;
@@ -29,14 +32,14 @@ namespace Vostok.ServiceDiscovery
         private volatile AtomicBoolean isRunning = false;
         private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
-        public ServiceBeacon(IZooKeeperClient zooKeeperClient, ReplicaInfo replicaInfo, ServiceBeaconSettings settings, ILog log)
+        public ServiceBeacon([NotNull] IZooKeeperClient zooKeeperClient, [NotNull] ReplicaInfo replicaInfo, [CanBeNull] ServiceBeaconSettings settings, [CanBeNull] ILog log)
         {
+            this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
+            this.replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
+            this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
-            this.replicaInfo = replicaInfo;
-            this.zooKeeperClient = zooKeeperClient;
-            this.settings = settings;
 
-            var pathBuilder = new PathBuilder(settings.ZooKeeperNodePath);
+            var pathBuilder = new PathBuilder(this.settings.ZooKeeperNodePath);
             environmentNodePath = pathBuilder.BuildEnvironmentPath(replicaInfo.Environment);
             serviceNodePath = pathBuilder.BuildServicePath(replicaInfo.Environment, replicaInfo.Service);
             replicaNodePath = pathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Service, replicaInfo.Replica);
@@ -45,6 +48,7 @@ namespace Vostok.ServiceDiscovery
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
 
+        /// <inheritdoc />
         public void Start()
         {
             if (isRunning.TrySetTrue())
@@ -55,6 +59,7 @@ namespace Vostok.ServiceDiscovery
             }
         }
 
+        /// <inheritdoc />
         public void Stop()
         {
             if (isRunning.TrySetFalse())
@@ -65,7 +70,11 @@ namespace Vostok.ServiceDiscovery
             }
         }
 
-        public Task WaitForRegistration(TimeSpan timeout) => nodeCreatedOnceSignal.WaitAsync();
+        /// <summary>
+        /// Waits for first registration after <see cref="Start"/> method call.
+        /// </summary>
+        [NotNull]
+        public Task WaitForRegistration() => nodeCreatedOnceSignal.WaitAsync();
 
         private async Task BeaconTask()
         {
@@ -95,7 +104,7 @@ namespace Vostok.ServiceDiscovery
                 log.Error(exception, "Failed beacon iteration.");
             }
 
-            var waitTimeout = nodeCreatedOnceSignal.Get() ? settings.IterationTimeSpan : 1.Seconds();
+            var waitTimeout = nodeCreatedOnceSignal.Get() ? settings.IterationPeriod : 1.Seconds();
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }
 
