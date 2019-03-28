@@ -32,7 +32,20 @@ namespace Vostok.ServiceDiscovery
         private volatile AtomicBoolean isRunning = false;
         private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
-        public ServiceBeacon([NotNull] IZooKeeperClient zooKeeperClient, [NotNull] ReplicaInfo replicaInfo, [CanBeNull] ServiceBeaconSettings settings, [CanBeNull] ILog log)
+        public ServiceBeacon(
+            [NotNull] IZooKeeperClient zooKeeperClient,
+            [CanBeNull] ReplicaInfoBuilderSetup replicaInfoBuilderSetup,
+            [CanBeNull] ServiceBeaconSettings settings,
+            [CanBeNull] ILog log)
+            : this(zooKeeperClient, ReplicaInfoBuilder.Build(replicaInfoBuilderSetup), settings, log)
+        {
+        }
+
+        public ServiceBeacon(
+            [NotNull] IZooKeeperClient zooKeeperClient,
+            [NotNull] ReplicaInfo replicaInfo,
+            [CanBeNull] ServiceBeaconSettings settings,
+            [CanBeNull] ILog log)
         {
             this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
             this.replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));

@@ -3,7 +3,7 @@
 namespace Vostok.ServiceDiscovery.Tests
 {
     [TestFixture]
-    internal class ServiceBeacon_Tests : TestsBase
+    internal class ReplicaInfoBuilder_Tests
     {
     }
 }

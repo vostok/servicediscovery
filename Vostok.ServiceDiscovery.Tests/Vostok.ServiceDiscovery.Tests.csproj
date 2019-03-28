@@ -18,6 +18,9 @@
     <ProjectReference Include="..\Vostok.ServiceDiscovery\Vostok.ServiceDiscovery.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\*.cs" LinkBase="Commons\Testing\" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Vostok.ZooKeeper.Client">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.zookeeper.client\Vostok.ZooKeeper.Client\bin\Release\netstandard2.0\Vostok.ZooKeeper.Client.dll</HintPath>
