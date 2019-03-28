@@ -1,5 +1,8 @@
-﻿namespace Vostok.ServiceDiscovery
+﻿using JetBrains.Annotations;
+
+namespace Vostok.ServiceDiscovery
 {
+    [PublicAPI]
     public static class ReplicaInfoKeys
     {
         public const string Environment = "Zone";
@@ -16,5 +19,7 @@
 
         public const string CommitHash = "Commit hash";
         public const string ReleaseDate = "Release date";
+
+        public const string Dependencies = "Dependencies";
     }
 }
