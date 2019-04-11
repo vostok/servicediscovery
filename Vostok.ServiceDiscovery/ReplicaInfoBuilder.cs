@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vostok.Commons.Environment;
 
 namespace Vostok.ServiceDiscovery
@@ -7,6 +8,8 @@ namespace Vostok.ServiceDiscovery
     internal class ReplicaInfoBuilder : IReplicaInfoBuilder
     {
         private List<KeyValuePair<string, string>> properties = new List<KeyValuePair<string, string>>();
+
+        private const string DependenciesDelimiter = ";";
 
         public ReplicaInfoBuilder()
         {
@@ -18,6 +21,7 @@ namespace Vostok.ServiceDiscovery
             BaseDirectory = EnvironmentInfo.BaseDirectory;
             CommitHash = AssemblyCommitHashExtractor.ExtractFromEntryAssembly();
             ReleaseDate = AssemblyBuildTimeExtractor.ExtractFromEntryAssembly()?.ToString("O");
+            Dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
         }
 
         public static ReplicaInfo Build(ReplicaInfoBuilderSetup setup)
@@ -43,6 +47,8 @@ namespace Vostok.ServiceDiscovery
 
         public string CommitHash { get; set; }
         public string ReleaseDate { get; set; }
+
+        public List<string> Dependencies { get; set; }
 
         public IReplicaInfoBuilder AddProperty(string key, string value)
         {
@@ -81,12 +87,21 @@ namespace Vostok.ServiceDiscovery
             replicaInfo.AddProperty(ReplicaInfoKeys.BaseDirectory, BaseDirectory);
             replicaInfo.AddProperty(ReplicaInfoKeys.CommitHash, CommitHash);
             replicaInfo.AddProperty(ReplicaInfoKeys.ReleaseDate, ReleaseDate);
+            replicaInfo.AddProperty(ReplicaInfoKeys.Dependencies, FormatDependencies());
             replicaInfo.AddProperty(ReplicaInfoKeys.Port, Port?.ToString());
 
             foreach (var property in properties)
             {
                 replicaInfo.AddProperty(property.Key, property.Value);
             }
+        }
+
+        private string FormatDependencies()
+        {
+            return Dependencies == null 
+                ? null 
+                : string.Join(DependenciesDelimiter, 
+                    Dependencies.Select(d => d?.Replace(DependenciesDelimiter, "_")));
         }
 
         private static Uri BuildUrl(string scheme, int? port, string virtualPath)

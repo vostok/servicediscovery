@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace Vostok.ServiceDiscovery
@@ -18,6 +19,7 @@ namespace Vostok.ServiceDiscovery
 
         string CommitHash { set; }
         string ReleaseDate { set; }
+        List<string> Dependencies { set; }
 
         IReplicaInfoBuilder AddProperty([NotNull] string key, [CanBeNull] string value);
     }
