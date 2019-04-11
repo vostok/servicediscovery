@@ -15,5 +15,7 @@ namespace Vostok.ServiceDiscovery
         public TimeSpan MinimumTimeBetweenIterations { get; set; } = 500.Milliseconds();
 
         public TimeSpan IterationPeriod { get; set; } = 1.Minutes();
+
+        public int DeleteNodeAttempts = 10;
     }
 }

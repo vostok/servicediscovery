@@ -219,14 +219,14 @@ namespace Vostok.ServiceDiscovery
 
         private void DropNodeIfExists()
         {
-            for (var times = 0; times < 10; times++)
+            for (var attempt = 0; attempt < settings.DeleteNodeAttempts; attempt++)
             {
                 var deleteResult = zooKeeperClient.Delete(replicaNodePath);
                 if (deleteResult.IsSuccessful)
                     return;
             }
 
-            log.Error("Node removal has failed.");
+            log.Error($"Node removal has failed {settings.DeleteNodeAttempts} times.");
         }
     }
 }
