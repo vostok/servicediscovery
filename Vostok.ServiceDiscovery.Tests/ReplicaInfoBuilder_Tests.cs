@@ -19,7 +19,7 @@ namespace Vostok.ServiceDiscovery.Tests
             info.Service.Should().NotBeNullOrEmpty();
             info.Replica.Should().NotBeNullOrEmpty();
 
-            var properties = info.ToDictionary();
+            var properties = info.Properties;
 
             properties[ReplicaInfoKeys.Environment].Should().Be("default");
             properties[ReplicaInfoKeys.Service].Should().NotBeNullOrEmpty();
@@ -64,7 +64,7 @@ namespace Vostok.ServiceDiscovery.Tests
             info.Service.Should().Be("Vostok.App.1");
             info.Replica.Should().Be("https://github.com:123/vostok");
 
-            var properties = info.ToDictionary();
+            var properties = info.Properties;
 
             properties[ReplicaInfoKeys.Environment].Should().Be("custom-environment");
             properties[ReplicaInfoKeys.Service].Should().Be("Vostok.App.1");
@@ -93,7 +93,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             info.Replica.Should().Be($"https://{host}:123/vostok");
 
-            var properties = info.ToDictionary();
+            var properties = info.Properties;
 
             properties[ReplicaInfoKeys.Replica].Should().Be($"https://{host}:123/vostok");
 
@@ -113,7 +113,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
             info.Replica.Should().Be($"http://{host}:123/");
-            info.ToDictionary()[ReplicaInfoKeys.Replica].Should().Be($"http://{host}:123/");
+            info.Properties[ReplicaInfoKeys.Replica].Should().Be($"http://{host}:123/");
         }
 
         [Test]
@@ -127,7 +127,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var host = EnvironmentInfo.Host;
             
             info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
-            info.ToDictionary()[ReplicaInfoKeys.Replica].Should().Be($"{host}({Process.GetCurrentProcess().Id})");
+            info.Properties[ReplicaInfoKeys.Replica].Should().Be($"{host}({Process.GetCurrentProcess().Id})");
         }
 
         [Test]
@@ -141,7 +141,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 });
 
 
-            var properties = info.ToDictionary();
+            var properties = info.Properties;
             properties["key1"].Should().Be("value1");
             properties["key2"].Should().Be("value2");
         }
@@ -157,7 +157,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 });
 
 
-            var properties = info.ToDictionary();
+            var properties = info.Properties;
             properties["key"].Should().Be("value2");
         }
 
@@ -173,7 +173,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var host = EnvironmentInfo.Host;
             
             info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
-            info.ToDictionary()[ReplicaInfoKeys.Replica].Should().Be("value");
+            info.Properties[ReplicaInfoKeys.Replica].Should().Be("value");
         }
     }
 }

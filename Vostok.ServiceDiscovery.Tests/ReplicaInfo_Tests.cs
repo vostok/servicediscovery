@@ -14,7 +14,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 .AddProperty("Process name", "Vostok.App.1")
                 .AddProperty("Process ID", "4242");
 
-            info.ToDictionary()
+            info.Properties
                 .Should()
                 .BeEquivalentTo(
                     new Dictionary<string, string>

@@ -14,7 +14,7 @@ namespace Vostok.ServiceDiscovery
 
         /// <param name="environment">Service environment. Example: <c>default</c>.</param>
         /// <param name="service">Service name. Example: <c>hercules.api</c>.</param>
-        /// <param name="replica">Service replica (uri or description). Example: <c>http://localhost:888/</c>, <c>process-name(pid)</c>.</param>
+        /// <param name="replica">Replica url or description. Example: <c>http://localhost:888/</c>, <c>process-name(pid)</c>.</param>
         public ReplicaInfo([NotNull] string environment, [NotNull] string service, [NotNull] string replica)
         {
             Environment = environment ?? throw new ArgumentNullException(nameof(environment));
@@ -39,6 +39,6 @@ namespace Vostok.ServiceDiscovery
         }
 
         [NotNull]
-        public IReadOnlyDictionary<string, string> ToDictionary() => properties;
+        public IReadOnlyDictionary<string, string> Properties => properties;
     }
 }

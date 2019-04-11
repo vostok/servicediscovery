@@ -56,7 +56,7 @@ namespace Vostok.ServiceDiscovery
             environmentNodePath = pathBuilder.BuildEnvironmentPath(replicaInfo.Environment);
             serviceNodePath = pathBuilder.BuildServicePath(replicaInfo.Environment, replicaInfo.Service);
             replicaNodePath = pathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Service, replicaInfo.Replica);
-            replicaNodeData = NodeDataSerializer.Serialize(replicaInfo.ToDictionary());
+            replicaNodeData = NodeDataSerializer.Serialize(replicaInfo.Properties);
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
