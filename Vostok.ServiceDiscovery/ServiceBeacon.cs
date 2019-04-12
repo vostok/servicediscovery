@@ -30,6 +30,7 @@ namespace Vostok.ServiceDiscovery
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile AtomicBoolean isRunning = false;
+        private readonly object startStopSync = new object();
         private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
         public ServiceBeacon(
@@ -64,25 +65,34 @@ namespace Vostok.ServiceDiscovery
         /// <inheritdoc />
         public void Start()
         {
-            if (isRunning.TrySetTrue())
+            lock (startStopSync)
             {
-                nodeCreatedOnceSignal.Reset();
-                checkNodeSignal.Set();
-                beaconTask = BeaconTask();
+                if (isRunning.TrySetTrue())
+                {
+                    nodeCreatedOnceSignal.Reset();
+                    checkNodeSignal.Set();
+                    beaconTask = BeaconTask();
+                }
             }
         }
 
         /// <inheritdoc />
         public void Stop()
         {
-            if (isRunning.TrySetFalse())
+            lock (startStopSync)
             {
-                checkNodeSignal.Set();
-                beaconTask.Wait();
-                DropNodeIfExists();
+                if (isRunning.TrySetFalse())
+                {
+                    checkNodeSignal.Set();
+                    beaconTask.Wait();
+                    DropNodeIfExists();
+                }
             }
         }
 
+        /// <summary>
+        /// Calls <see cref="Stop"/> method.
+        /// </summary>
         public void Dispose()
         {
             Stop();
@@ -128,10 +138,13 @@ namespace Vostok.ServiceDiscovery
 
         private void OnCompleted()
         {
-            if (isRunning.TrySetFalse())
+            lock (startStopSync)
             {
-                checkNodeSignal.Set();
-                beaconTask.Wait();
+                if (isRunning.TrySetFalse())
+                {
+                    checkNodeSignal.Set();
+                    beaconTask.Wait();
+                }
             }
         }
 
