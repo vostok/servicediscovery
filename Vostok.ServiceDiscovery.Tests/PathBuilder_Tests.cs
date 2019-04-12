@@ -10,13 +10,13 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_combine_without_prefix()
         {
             var environment = "default";
-            var service = "ServiceX.Api";
+            var application = "App.1";
             var replica = "http://some-infra-host123:13528/";
 
             var pathBuilder = new PathBuilder(null);
             pathBuilder.BuildEnvironmentPath(environment).Should().Be("/default");
-            pathBuilder.BuildServicePath(environment, service).Should().Be("/default/ServiceX.Api");
-            pathBuilder.BuildReplicaPath(environment, service, replica).Should().Be("/default/ServiceX.Api/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
+            pathBuilder.BuildApplicationPath(environment, application).Should().Be("/default/App.1");
+            pathBuilder.BuildReplicaPath(environment, application, replica).Should().Be("/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
         }
 
         [Test]
@@ -24,13 +24,13 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var prefix = "/prefix/nested";
             var environment = "default";
-            var service = "ServiceX.Api";
+            var application = "App.1";
             var replica = "http://some-infra-host123:13528/";
 
             var pathBuilder = new PathBuilder(prefix);
             pathBuilder.BuildEnvironmentPath(environment).Should().Be("/prefix/nested/default");
-            pathBuilder.BuildServicePath(environment, service).Should().Be("/prefix/nested/default/ServiceX.Api");
-            pathBuilder.BuildReplicaPath(environment, service, replica).Should().Be("/prefix/nested/default/ServiceX.Api/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
+            pathBuilder.BuildApplicationPath(environment, application).Should().Be("/prefix/nested/default/App.1");
+            pathBuilder.BuildReplicaPath(environment, application, replica).Should().Be("/prefix/nested/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
         }
 
         [Test]
@@ -40,9 +40,9 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public void Should_encode_service()
+        public void Should_encode_application()
         {
-            new PathBuilder(null).BuildReplicaPath("e", "SSS/sss", "r").Should().Be("/e/SSS%2Fsss/r");
+            new PathBuilder(null).BuildReplicaPath("e", "AAA/aaa", "r").Should().Be("/e/AAA%2Faaa/r");
         }
 
         [Test]

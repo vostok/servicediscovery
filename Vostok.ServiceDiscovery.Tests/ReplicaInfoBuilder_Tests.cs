@@ -16,13 +16,13 @@ namespace Vostok.ServiceDiscovery.Tests
             var info = new ReplicaInfoBuilder().Build();
 
             info.Environment.Should().Be("default");
-            info.Service.Should().NotBeNullOrEmpty();
+            info.Application.Should().NotBeNullOrEmpty();
             info.Replica.Should().NotBeNullOrEmpty();
 
             var properties = info.Properties;
 
             properties[ReplicaInfoKeys.Environment].Should().Be("default");
-            properties[ReplicaInfoKeys.Service].Should().NotBeNullOrEmpty();
+            properties[ReplicaInfoKeys.Application].Should().NotBeNullOrEmpty();
             properties[ReplicaInfoKeys.Replica].Should().NotBeNullOrEmpty();
 
             properties[ReplicaInfoKeys.Url].Should().BeNull();
@@ -53,7 +53,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 builder =>
                 {
                     builder.Environment = "custom-environment";
-                    builder.Service = "Vostok.App.1";
+                    builder.Application = "Vostok.App.1";
                     builder.Url = url;
                     builder.CommitHash = "ASDF";
                     builder.ReleaseDate = "released now";
@@ -61,13 +61,13 @@ namespace Vostok.ServiceDiscovery.Tests
                 });
 
             info.Environment.Should().Be("custom-environment");
-            info.Service.Should().Be("Vostok.App.1");
+            info.Application.Should().Be("Vostok.App.1");
             info.Replica.Should().Be("https://github.com:123/vostok");
 
             var properties = info.Properties;
 
             properties[ReplicaInfoKeys.Environment].Should().Be("custom-environment");
-            properties[ReplicaInfoKeys.Service].Should().Be("Vostok.App.1");
+            properties[ReplicaInfoKeys.Application].Should().Be("Vostok.App.1");
             properties[ReplicaInfoKeys.Replica].Should().Be("https://github.com:123/vostok");
 
             properties[ReplicaInfoKeys.Url].Should().BeEquivalentTo("https://github.com:123/vostok");

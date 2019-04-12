@@ -46,7 +46,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
 
-                var path = new PathBuilder(new ServiceBeaconSettings().ZooKeeperNodePath).BuildReplicaPath(replica.Environment, replica.Service, replica.Replica);
+                var path = new PathBuilder(new ServiceBeaconSettings().ZooKeeperNodePath).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = NodeDataSerializer.Deserialize(data);
 
@@ -61,7 +61,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
         private bool ReplicaRegistered(string prefix, ReplicaInfo replica)
         {
-            var path = new PathBuilder(prefix).BuildReplicaPath(replica.Environment, replica.Service, replica.Replica);
+            var path = new PathBuilder(prefix).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
             var exists = ZooKeeperClient.Exists(path);
             return exists.Exists;
         }

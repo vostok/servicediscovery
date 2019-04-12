@@ -15,11 +15,11 @@ namespace Vostok.ServiceDiscovery
         public string BuildEnvironmentPath(string environment) =>
             ZooKeeperPath.Combine(prefix, Escape(environment.ToLowerInvariant()));
 
-        public string BuildServicePath(string environment, string service) =>
-            ZooKeeperPath.Combine(BuildEnvironmentPath(environment), Escape(service));
+        public string BuildApplicationPath(string environment, string application) =>
+            ZooKeeperPath.Combine(BuildEnvironmentPath(environment), Escape(application));
 
-        public string BuildReplicaPath(string environment, string service, string replica) =>
-            ZooKeeperPath.Combine(BuildServicePath(environment, service), Escape(replica));
+        public string BuildReplicaPath(string environment, string application, string replica) =>
+            ZooKeeperPath.Combine(BuildApplicationPath(environment, application), Escape(replica));
 
         private static string Escape(string segment) =>
             Uri.EscapeDataString(segment);

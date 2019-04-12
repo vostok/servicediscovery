@@ -6,7 +6,7 @@ namespace Vostok.ServiceDiscovery
     public static class ReplicaInfoKeys
     {
         public const string Environment = "Zone";
-        public const string Service = "Service";
+        public const string Application = "Service";
         public const string Replica = "Instance name";
 
         public const string Url = "Url";

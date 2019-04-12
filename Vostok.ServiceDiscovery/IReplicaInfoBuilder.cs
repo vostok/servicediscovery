@@ -13,21 +13,21 @@ namespace Vostok.ServiceDiscovery
     public interface IReplicaInfoBuilder
     {
         /// <summary>
-        /// <para>Service environment.</para>
+        /// <para>Application environment.</para>
         /// <para>Default value: <c>default</c>.</para>
         /// </summary>
         string Environment { set; }
 
         /// <summary>
-        /// <para>Service name.</para>
-        /// <para>Default value: application name.</para>
+        /// <para>Application name.</para>
+        /// <para>Default value: current application name.</para>
         /// </summary>
-        string Service { set; }
+        string Application { set; }
 
         /// <summary>
         /// <para>Replica url.</para>
         /// <para>If is not specified and <see cref="Port"/> is not <c>null</c>,
-        ///     will be constructed from <see cref="Scheme"/>, current hostname, <see cref="Port"/> and <see cref="VirtualPath"/>.</para>
+        ///     will be constructed from <see cref="Scheme"/>, current host name, <see cref="Port"/> and <see cref="VirtualPath"/>.</para>
         /// </summary>
         Uri Url { set; }
 

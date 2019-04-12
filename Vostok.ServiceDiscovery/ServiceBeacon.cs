@@ -18,7 +18,7 @@ namespace Vostok.ServiceDiscovery
     public class ServiceBeacon : IServiceBeacon, IDisposable
     {
         private readonly string environmentNodePath;
-        private readonly string serviceNodePath;
+        private readonly string applicationNodePath;
         private readonly string replicaNodePath;
         private readonly byte[] replicaNodeData;
         private readonly IZooKeeperClient zooKeeperClient;
@@ -54,8 +54,8 @@ namespace Vostok.ServiceDiscovery
 
             var pathBuilder = new PathBuilder(this.settings.ZooKeeperNodePath);
             environmentNodePath = pathBuilder.BuildEnvironmentPath(replicaInfo.Environment);
-            serviceNodePath = pathBuilder.BuildServicePath(replicaInfo.Environment, replicaInfo.Service);
-            replicaNodePath = pathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Service, replicaInfo.Replica);
+            applicationNodePath = pathBuilder.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
+            replicaNodePath = pathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
             replicaNodeData = NodeDataSerializer.Serialize(replicaInfo.Properties);
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
@@ -174,7 +174,7 @@ namespace Vostok.ServiceDiscovery
                         $"and has owner session id = {exists.Stat.EphemeralOwner:x16}, " +
                         $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
                         $"But it was created recently (at {nodeCreationTime}) so we won't touch it. " +
-                        "This may indicate several beacons with same zone, service and URL!");
+                        "This may indicate several beacons with same environment, application and replica.");
 
                     return;
                 }

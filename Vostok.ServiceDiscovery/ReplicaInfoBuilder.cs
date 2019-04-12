@@ -14,7 +14,7 @@ namespace Vostok.ServiceDiscovery
         public ReplicaInfoBuilder()
         {
             Environment = "default";
-            Service = EnvironmentInfo.Application;
+            Application = EnvironmentInfo.Application;
             Host = EnvironmentInfo.Host;
             ProcessName = EnvironmentInfo.ProcessName;
             ProcessId = EnvironmentInfo.ProcessId;
@@ -32,7 +32,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         public string Environment { get; set; }
-        public string Service { get; set; }
+        public string Application { get; set; }
         public string Replica { get; set; }
 
         public Uri Url { get; set; }
@@ -68,7 +68,7 @@ namespace Vostok.ServiceDiscovery
                 VirtualPath = Url.AbsolutePath;
             }
 
-            var result = new ReplicaInfo(Environment, Service, Replica);
+            var result = new ReplicaInfo(Environment, Application, Replica);
 
             FillProperties(result);
 
@@ -78,7 +78,7 @@ namespace Vostok.ServiceDiscovery
         private void FillProperties(ReplicaInfo replicaInfo)
         {
             replicaInfo.AddProperty(ReplicaInfoKeys.Environment, Environment);
-            replicaInfo.AddProperty(ReplicaInfoKeys.Service, Service);
+            replicaInfo.AddProperty(ReplicaInfoKeys.Application, Application);
             replicaInfo.AddProperty(ReplicaInfoKeys.Replica, Replica);
             replicaInfo.AddProperty(ReplicaInfoKeys.Url, Url?.ToString());
             replicaInfo.AddProperty(ReplicaInfoKeys.Host, Host);

@@ -12,13 +12,13 @@ namespace Vostok.ServiceDiscovery
     {
         private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
 
-        /// <param name="environment">Service environment. Example: <c>default</c>.</param>
-        /// <param name="service">Service name. Example: <c>hercules.api</c>.</param>
+        /// <param name="environment">Application environment. Example: <c>default</c>.</param>
+        /// <param name="application">Application name. Example: <c>hercules.api</c>.</param>
         /// <param name="replica">Replica url or description. Example: <c>http://localhost:888/</c>, <c>process-name(pid)</c>.</param>
-        public ReplicaInfo([NotNull] string environment, [NotNull] string service, [NotNull] string replica)
+        public ReplicaInfo([NotNull] string environment, [NotNull] string application, [NotNull] string replica)
         {
             Environment = environment ?? throw new ArgumentNullException(nameof(environment));
-            Service = service ?? throw new ArgumentNullException(nameof(service));
+            Application = application ?? throw new ArgumentNullException(nameof(application));
             Replica = replica ?? throw new ArgumentNullException(nameof(replica));
         }
 
@@ -26,7 +26,7 @@ namespace Vostok.ServiceDiscovery
         public string Environment { get; }
 
         [NotNull]
-        public string Service { get; }
+        public string Application { get; }
 
         [NotNull]
         public string Replica { get; }
