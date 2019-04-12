@@ -23,6 +23,8 @@ full-build > notests:
     - vostok.logging.console
     - vostok.zookeeper.localensemble
     - vostok.zookeeper.client
+    - vostok.commons.testing
+
   build:
     target: Vostok.ServiceDiscovery.sln
     configuration: Release
