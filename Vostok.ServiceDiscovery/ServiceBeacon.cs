@@ -13,9 +13,9 @@ using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 
 namespace Vostok.ServiceDiscovery
 {
-    /// <inheritdoc />
+    /// <inheritdoc cref="IServiceBeacon"/>
     [PublicAPI]
-    public class ServiceBeacon : IServiceBeacon
+    public class ServiceBeacon : IServiceBeacon, IDisposable
     {
         private readonly string environmentNodePath;
         private readonly string serviceNodePath;
@@ -81,6 +81,11 @@ namespace Vostok.ServiceDiscovery
                 beaconTask.Wait();
                 DropNodeIfExists();
             }
+        }
+
+        public void Dispose()
+        {
+            Stop();
         }
 
         /// <summary>
@@ -151,7 +156,7 @@ namespace Vostok.ServiceDiscovery
 
         private async Task EnsureNodeExists()
         {
-            if (!await EnsureEnvironmentExists().ConfigureAwait(false))
+            if (!await EnvironmentExists().ConfigureAwait(false))
                 return;
 
             var exists = await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
@@ -187,7 +192,6 @@ namespace Vostok.ServiceDiscovery
 
             var createRequest = new CreateRequest(replicaNodePath, CreateMode.Ephemeral)
             {
-                CreateParentsIfNeeded = false,
                 Data = replicaNodeData
             };
             var create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
@@ -203,7 +207,7 @@ namespace Vostok.ServiceDiscovery
             log.Error("Node creation has failed.");
         }
 
-        private async Task<bool> EnsureEnvironmentExists()
+        private async Task<bool> EnvironmentExists()
         {
             var environmentExists = await zooKeeperClient.ExistsAsync(new ExistsRequest(environmentNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
             if (!environmentExists.IsSuccessful)

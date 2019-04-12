@@ -13,11 +13,13 @@ namespace Vostok.ServiceDiscovery.Tests
         protected static TimeSpan DefaultTimeout = 10.Seconds();
         protected readonly ILog Log = new SynchronousConsoleLog();
         protected ZooKeeperEnsemble Ensemble;
+        protected ZooKeeperClient ZooKeeperClient;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
             Ensemble = ZooKeeperEnsemble.DeployNew(1, Log);
+            ZooKeeperClient = GetZooKeeperClient();
         }
 
         [SetUp]
@@ -33,9 +35,9 @@ namespace Vostok.ServiceDiscovery.Tests
             Ensemble.Dispose();
         }
 
-        protected ZooKeeperClient GetClient()
+        protected ZooKeeperClient GetZooKeeperClient()
         {
-            var settings = new ZooKeeperClientSettings(Ensemble.ConnectionString) {Timeout = DefaultTimeout, LoggingLevel = LogLevel.Debug};
+            var settings = new ZooKeeperClientSettings(Ensemble.ConnectionString) {Timeout = DefaultTimeout};
             return new ZooKeeperClient(settings, Log);
         }
     }

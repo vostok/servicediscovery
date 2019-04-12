@@ -21,6 +21,10 @@
     <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\*.cs" LinkBase="Commons\Testing\" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Vostok.ServiceDiscovery.Abstractions">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\vostok.servicediscovery.abstractions\Vostok.ServiceDiscovery.Abstractions\bin\Release\netstandard2.0\Vostok.ServiceDiscovery.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="Vostok.ZooKeeper.Client">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.zookeeper.client\Vostok.ZooKeeper.Client\bin\Release\netstandard2.0\Vostok.ZooKeeper.Client.dll</HintPath>
