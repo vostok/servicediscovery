@@ -71,7 +71,7 @@ namespace Vostok.ServiceDiscovery
                 {
                     nodeCreatedOnceSignal.Reset();
                     checkNodeSignal.Set();
-                    beaconTask = BeaconTask();
+                    beaconTask = Task.Run(BeaconTask);
                 }
             }
         }
@@ -125,11 +125,12 @@ namespace Vostok.ServiceDiscovery
         {
             try
             {
+                checkNodeSignal.Reset();
                 await EnsureNodeExists().ConfigureAwait(false);
             }
             catch (Exception exception)
             {
-                log.Error(exception, "Failed beacon iteration.");
+                log.Error(exception, "Failed ServiceBeacon iteration.");
             }
 
             var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet() ? settings.IterationPeriod : 1.Seconds();
@@ -140,10 +141,10 @@ namespace Vostok.ServiceDiscovery
         {
             lock (startStopSync)
             {
+                log.Warn("Someone else has disposed ZooKeeper client.");
                 if (isRunning.TrySetFalse())
                 {
                     checkNodeSignal.Set();
-                    beaconTask.Wait();
                 }
             }
         }
@@ -176,7 +177,10 @@ namespace Vostok.ServiceDiscovery
             if (exists.IsSuccessful && exists.Stat != null)
             {
                 if (exists.Stat.EphemeralOwner == zooKeeperClient.SessionId)
+                {
+                    nodeCreatedOnceSignal.Set();
                     return;
+                }
 
                 var lastConnected = new DateTime(Interlocked.Read(ref lastConnectedTimestamp), DateTimeKind.Utc);
                 var nodeCreationTime = exists.Stat.CreatedTime;

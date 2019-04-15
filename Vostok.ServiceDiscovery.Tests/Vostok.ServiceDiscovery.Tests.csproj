@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\vostok.commons.testing\Vostok.Commons.Testing\*.cs" LinkBase="Commons\Testing\" />
+    <Compile Include="..\..\vostok.commons.helpers\Vostok.Commons.Helpers\Observable\CachingObservable.cs" Link="Commons\CachingObservable.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Vostok.ServiceDiscovery.Abstractions">
