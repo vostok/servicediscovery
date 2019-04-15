@@ -62,5 +62,26 @@ namespace Vostok.ServiceDiscovery.Tests
                         {"d", " "}
                     });
         }
+
+        [Test]
+        public void Deserialize_should_replace_new_line_symbol()
+        {
+            var dict = new Dictionary<string, string>
+            {
+                {"a", "a-value\n2"},
+                {"b", "b\n\nb"}
+            };
+
+            var serialized = NodeDataSerializer.Serialize(dict);
+            var deserialized = NodeDataSerializer.Deserialize(serialized);
+
+            deserialized.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"a", "a-value 2"},
+                        {"b", "b  b"}
+                    });
+        }
     }
 }
