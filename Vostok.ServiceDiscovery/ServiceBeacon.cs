@@ -133,7 +133,9 @@ namespace Vostok.ServiceDiscovery
                 log.Error(exception, "Failed ServiceBeacon iteration.");
             }
 
-            var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet() ? settings.IterationPeriod : 1.Seconds();
+            var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet() 
+                ? settings.IterationPeriod 
+                : 1.Seconds();
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }
 
@@ -145,6 +147,7 @@ namespace Vostok.ServiceDiscovery
                 if (isRunning.TrySetFalse())
                 {
                     checkNodeSignal.Set();
+                    // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
                 }
             }
         }
@@ -154,8 +157,10 @@ namespace Vostok.ServiceDiscovery
             if (connectionState == ConnectionState.Connected)
             {
                 Interlocked.Exchange(ref lastConnectedTimestamp, DateTime.UtcNow.Ticks);
-                checkNodeSignal.Set();
             }
+
+            // Note(kungurtsev): sometimes need to perform some operation to force ZooKeeperClient reconnect.
+            checkNodeSignal.Set();
         }
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
@@ -191,7 +196,7 @@ namespace Vostok.ServiceDiscovery
                         $"and has owner session id = {exists.Stat.EphemeralOwner:x16}, " +
                         $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
                         $"But it was created recently (at {nodeCreationTime}) so we won't touch it. " +
-                        "This may indicate several beacons with same environment, application and replica.");
+                        "This may indicate several beacons with same environment, application and replica exist.");
 
                     return;
                 }

@@ -1,4 +1,7 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
@@ -7,6 +10,7 @@ using NUnit.Framework;
 using Vostok.Commons.Helpers.Observable;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
+using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -20,18 +24,17 @@ namespace Vostok.ServiceDiscovery.Tests
         [TearDown]
         public void TearDown()
         {
-            ZooKeeperClient.Delete(new ServiceBeaconSettings().ZooKeeperNodePath);
+            ZooKeeperClient.Delete(PathBuilder.Prefix);
         }
 
         [Test]
         public void Start_should_create_node()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(replica))
             {
-                CreateEnvironmentNode(replica.Environment);
-
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
@@ -46,11 +49,10 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             replica.AddProperty("key", "value");
+            CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(replica))
             {
-                CreateEnvironmentNode(replica.Environment);
-
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
 
@@ -101,16 +103,14 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Stop_should_delete_node()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(replica))
             {
-                CreateEnvironmentNode(replica.Environment);
-
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
-
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 beacon.Stop();
@@ -123,16 +123,14 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Dispose_should_delete_node()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(replica))
             {
-                CreateEnvironmentNode(replica.Environment);
-
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
-
                 ReplicaRegistered(replica).Should().BeTrue();
             }
 
@@ -143,12 +141,11 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_be_startable_and_stoppable_multiple_times()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(replica))
             {
-                CreateEnvironmentNode(replica.Environment);
-
-                for (var times = 0; times < 5; times++)
+                for (var times = 0; times < 3; times++)
                 {
                     beacon.Start();
                     beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
@@ -166,16 +163,14 @@ namespace Vostok.ServiceDiscovery.Tests
             var disposedClient = GetZooKeeperClient();
 
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
-
+            CreateEnvironmentNode(replica.Environment);
+            
             using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
             {
-                CreateEnvironmentNode(replica.Environment);
-
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
-
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 disposedClient.Dispose();
@@ -184,38 +179,346 @@ namespace Vostok.ServiceDiscovery.Tests
             }
         }
 
-        private bool ReplicaRegistered(ReplicaInfo replica)
+        [Test]
+        public void Should_create_node_immediately_after_ensemble_start()
         {
-            return ReplicaRegistered(new ServiceBeaconSettings().ZooKeeperNodePath, replica);
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+            Ensemble.Stop();
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldNotCompleteIn(1.Seconds());
+
+                Ensemble.Start();
+
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+            }
         }
 
-        private bool ReplicaRegistered(string prefix, ReplicaInfo replica)
+        [Test]
+        public void Should_create_node_immediately_after_ensemble_restart()
         {
-            var path = new PathBuilder(prefix).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                Ensemble.Stop();
+
+                Ensemble.Start();
+
+                WaitReplicaRegistered(replica);
+            }
+        }
+
+        [Test]
+        public void Should_create_node_immediately_after_session_expire()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                KillSession(ZooKeeperClient).Wait();
+
+                WaitReplicaRegistered(replica);
+            }
+        }
+
+        [Test]
+        public void Should_create_node_immediately_after_environment_node_created()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldNotCompleteIn(0.5.Seconds());
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                for (var times = 0; times < 3; times++)
+                {
+                    CreateEnvironmentNode(replica.Environment);
+
+                    WaitReplicaRegistered(replica);
+
+                    DeleteEnvironmentNode(replica.Environment);
+
+                    // Note(kungurtsev): can be true, if ServiceBeacon iteration in progress
+                    ReplicaRegistered(replica).Should().BeFalse();
+                }
+            }
+        }
+
+        [Test]
+        public void Should_create_node_immediately_after_replica_node_deleted_by_someone_else()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                for (var times = 0; times < 3; times++)
+                {
+                    DeleteReplicaNode(replica);
+
+                    WaitReplicaRegistered(replica);
+                }
+            }
+        }
+
+        [Test]
+        public void Should_create_node_immediately_after_application_node_deleted()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                for (var times = 0; times < 3; times++)
+                {
+                    DeleteApplicationNode(replica);
+
+                    WaitReplicaRegistered(replica);
+                }
+            }
+        }
+
+        [Test]
+        public void Should_register_multiple_replicas_in_one_application()
+        {
+            var replicas = Enumerable.Range(0, 3)
+                .Select(i => new ReplicaInfo("default", "vostok", $"app_{i}"))
+                .ToList();
+            CreateEnvironmentNode(replicas.First().Environment);
+
+            using (var beacon1 = GetServiceBeacon(replicas[0]))
+            using (var beacon2 = GetServiceBeacon(replicas[1]))
+            using (var beacon3 = GetServiceBeacon(replicas[2]))
+            {
+                var beacons = new List<ServiceBeacon> {beacon1, beacon2, beacon3};
+
+                foreach (var beacon in beacons)
+                    beacon.Start();
+
+                foreach (var beacon in beacons)
+                    beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                foreach (var replica in replicas)
+                    ReplicaRegistered(replica).Should().BeTrue();
+            }
+        }
+
+        [Test]
+        public void Should_register_same_replicas_in_different_environments()
+        {
+            var replicas = Enumerable.Range(0, 3)
+                .Select(i => new ReplicaInfo($"environment_{i}", "vostok", "https://github.com/vostok"))
+                .ToList();
+
+            foreach (var replica in replicas)
+                CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon1 = GetServiceBeacon(replicas[0]))
+            using (var beacon2 = GetServiceBeacon(replicas[1]))
+            using (var beacon3 = GetServiceBeacon(replicas[2]))
+            {
+                var beacons = new List<ServiceBeacon> { beacon1, beacon2, beacon3 };
+
+                foreach (var beacon in beacons)
+                    beacon.Start();
+
+                foreach (var beacon in beacons)
+                    beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                foreach (var replica in replicas)
+                    ReplicaRegistered(replica).Should().BeTrue();
+            }
+        }
+
+        [Test]
+        public void Should_register_same_replicas_in_different_applications()
+        {
+            var replicas = Enumerable.Range(0, 3)
+                .Select(i => new ReplicaInfo("environment", $"vostok_{i}", "https://github.com/vostok"))
+                .ToList();
+
+            CreateEnvironmentNode(replicas.First().Environment);
+
+            using (var beacon1 = GetServiceBeacon(replicas[0]))
+            using (var beacon2 = GetServiceBeacon(replicas[1]))
+            using (var beacon3 = GetServiceBeacon(replicas[2]))
+            {
+                var beacons = new List<ServiceBeacon> { beacon1, beacon2, beacon3 };
+
+                foreach (var beacon in beacons)
+                    beacon.Start();
+
+                foreach (var beacon in beacons)
+                    beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                foreach (var replica in replicas)
+                    ReplicaRegistered(replica).Should().BeTrue();
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Should_register_one_replica_for_multiple_beacons(bool swapStops)
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon1 = GetServiceBeacon(replica))
+            using (var beacon2 = GetServiceBeacon(replica))
+            {
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                beacon1.Start();
+                beacon1.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                beacon2.Start();
+                beacon2.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                if (swapStops)
+                {
+                    beacon1.Stop();
+                    WaitReplicaRegistered(replica);
+
+                    beacon2.Stop();
+                    ReplicaRegistered(replica).Should().BeFalse();
+                }
+                else
+                {
+                    beacon2.Stop();
+                    WaitReplicaRegistered(replica);
+
+                    beacon1.Stop();
+                    ReplicaRegistered(replica).Should().BeFalse();
+                }
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Should_register_one_replica_for_multiple_zookeeper_clients(bool swapStops)
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var client1 = GetZooKeeperClient())
+            using (var client2 = GetZooKeeperClient())
+            using (var beacon1 = GetServiceBeacon(replica, client1))
+            using (var beacon2 = GetServiceBeacon(replica, client2))
+            {
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                beacon1.Start();
+                beacon1.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                beacon2.Start();
+                beacon2.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                if (swapStops)
+                {
+                    beacon1.Stop();
+                    WaitReplicaRegistered(replica);
+
+                    beacon2.Stop();
+                    ReplicaRegistered(replica).Should().BeFalse();
+                }
+                else
+                {
+                    beacon2.Stop();
+                    WaitReplicaRegistered(replica);
+
+                    beacon1.Stop();
+                    ReplicaRegistered(replica).Should().BeFalse();
+                }
+            }
+        }
+
+        private void WaitReplicaRegistered(ReplicaInfo replica, bool expected = true)
+        {
+            var wait = new Action(
+                () =>
+                {
+                    var path = PathBuilder.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+                    var exists = ZooKeeperClient.Exists(path);
+                    exists.IsSuccessful.Should().Be(true);
+                    exists.Exists.Should().Be(expected);
+                });
+            
+            wait.ShouldPassIn(DefaultTimeout);
+        }
+
+        private bool ReplicaRegistered(ReplicaInfo replica)
+        {
+            var path = PathBuilder.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
             var exists = ZooKeeperClient.Exists(path);
             return exists.Exists;
         }
 
         private void CreateEnvironmentNode(string environment)
         {
-            CreateEnvironmentNode(new ServiceBeaconSettings().ZooKeeperNodePath, environment);
-        }
-
-        private void CreateEnvironmentNode(string prefix, string environment)
-        {
-            var path = new PathBuilder(prefix).BuildEnvironmentPath(environment);
+            var path = PathBuilder.BuildEnvironmentPath(environment);
             var create = ZooKeeperClient.Create(path, CreateMode.Persistent);
             (create.Status == ZooKeeperStatus.Ok || create.Status == ZooKeeperStatus.NodeAlreadyExists).Should().BeTrue();
         }
 
-        private ServiceBeacon GetServiceBeacon(ReplicaInfo replica)
+        private void DeleteEnvironmentNode(string environment)
         {
+            var path = PathBuilder.BuildEnvironmentPath(environment);
+            var delete = ZooKeeperClient.Delete(path);
+            delete.IsSuccessful.Should().BeTrue();
+        }
+
+        private void DeleteApplicationNode(ReplicaInfo replicaInfo)
+        {
+            var path = PathBuilder.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
+            var delete = ZooKeeperClient.Delete(path);
+            delete.IsSuccessful.Should().BeTrue();
+        }
+
+        private void DeleteReplicaNode(ReplicaInfo replicaInfo)
+        {
+            var path = PathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
+            var delete = ZooKeeperClient.Delete(path);
+            delete.IsSuccessful.Should().BeTrue();
+        }
+
+        private ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null)
+        {
+            client = client ?? ZooKeeperClient;
             var settings = new ServiceBeaconSettings
             {
-                IterationPeriod = 5.Seconds(),
+                IterationPeriod = 60.Seconds(),
                 MinimumTimeBetweenIterations = 1.Seconds()
             };
-            return new ServiceBeacon(ZooKeeperClient, replica, settings, Log);
+            return new ServiceBeacon(client, replica, settings, Log);
         }
     }
 }

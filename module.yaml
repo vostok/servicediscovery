@@ -20,6 +20,7 @@ notests *default:
 
 full-build > notests:
   deps:
+    - vostok.zookeeper.testing
     - vostok.logging.console
     - vostok.zookeeper.localensemble
     - vostok.zookeeper.client

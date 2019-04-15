@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Console;
 using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.LocalEnsemble;
+using Vostok.ZooKeeper.Testing;
 
 namespace Vostok.ServiceDiscovery.Tests
 {
@@ -14,6 +16,7 @@ namespace Vostok.ServiceDiscovery.Tests
         protected readonly ILog Log = new SynchronousConsoleLog();
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
+        protected PathBuilder PathBuilder = new PathBuilder(new ServiceBeaconSettings().ZooKeeperNodePath);
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -34,6 +37,9 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             Ensemble.Dispose();
         }
+
+        protected Task KillSession(ZooKeeperClient client) =>
+            ZooKeeperClientTestsHelper.KillSession(client.SessionId, client.SessionPassword, client.OnConnectionStateChanged, Ensemble.ConnectionString, DefaultTimeout);
 
         protected ZooKeeperClient GetZooKeeperClient()
         {

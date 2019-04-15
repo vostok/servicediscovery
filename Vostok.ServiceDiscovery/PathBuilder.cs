@@ -5,15 +5,15 @@ namespace Vostok.ServiceDiscovery
 {
     internal class PathBuilder
     {
-        private readonly string prefix;
+        public readonly string Prefix;
 
         public PathBuilder(string prefix)
         {
-            this.prefix = prefix ?? ZooKeeperPath.Root;
+            Prefix = prefix ?? ZooKeeperPath.Root;
         }
-
+        
         public string BuildEnvironmentPath(string environment) =>
-            ZooKeeperPath.Combine(prefix, Escape(environment.ToLowerInvariant()));
+            ZooKeeperPath.Combine(Prefix, Escape(environment.ToLowerInvariant()));
 
         public string BuildApplicationPath(string environment, string application) =>
             ZooKeeperPath.Combine(BuildEnvironmentPath(environment), Escape(application));
