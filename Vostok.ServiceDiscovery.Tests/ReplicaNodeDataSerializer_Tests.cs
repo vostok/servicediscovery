@@ -6,12 +6,12 @@ using NUnit.Framework;
 namespace Vostok.ServiceDiscovery.Tests
 {
     [TestFixture]
-    public class NodeDataSerializer_Tests
+    public class ReplicaNodeDataSerializer_Tests
     {
         [Test]
         public void Serialize_should_concat_dict_key_values()
         {
-            var serialized = NodeDataSerializer.Serialize(
+            var serialized = ReplicaNodeDataSerializer.Serialize(
                 new Dictionary<string, string>
                 {
                     {"a", "a-value"},
@@ -34,8 +34,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 {"with some spaces  ", "   "}
             };
 
-            var serialized = NodeDataSerializer.Serialize(dict);
-            var deserialized = NodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
 
             deserialized.Should().BeEquivalentTo(dict);
         }
@@ -51,8 +51,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 {"d", " "}
             };
 
-            var serialized = NodeDataSerializer.Serialize(dict);
-            var deserialized = NodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
 
             deserialized.Should()
                 .BeEquivalentTo(
@@ -72,8 +72,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 {"b", "b\n\nb"}
             };
 
-            var serialized = NodeDataSerializer.Serialize(dict);
-            var deserialized = NodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
 
             deserialized.Should()
                 .BeEquivalentTo(

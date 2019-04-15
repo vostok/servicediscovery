@@ -89,7 +89,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     builder.VirtualPath = "vostok";
                 });
 
-            var host = EnvironmentInfo.Host.ToLowerInvariant();
+            var host = Vostok.Commons.Environment.EnvironmentInfo.Host.ToLowerInvariant();
 
             info.Replica.Should().Be($"https://{host}:123/vostok");
 
@@ -110,7 +110,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     builder.Port = 123;
                 });
 
-            var host = EnvironmentInfo.Host.ToLowerInvariant();
+            var host = Vostok.Commons.Environment.EnvironmentInfo.Host.ToLowerInvariant();
 
             info.Replica.Should().Be($"http://{host}:123/");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be($"http://{host}:123/");
@@ -124,7 +124,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 {
                 });
 
-            var host = EnvironmentInfo.Host;
+            var host = Vostok.Commons.Environment.EnvironmentInfo.Host;
             
             info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be($"{host}({Process.GetCurrentProcess().Id})");
@@ -170,7 +170,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     builder.AddProperty(ReplicaInfoKeys.Replica, "value");
                 });
 
-            var host = EnvironmentInfo.Host;
+            var host = Vostok.Commons.Environment.EnvironmentInfo.Host;
             
             info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be("value");

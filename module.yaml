@@ -10,6 +10,7 @@ notests *default:
     - module vostok.servicediscovery.abstractions
 
   deps:
+    - vostok.commons.binary
     - vostok.logging.abstractions
     - vostok.zookeeper.client.abstractions
     - vostok.servicediscovery.abstractions

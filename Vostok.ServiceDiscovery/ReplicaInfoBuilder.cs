@@ -14,11 +14,11 @@ namespace Vostok.ServiceDiscovery
         public ReplicaInfoBuilder()
         {
             Environment = "default";
-            Application = EnvironmentInfo.Application;
-            Host = EnvironmentInfo.Host;
-            ProcessName = EnvironmentInfo.ProcessName;
-            ProcessId = EnvironmentInfo.ProcessId;
-            BaseDirectory = EnvironmentInfo.BaseDirectory;
+            Application = Vostok.Commons.Environment.EnvironmentInfo.Application;
+            Host = Vostok.Commons.Environment.EnvironmentInfo.Host;
+            ProcessName = Vostok.Commons.Environment.EnvironmentInfo.ProcessName;
+            ProcessId = Vostok.Commons.Environment.EnvironmentInfo.ProcessId;
+            BaseDirectory = Vostok.Commons.Environment.EnvironmentInfo.BaseDirectory;
             CommitHash = AssemblyCommitHashExtractor.ExtractFromEntryAssembly();
             ReleaseDate = AssemblyBuildTimeExtractor.ExtractFromEntryAssembly()?.ToString("O");
             Dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
@@ -59,7 +59,7 @@ namespace Vostok.ServiceDiscovery
         public ReplicaInfo Build()
         {
             Url = Url ?? BuildUrl(Scheme, Port, VirtualPath);
-            Replica = Url?.ToString() ?? $"{EnvironmentInfo.Host}({EnvironmentInfo.ProcessId})";
+            Replica = Url?.ToString() ?? $"{Vostok.Commons.Environment.EnvironmentInfo.Host}({Vostok.Commons.Environment.EnvironmentInfo.ProcessId})";
 
             if (Url != null)
             {
@@ -112,7 +112,7 @@ namespace Vostok.ServiceDiscovery
             return new UriBuilder
             {
                 Scheme = scheme ?? "http",
-                Host = EnvironmentInfo.Host,
+                Host = Vostok.Commons.Environment.EnvironmentInfo.Host,
                 Port = port.Value,
                 Path = virtualPath ?? ""
             }.Uri;

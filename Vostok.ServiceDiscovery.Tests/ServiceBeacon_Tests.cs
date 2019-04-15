@@ -58,7 +58,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 var path = new PathBuilder(new ServiceBeaconSettings().ZooKeeperNodePath).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
-                var dict = NodeDataSerializer.Deserialize(data);
+                var dict = ReplicaNodeDataSerializer.Deserialize(data);
 
                 dict["key"].Should().Be("value");
             }

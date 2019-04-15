@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 
 namespace Vostok.ServiceDiscovery
 {
-    internal static class NodeDataSerializer
+    internal static class ReplicaNodeDataSerializer
     {
         private const string KeyValueDelimiter = " = ";
         private const string LinesDelimiter = "\n";
