@@ -1,0 +1,45 @@
+﻿using System.Collections.Generic;
+using FluentAssertions;
+using NUnit.Framework;
+
+namespace Vostok.ServiceDiscovery.Tests
+{
+    [TestFixture]
+    internal class ApplicationNodeDataSerializer_Tests
+    {
+        [Test]
+        public void Should_serialize_and_deserialize()
+        {
+            foreach (var properties in TestProperties())
+            {
+                var info = new ApplicationInfo(properties);
+                var serialized = ApplicationNodeDataSerializer.Serialize(info);
+                var deserialized = ApplicationNodeDataSerializer.Deserialize(serialized);
+                deserialized.Should().BeEquivalentTo(info);
+            }
+        }
+
+        [Test]
+        public void Should_deserialize_null()
+        {
+            ApplicationNodeDataSerializer.Deserialize(null).Should().BeEquivalentTo(new ApplicationInfo(null));
+        }
+
+        [Test]
+        public void Should_deserialize_empty()
+        {
+            ApplicationNodeDataSerializer.Deserialize(new byte[0]).Should().BeEquivalentTo(new ApplicationInfo(null));
+        }
+
+        private static IEnumerable<Dictionary<string, string>> TestProperties()
+        {
+            return new[]
+            {
+                null,
+                new Dictionary<string, string>(),
+                new Dictionary<string, string> {{"key", "value"}},
+                new Dictionary<string, string> {{"a", "aa"}, {"b b b", "bb __ bb // b"}}
+            };
+        }
+    }
+}

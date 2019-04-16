@@ -10,11 +10,9 @@ namespace Vostok.ServiceDiscovery
     public class ServiceTopology : IServiceTopology
     {
         /// <inheritdoc />
-        [ItemNotNull]
         public IReadOnlyList<Uri> Replicas { get; }
 
         /// <inheritdoc />
-        [NotNull]
-        public IReadOnlyDictionary<string, string> Data { get; }
+        public IReadOnlyDictionary<string, string> Properties { get; }
     }
 }

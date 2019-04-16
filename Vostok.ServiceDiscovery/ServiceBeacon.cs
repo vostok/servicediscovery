@@ -36,6 +36,14 @@ namespace Vostok.ServiceDiscovery
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
             [CanBeNull] ReplicaInfoBuilderSetup replicaInfoBuilderSetup,
+            [CanBeNull] ILog log)
+            : this(zooKeeperClient, replicaInfoBuilderSetup, null, log)
+        {
+        }
+
+        public ServiceBeacon(
+            [NotNull] IZooKeeperClient zooKeeperClient,
+            [CanBeNull] ReplicaInfoBuilderSetup replicaInfoBuilderSetup,
             [CanBeNull] ServiceBeaconSettings settings,
             [CanBeNull] ILog log)
             : this(zooKeeperClient, ReplicaInfoBuilder.Build(replicaInfoBuilderSetup), settings, log)

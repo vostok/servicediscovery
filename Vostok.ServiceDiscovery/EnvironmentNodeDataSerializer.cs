@@ -23,7 +23,7 @@ namespace Vostok.ServiceDiscovery
         [NotNull]
         public static EnvironmentInfo Deserialize([CanBeNull] byte[] data)
         { 
-            if (data == null)
+            if (data == null || data.Length == 0)
                 return new EnvironmentInfo(null, null);
 
             var reader = new BinaryBufferReader(data, 0);

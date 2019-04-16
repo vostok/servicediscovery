@@ -24,6 +24,18 @@ namespace Vostok.ServiceDiscovery.Tests
             }
         }
 
+        [Test]
+        public void Should_deserialize_null()
+        {
+            EnvironmentNodeDataSerializer.Deserialize(null).Should().BeEquivalentTo(new EnvironmentInfo(null, null));
+        }
+
+        [Test]
+        public void Should_deserialize_empty()
+        {
+            EnvironmentNodeDataSerializer.Deserialize(new byte[0]).Should().BeEquivalentTo(new EnvironmentInfo(null, null));
+        }
+
         private static IEnumerable<Dictionary<string, string>> TestProperties()
         {
             return new[]

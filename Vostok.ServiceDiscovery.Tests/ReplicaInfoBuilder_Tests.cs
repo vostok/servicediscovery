@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Environment;
 
 namespace Vostok.ServiceDiscovery.Tests
 {
@@ -114,6 +113,22 @@ namespace Vostok.ServiceDiscovery.Tests
 
             info.Replica.Should().Be($"http://{host}:123/");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be($"http://{host}:123/");
+        }
+
+        [Test]
+        public void Should_build_url_from_default_port()
+        {
+            var info = ReplicaInfoBuilder.Build(
+                builder =>
+                {
+                    builder.Port = 80;
+                });
+
+            var host = Vostok.Commons.Environment.EnvironmentInfo.Host.ToLowerInvariant();
+
+            info.Replica.Should().Be($"http://{host}/");
+            info.Properties[ReplicaInfoKeys.Replica].Should().Be($"http://{host}/");
+            info.Properties[ReplicaInfoKeys.Port].Should().Be("80");
         }
 
         [Test]
