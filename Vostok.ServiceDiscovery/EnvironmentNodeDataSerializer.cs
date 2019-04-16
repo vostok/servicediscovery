@@ -14,7 +14,8 @@ namespace Vostok.ServiceDiscovery
             var writer = new BinaryBufferWriter(0);
             writer.Write(WithPropertiesVersion);
             writer.WriteNullable(info?.ParentEnvironment, (w, i) => w.WriteWithLength(i));
-            writer.WriteDictionary(info?.Properties ?? new Dictionary<string, string>(), (w, k) => w.WriteWithLength(k), (w, v) => w.WriteWithLength(v));
+            writer.WriteDictionary(info?.Properties ?? new Dictionary<string, string>(), 
+                (w, k) => w.WriteWithLength(k), (w, v) => w.WriteWithLength(v));
 
             return writer.Buffer;
         }
@@ -39,7 +40,7 @@ namespace Vostok.ServiceDiscovery
 
         private static Dictionary<string, string> DeserializeProperties(BinaryBufferReader reader)
         {
-            return reader.ReadNullable(r => r.ReadDictionary(rr => rr.ReadString(), rr => rr.ReadString()));
+            return reader.ReadDictionary(r => r.ReadString(), r => r.ReadString());
         }
     }
 }
