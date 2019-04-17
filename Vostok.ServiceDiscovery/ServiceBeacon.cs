@@ -173,12 +173,8 @@ namespace Vostok.ServiceDiscovery
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
         {
-            if (!isRunning)
-                return;
-
-            if (type == NodeChangedEventType.Created && path.Equals(environmentNodePath)
-                || type == NodeChangedEventType.Deleted && path.Equals(replicaNodePath))
-                checkNodeSignal.Set();
+            // Note(kungurtsev): even if we received modify data event, we should put new watchers on the node
+            checkNodeSignal.Set();
         }
 
         private async Task EnsureNodeExists()
