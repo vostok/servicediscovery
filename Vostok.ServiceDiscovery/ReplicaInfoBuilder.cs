@@ -7,18 +7,17 @@ namespace Vostok.ServiceDiscovery
 {
     internal class ReplicaInfoBuilder : IReplicaInfoBuilder
     {
-        private List<KeyValuePair<string, string>> properties = new List<KeyValuePair<string, string>>();
-
         private const string DependenciesDelimiter = ";";
+        private List<KeyValuePair<string, string>> properties = new List<KeyValuePair<string, string>>();
 
         public ReplicaInfoBuilder()
         {
             Environment = "default";
-            Application = Vostok.Commons.Environment.EnvironmentInfo.Application;
-            Host = Vostok.Commons.Environment.EnvironmentInfo.Host;
-            ProcessName = Vostok.Commons.Environment.EnvironmentInfo.ProcessName;
-            ProcessId = Vostok.Commons.Environment.EnvironmentInfo.ProcessId;
-            BaseDirectory = Vostok.Commons.Environment.EnvironmentInfo.BaseDirectory;
+            Application = Commons.Environment.EnvironmentInfo.Application;
+            Host = Commons.Environment.EnvironmentInfo.Host;
+            ProcessName = Commons.Environment.EnvironmentInfo.ProcessName;
+            ProcessId = Commons.Environment.EnvironmentInfo.ProcessId;
+            BaseDirectory = Commons.Environment.EnvironmentInfo.BaseDirectory;
             CommitHash = AssemblyCommitHashExtractor.ExtractFromEntryAssembly();
             ReleaseDate = AssemblyBuildTimeExtractor.ExtractFromEntryAssembly()?.ToString("O");
             Dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
@@ -59,7 +58,7 @@ namespace Vostok.ServiceDiscovery
         public ReplicaInfo Build()
         {
             Url = Url ?? BuildUrl(Scheme, Port, VirtualPath);
-            Replica = Url?.ToString() ?? $"{Vostok.Commons.Environment.EnvironmentInfo.Host}({Vostok.Commons.Environment.EnvironmentInfo.ProcessId})";
+            Replica = Url?.ToString() ?? $"{Commons.Environment.EnvironmentInfo.Host}({Commons.Environment.EnvironmentInfo.ProcessId})";
 
             if (Url != null)
             {
@@ -73,6 +72,20 @@ namespace Vostok.ServiceDiscovery
             FillProperties(result);
 
             return result;
+        }
+
+        private static Uri BuildUrl(string scheme, int? port, string virtualPath)
+        {
+            if (port == null)
+                return null;
+
+            return new UriBuilder
+            {
+                Scheme = scheme ?? "http",
+                Host = Commons.Environment.EnvironmentInfo.Host,
+                Port = port.Value,
+                Path = virtualPath ?? ""
+            }.Uri;
         }
 
         private void FillProperties(ReplicaInfo replicaInfo)
@@ -98,24 +111,11 @@ namespace Vostok.ServiceDiscovery
 
         private string FormatDependencies()
         {
-            return Dependencies == null 
-                ? null 
-                : string.Join(DependenciesDelimiter, 
+            return Dependencies == null
+                ? null
+                : string.Join(
+                    DependenciesDelimiter,
                     Dependencies.Select(d => d?.Replace(DependenciesDelimiter, "_")));
-        }
-
-        private static Uri BuildUrl(string scheme, int? port, string virtualPath)
-        {
-            if (port == null)
-                return null;
-
-            return new UriBuilder
-            {
-                Scheme = scheme ?? "http",
-                Host = Vostok.Commons.Environment.EnvironmentInfo.Host,
-                Port = port.Value,
-                Path = virtualPath ?? ""
-            }.Uri;
         }
     }
 }

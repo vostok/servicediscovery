@@ -44,7 +44,6 @@ namespace Vostok.ServiceDiscovery
 
         public void Dispose()
         {
-            
         }
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
@@ -83,7 +82,7 @@ namespace Vostok.ServiceDiscovery
                     return null;
                 }
 
-                var goToParent = environment.Replicas.Length == 0 && environment.Info.IgnoreEmptyTopologies();
+                var goToParent = environment.Replicas.Length == 0 && environment.Info.SkipIfEmpty();
 
                 if (!goToParent)
                     return new ServiceTopology(environment.Replicas, environment.Info.Properties);
@@ -103,7 +102,7 @@ namespace Vostok.ServiceDiscovery
         {
             var envitonmentDataResult = zooKeeperClient.GetData(serviceDiscoveryPath.BuildEnvironmentPath(environment.Name));
             environment.UpdateInfo(envitonmentDataResult, log);
-            
+
             var getChildrenDataResult = zooKeeperClient.GetChildren(serviceDiscoveryPath.BuildApplicationPath(environment.Name, application));
             environment.UpdateReplicas(getChildrenDataResult, log);
 
@@ -165,6 +164,7 @@ namespace Vostok.ServiceDiscovery
                     continue;
                 result.Add(parsedUri);
             }
+
             return result.ToArray();
         }
     }

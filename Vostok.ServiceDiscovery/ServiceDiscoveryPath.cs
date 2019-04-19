@@ -17,7 +17,7 @@ namespace Vostok.ServiceDiscovery
                 $@"^{Prefix}(/(?<environment>[^/]+)(/(?<application>[^/]+)(/(?<replica>[^/]+))?)?)?$",
                 RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
         }
-        
+
         public string BuildEnvironmentPath(string environment) =>
             ZooKeeperPath.Combine(Prefix, Escape(environment.ToLowerInvariant()));
 

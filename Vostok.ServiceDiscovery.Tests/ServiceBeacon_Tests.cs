@@ -72,12 +72,14 @@ namespace Vostok.ServiceDiscovery.Tests
             var calls = 0;
             var client = Substitute.For<IZooKeeperClient>();
             client.OnConnectionStateChanged.Returns(new CachingObservable<ConnectionState>(ConnectionState.Connected));
-            client.ExistsAsync(Arg.Any<ExistsRequest>()).Returns(c =>
-            {
-                Log.Info($"{c.Args()[0]}");
-                Interlocked.Increment(ref calls);
-                return Task.FromResult(ExistsResult.Successful("", new NodeStat(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)));
-            });
+            client.ExistsAsync(Arg.Any<ExistsRequest>())
+                .Returns(
+                    c =>
+                    {
+                        Log.Info($"{c.Args()[0]}");
+                        Interlocked.Increment(ref calls);
+                        return Task.FromResult(ExistsResult.Successful("", new NodeStat(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)));
+                    });
             client.DeleteAsync(Arg.Any<DeleteRequest>()).Returns(Task.FromResult(DeleteResult.Successful("")));
 
             var settings = new ServiceBeaconSettings
@@ -90,13 +92,13 @@ namespace Vostok.ServiceDiscovery.Tests
             {
                 beacon.Start();
 
-                Thread.Sleep((4*200).Milliseconds());
+                Thread.Sleep((4 * 200).Milliseconds());
 
                 beacon.Stop();
             }
 
             // One call for environment, one for node.
-            calls.Should().BeInRange(2*3, 2*5);
+            calls.Should().BeInRange(2 * 3, 2 * 5);
         }
 
         [Test]
@@ -164,7 +166,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             CreateEnvironmentNode(replica.Environment);
-            
+
             using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
@@ -240,7 +242,7 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_create_node_immediately_after_environment_node_created()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
-            
+
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
@@ -342,7 +344,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon2 = GetServiceBeacon(replicas[1]))
             using (var beacon3 = GetServiceBeacon(replicas[2]))
             {
-                var beacons = new List<ServiceBeacon> { beacon1, beacon2, beacon3 };
+                var beacons = new List<ServiceBeacon> {beacon1, beacon2, beacon3};
 
                 foreach (var beacon in beacons)
                     beacon.Start();
@@ -368,7 +370,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon2 = GetServiceBeacon(replicas[1]))
             using (var beacon3 = GetServiceBeacon(replicas[2]))
             {
-                var beacons = new List<ServiceBeacon> { beacon1, beacon2, beacon3 };
+                var beacons = new List<ServiceBeacon> {beacon1, beacon2, beacon3};
 
                 foreach (var beacon in beacons)
                     beacon.Start();
@@ -471,7 +473,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     exists.IsSuccessful.Should().Be(true);
                     exists.Exists.Should().Be(expected);
                 });
-            
+
             wait.ShouldPassIn(DefaultTimeout);
         }
 

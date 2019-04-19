@@ -15,8 +15,11 @@ namespace Vostok.ServiceDiscovery
         public static byte[] Serialize([CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
             properties = properties ?? new Dictionary<string, string>();
-            var content = string.Join(LinesDelimiter, properties.Select(item => 
-                $"{item.Key}{KeyValueDelimiter}{item.Value}".Replace(LinesDelimiter, " ")));
+            var content = string.Join(
+                LinesDelimiter,
+                properties.Select(
+                    item =>
+                        $"{item.Key}{KeyValueDelimiter}{item.Value}".Replace(LinesDelimiter, " ")));
             return Encoding.UTF8.GetBytes(content);
         }
 

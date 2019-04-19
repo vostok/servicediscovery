@@ -1,10 +1,7 @@
-﻿using JetBrains.Annotations;
-
-namespace Vostok.ServiceDiscovery
+﻿namespace Vostok.ServiceDiscovery
 {
-    [PublicAPI]
-    public static class EnvironmentInfoKeys
+    internal static class EnvironmentInfoKeys
     {
-        public const string IgnoreEmptyEnvironments = "IgnoreEmptyTopologies";
+        public const string SkipIfEmpty = "IgnoreEmptyTopologies";
     }
 }

@@ -4,14 +4,16 @@ using Vostok.Commons.Binary;
 
 namespace Vostok.ServiceDiscovery
 {
-    internal class ApplicationNodeDataSerializer
+    internal static class ApplicationNodeDataSerializer
     {
         [NotNull]
         public static byte[] Serialize([CanBeNull] ApplicationInfo info)
         {
             var writer = new BinaryBufferWriter(0);
-            writer.WriteDictionary(info?.Properties ?? new Dictionary<string, string>(),
-                (w, k) => w.WriteWithLength(k), (w, v) => w.WriteWithLength(v));
+            writer.WriteDictionary(
+                info?.Properties ?? new Dictionary<string, string>(),
+                (w, k) => w.WriteWithLength(k),
+                (w, v) => w.WriteWithLength(v));
 
             return writer.Buffer;
         }

@@ -27,10 +27,10 @@ namespace Vostok.ServiceDiscovery
         private readonly ReplicaInfo replicaInfo;
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
         private readonly ILog log;
+        private readonly object startStopSync = new object();
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile AtomicBoolean isRunning = false;
-        private readonly object startStopSync = new object();
         private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
         public ServiceBeacon(
@@ -141,8 +141,8 @@ namespace Vostok.ServiceDiscovery
                 log.Error(exception, "Failed ServiceBeacon iteration.");
             }
 
-            var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet() 
-                ? settings.IterationPeriod 
+            var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet()
+                ? settings.IterationPeriod
                 : 1.Seconds();
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }

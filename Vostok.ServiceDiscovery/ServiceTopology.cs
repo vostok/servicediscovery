@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Abstractions;
 
 namespace Vostok.ServiceDiscovery
 {
-    /// <inheritdoc />
-    [PublicAPI]
-    public class ServiceTopology : IServiceTopology
+    internal class ServiceTopology : IServiceTopology
     {
         public ServiceTopology(IReadOnlyList<Uri> replicas, IReadOnlyDictionary<string, string> properties)
         {

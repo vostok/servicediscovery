@@ -32,13 +32,13 @@ namespace Vostok.ServiceDiscovery
         public string Replica { get; }
 
         [NotNull]
+        public IReadOnlyDictionary<string, string> Properties => properties;
+
+        [NotNull]
         public ReplicaInfo AddProperty([NotNull] string key, [CanBeNull] string value)
         {
             properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
             return this;
         }
-
-        [NotNull]
-        public IReadOnlyDictionary<string, string> Properties => properties;
     }
 }

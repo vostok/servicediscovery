@@ -8,7 +8,7 @@ namespace Vostok.ServiceDiscovery.Tests
     internal class ApplicationNodeDataSerializer_Tests
     {
         [Test]
-        public void Should_serialize_and_deserialize()
+        public void Should_serialize_and_deserialize_properties()
         {
             foreach (var properties in TestProperties())
             {
@@ -17,6 +17,14 @@ namespace Vostok.ServiceDiscovery.Tests
                 var deserialized = ApplicationNodeDataSerializer.Deserialize(serialized);
                 deserialized.Should().BeEquivalentTo(info);
             }
+        }
+
+        [Test]
+        public void Should_serialize_null()
+        {
+            var serialized = ApplicationNodeDataSerializer.Serialize(null);
+            var deserialized = ApplicationNodeDataSerializer.Deserialize(serialized);
+            deserialized.Should().BeEquivalentTo(new ApplicationInfo(null));
         }
 
         [Test]

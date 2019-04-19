@@ -65,7 +65,8 @@ namespace Vostok.ServiceDiscovery.Tests
             new ServiceDiscoveryPath(null).BuildReplicaPath("e", "s", "RRR/rrr:88").Should().Be("/e/s/RRR%2Frrr%3A88");
         }
 
-        [Test, Combinatorial]
+        [Test]
+        [Combinatorial]
         public void TryParse_should_parse_replica_path(
             [Values(null, "prefix/node")] string prefix,
             [Values("environment", "EEE/eee")] string environment,
@@ -75,13 +76,16 @@ namespace Vostok.ServiceDiscovery.Tests
             var path = new ServiceDiscoveryPath(prefix);
 
             path.TryParse(path.BuildEnvironmentPath(environment))
-                .Should().Be(((string environment, string application, string replica)?) (environment?.ToLowerInvariant(), null, null));
+                .Should()
+                .Be(((string environment, string application, string replica)?)(environment?.ToLowerInvariant(), null, null));
 
             path.TryParse(path.BuildApplicationPath(environment, application))
-                .Should().Be(((string environment, string application, string replica)?)(environment?.ToLowerInvariant(), application, null));
+                .Should()
+                .Be(((string environment, string application, string replica)?)(environment?.ToLowerInvariant(), application, null));
 
             path.TryParse(path.BuildReplicaPath(environment, application, replica))
-                .Should().Be(((string environment, string application, string replica)?)(environment?.ToLowerInvariant(), application, replica));
+                .Should()
+                .Be(((string environment, string application, string replica)?)(environment?.ToLowerInvariant(), application, replica));
         }
     }
 }

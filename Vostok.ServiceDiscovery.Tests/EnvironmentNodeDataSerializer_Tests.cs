@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -22,6 +21,14 @@ namespace Vostok.ServiceDiscovery.Tests
                 var deserialized = EnvironmentNodeDataSerializer.Deserialize(serialized);
                 deserialized.Should().BeEquivalentTo(info);
             }
+        }
+
+        [Test]
+        public void Should_serialize_null()
+        {
+            var serialized = EnvironmentNodeDataSerializer.Serialize(null);
+            var deserialized = EnvironmentNodeDataSerializer.Deserialize(serialized);
+            deserialized.Should().BeEquivalentTo(new EnvironmentInfo(null, null));
         }
 
         [Test]

@@ -4,7 +4,7 @@ using Vostok.Commons.Binary;
 
 namespace Vostok.ServiceDiscovery
 {
-    internal class EnvironmentNodeDataSerializer
+    internal static class EnvironmentNodeDataSerializer
     {
         private const int WithPropertiesVersion = 2;
 
@@ -14,15 +14,17 @@ namespace Vostok.ServiceDiscovery
             var writer = new BinaryBufferWriter(0);
             writer.Write(WithPropertiesVersion);
             writer.WriteNullable(info?.ParentEnvironment, (w, i) => w.WriteWithLength(i));
-            writer.WriteDictionary(info?.Properties ?? new Dictionary<string, string>(), 
-                (w, k) => w.WriteWithLength(k), (w, v) => w.WriteWithLength(v));
+            writer.WriteDictionary(
+                info?.Properties ?? new Dictionary<string, string>(),
+                (w, k) => w.WriteWithLength(k),
+                (w, v) => w.WriteWithLength(v));
 
             return writer.Buffer;
         }
 
         [NotNull]
         public static EnvironmentInfo Deserialize([CanBeNull] byte[] data)
-        { 
+        {
             if (data == null || data.Length == 0)
                 return new EnvironmentInfo(null, null);
 

@@ -14,9 +14,9 @@ namespace Vostok.ServiceDiscovery.Tests
     {
         protected static TimeSpan DefaultTimeout = 10.Seconds();
         protected readonly ILog Log = new SynchronousConsoleLog();
+        protected readonly ServiceDiscoveryPath ServiceDiscoveryPath = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath);
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
-        protected readonly ServiceDiscoveryPath ServiceDiscoveryPath = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath);
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
