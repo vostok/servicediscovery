@@ -24,7 +24,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [TearDown]
         public void TearDown()
         {
-            ZooKeeperClient.Delete(PathBuilder.Prefix);
+            ZooKeeperClient.Delete(ServiceDiscoveryPath.Prefix);
         }
 
         [Test]
@@ -56,7 +56,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
 
-                var path = new PathBuilder(new ServiceBeaconSettings().ZooKeeperNodePath).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(data);
 
@@ -466,7 +466,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var wait = new Action(
                 () =>
                 {
-                    var path = PathBuilder.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+                    var path = ServiceDiscoveryPath.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                     var exists = ZooKeeperClient.Exists(path);
                     exists.IsSuccessful.Should().Be(true);
                     exists.Exists.Should().Be(expected);
@@ -477,35 +477,35 @@ namespace Vostok.ServiceDiscovery.Tests
 
         private bool ReplicaRegistered(ReplicaInfo replica)
         {
-            var path = PathBuilder.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+            var path = ServiceDiscoveryPath.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
             var exists = ZooKeeperClient.Exists(path);
             return exists.Exists;
         }
 
         private void CreateEnvironmentNode(string environment)
         {
-            var path = PathBuilder.BuildEnvironmentPath(environment);
+            var path = ServiceDiscoveryPath.BuildEnvironmentPath(environment);
             var create = ZooKeeperClient.Create(path, CreateMode.Persistent);
             (create.Status == ZooKeeperStatus.Ok || create.Status == ZooKeeperStatus.NodeAlreadyExists).Should().BeTrue();
         }
 
         private void DeleteEnvironmentNode(string environment)
         {
-            var path = PathBuilder.BuildEnvironmentPath(environment);
+            var path = ServiceDiscoveryPath.BuildEnvironmentPath(environment);
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
         }
 
         private void DeleteApplicationNode(ReplicaInfo replicaInfo)
         {
-            var path = PathBuilder.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
+            var path = ServiceDiscoveryPath.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
         }
 
         private void DeleteReplicaNode(ReplicaInfo replicaInfo)
         {
-            var path = PathBuilder.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
+            var path = ServiceDiscoveryPath.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
         }

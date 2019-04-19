@@ -16,7 +16,7 @@ namespace Vostok.ServiceDiscovery.Tests
         protected readonly ILog Log = new SynchronousConsoleLog();
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
-        protected readonly PathBuilder PathBuilder = new PathBuilder(new ServiceBeaconSettings().ZooKeeperNodePath);
+        protected readonly ServiceDiscoveryPath ServiceDiscoveryPath = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath);
 
         [OneTimeSetUp]
         public void OneTimeSetUp()

@@ -10,7 +10,7 @@ namespace Vostok.ServiceDiscovery
 
         [NotNull]
         public Dictionary<string, string> Properties { get; }
-
+        
         public EnvironmentInfo([CanBeNull] string parentEnvironment, [CanBeNull] Dictionary<string, string> properties)
         {
             ParentEnvironment = parentEnvironment;
