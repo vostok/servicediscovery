@@ -19,6 +19,7 @@
     <PackageProjectUrl>https://github.com/vostok/servicediscovery</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/vostok/servicediscovery/blob/master/LICENSE</PackageLicenseUrl>
     <PackageTags>vostok vostok.servicediscovery</PackageTags>
+    <PackageReleaseNotes>https://github.com/vostok/servicediscovery/blob/master/CHANGELOG.md</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/vostok/servicediscovery</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
