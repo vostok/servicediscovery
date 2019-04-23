@@ -10,7 +10,6 @@ notests *default:
     - module vostok.servicediscovery.abstractions
 
   deps:
-    - vostok.commons.binary
     - vostok.logging.abstractions
     - vostok.zookeeper.client.abstractions
     - vostok.servicediscovery.abstractions
@@ -18,6 +17,7 @@ notests *default:
     - vostok.commons.threading/src
     - vostok.commons.time/src
     - vostok.commons.environment/src
+    - vostok.commons.binary/src
 
 full-build > notests:
   deps:
