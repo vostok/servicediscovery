@@ -11,12 +11,18 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceDiscoveryPath(string prefix)
         {
-            Prefix = prefix?.TrimEnd('/') ?? "";
+            Prefix = ZooKeeperPath.Combine(ZooKeeperPath.Root, prefix?.TrimEnd('/') ?? "");
 
             pathRegex = new Regex(
                 $@"^{Prefix}(/(?<environment>[^/]+)(/(?<application>[^/]+)(/(?<replica>[^/]+))?)?)?$",
                 RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
         }
+
+        public static string Escape(string segment) =>
+            Uri.EscapeDataString(segment);
+
+        public static string Unescape(string segment) =>
+            Uri.UnescapeDataString(segment);
 
         public string BuildEnvironmentPath(string environment) =>
             ZooKeeperPath.Combine(Prefix, Escape(environment.ToLowerInvariant()));
@@ -42,11 +48,5 @@ namespace Vostok.ServiceDiscovery
             var token = match.Groups[key].Value;
             return token == "" ? null : Unescape(token);
         }
-
-        private static string Escape(string segment) =>
-            Uri.EscapeDataString(segment);
-
-        private static string Unescape(string segment) =>
-            Uri.UnescapeDataString(segment);
     }
 }
