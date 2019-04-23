@@ -6,15 +6,19 @@ namespace Vostok.ServiceDiscovery
 {
     internal class ServiceDiscoveryPath
     {
-        public readonly string Prefix;
+        private readonly string prefix;
         private readonly Regex pathRegex;
 
         public ServiceDiscoveryPath(string prefix)
         {
-            Prefix = ZooKeeperPath.Combine(ZooKeeperPath.Root, prefix?.TrimEnd('/') ?? "");
+            if (string.IsNullOrEmpty(prefix) || prefix == ZooKeeperPath.Root)
+                this.prefix = "";
+            else
+                this.prefix = $"/{prefix.Trim('/')}";
+
 
             pathRegex = new Regex(
-                $@"^{Prefix}(/(?<environment>[^/]+)(/(?<application>[^/]+)(/(?<replica>[^/]+))?)?)?$",
+                $@"^{this.prefix}(/(?<environment>[^/]+)(/(?<application>[^/]+)(/(?<replica>[^/]+))?)?)?$",
                 RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
         }
 
@@ -25,7 +29,7 @@ namespace Vostok.ServiceDiscovery
             Uri.UnescapeDataString(segment);
 
         public string BuildEnvironmentPath(string environment) =>
-            ZooKeeperPath.Combine(Prefix, Escape(environment.ToLowerInvariant()));
+            $"{prefix}/{Escape(environment.ToLowerInvariant())}";
 
         public string BuildApplicationPath(string environment, string application) =>
             ZooKeeperPath.Combine(BuildEnvironmentPath(environment), Escape(application));

@@ -39,7 +39,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [TearDown]
         public void TearDown()
         {
-            ZooKeeperClient.Delete(ServiceDiscoveryPath.Prefix);
+            ZooKeeperClient.Delete(new ServiceBeaconSettings().ZooKeeperNodePath);
         }
 
         [OneTimeTearDown]

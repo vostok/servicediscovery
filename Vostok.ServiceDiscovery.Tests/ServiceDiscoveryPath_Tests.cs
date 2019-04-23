@@ -6,51 +6,27 @@ namespace Vostok.ServiceDiscovery.Tests
     [TestFixture]
     internal class ServiceDiscoveryPath_Tests
     {
-        [Test]
-        public void Build_combine_without_prefix()
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("/")]
+        public void Build_combine_without_prefix(string emptyPrefix)
         {
             var environment = "default";
             var application = "App.1";
             var replica = "http://some-infra-host123:13528/";
 
-            var path = new ServiceDiscoveryPath(null);
+            var path = new ServiceDiscoveryPath(emptyPrefix);
             path.BuildEnvironmentPath(environment).Should().Be("/default");
             path.BuildApplicationPath(environment, application).Should().Be("/default/App.1");
             path.BuildReplicaPath(environment, application, replica).Should().Be("/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
         }
 
-        [Test]
-        public void Build_should_combine_with_prefix()
+        [TestCase("/prefix/nested")]
+        [TestCase("prefix/nested")]
+        [TestCase("prefix/nested/")]
+        [TestCase("/prefix/nested/")]
+        public void Build_should_combine_with_prefix(string prefix)
         {
-            var prefix = "/prefix/nested";
-            var environment = "default";
-            var application = "App.1";
-            var replica = "http://some-infra-host123:13528/";
-
-            var path = new ServiceDiscoveryPath(prefix);
-            path.BuildEnvironmentPath(environment).Should().Be("/prefix/nested/default");
-            path.BuildApplicationPath(environment, application).Should().Be("/prefix/nested/default/App.1");
-            path.BuildReplicaPath(environment, application, replica).Should().Be("/prefix/nested/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
-        }
-
-        [Test]
-        public void Build_should_combine_with_prefix_with_slash()
-        {
-            var prefix = "/prefix/nested/";
-            var environment = "default";
-            var application = "App.1";
-            var replica = "http://some-infra-host123:13528/";
-
-            var path = new ServiceDiscoveryPath(prefix);
-            path.BuildEnvironmentPath(environment).Should().Be("/prefix/nested/default");
-            path.BuildApplicationPath(environment, application).Should().Be("/prefix/nested/default/App.1");
-            path.BuildReplicaPath(environment, application, replica).Should().Be("/prefix/nested/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
-        }
-
-        [Test]
-        public void Build_should_combine_with_prefix_without_slashes()
-        {
-            var prefix = "prefix/nested";
             var environment = "default";
             var application = "App.1";
             var replica = "http://some-infra-host123:13528/";
@@ -82,7 +58,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         [Combinatorial]
         public void TryParse_should_parse_replica_path(
-            [Values(null, "prefix/node")] string prefix,
+            [Values(null, "prefix/node", "/prefix/node", "prefix/node/", "/prefix/node/")] string prefix,
             [Values("environment", "EEE/eee")] string environment,
             [Values("application", "AAA/aaa")] string application,
             [Values("replica", "RRR/rrr")] string replica)
