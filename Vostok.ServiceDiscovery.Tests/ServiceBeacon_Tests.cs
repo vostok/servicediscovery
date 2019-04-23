@@ -293,7 +293,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 for (var times = 0; times < 3; times++)
                 {
-                    DeleteApplicationNode(replica);
+                    DeleteApplicationNode(replica.Environment, replica.Application);
 
                     WaitReplicaRegistered(replica);
                 }

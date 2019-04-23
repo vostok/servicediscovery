@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
@@ -6,6 +7,7 @@ using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Console;
+using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -78,11 +80,13 @@ namespace Vostok.ServiceDiscovery.Tests
             return exists.Exists;
         }
 
-        protected void CreateEnvironmentNode(string environment)
+        protected void CreateEnvironmentNode(string environment, string parent = null, Dictionary<string, string> properties = null)
         {
+            var info = new EnvironmentInfo(parent, properties);
+            var data = EnvironmentNodeDataSerializer.Serialize(info);
+
             var path = ServiceDiscoveryPath.BuildEnvironmentPath(environment);
-            var create = ZooKeeperClient.Create(path, CreateMode.Persistent);
-            (create.Status == ZooKeeperStatus.Ok || create.Status == ZooKeeperStatus.NodeAlreadyExists).Should().BeTrue();
+            CreateOrUpdate(path, data);
         }
 
         protected void DeleteEnvironmentNode(string environment)
@@ -92,11 +96,27 @@ namespace Vostok.ServiceDiscovery.Tests
             delete.IsSuccessful.Should().BeTrue();
         }
 
-        protected void DeleteApplicationNode(ReplicaInfo replicaInfo)
+        protected void CreateApplicationNode(string environment, string application, Dictionary<string, string> properties = null)
         {
-            var path = ServiceDiscoveryPath.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
+            var info = new ApplicationInfo(properties);
+            var data = ApplicationNodeDataSerializer.Serialize(info);
+
+            var path = ServiceDiscoveryPath.BuildApplicationPath(environment, application);
+            CreateOrUpdate(path, data);
+        }
+
+        protected void DeleteApplicationNode(string environment, string application)
+        {
+            var path = ServiceDiscoveryPath.BuildApplicationPath(environment, application);
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
+        }
+
+        protected void CreateReplicaNode(ReplicaInfo replicaInfo)
+        {
+            var data = ReplicaNodeDataSerializer.Serialize(replicaInfo.Properties);
+            var path = ServiceDiscoveryPath.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
+            CreateOrUpdate(path, data);
         }
 
         protected void DeleteReplicaNode(ReplicaInfo replicaInfo)
@@ -115,6 +135,14 @@ namespace Vostok.ServiceDiscovery.Tests
                 MinimumTimeBetweenIterations = 1.Seconds()
             };
             return new ServiceBeacon(client, replica, settings, Log);
+        }
+
+        private void CreateOrUpdate(string path, byte[] data)
+        {
+            var create = ZooKeeperClient.Create(path, CreateMode.Persistent, data);
+            (create.Status == ZooKeeperStatus.Ok || create.Status == ZooKeeperStatus.NodeAlreadyExists).Should().BeTrue();
+            if (create.Status == ZooKeeperStatus.NodeAlreadyExists)
+                ZooKeeperClient.SetData(path, data).IsSuccessful.Should().BeTrue();
         }
     }
 }

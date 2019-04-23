@@ -184,6 +184,8 @@ namespace Vostok.ServiceDiscovery
 
         public void UpdateEnvironment(GetDataResult environmentData, ILog log)
         {
+            if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
+                RemoveApplication();
             if (!environmentData.IsSuccessful)
                 return;
 
@@ -247,8 +249,8 @@ namespace Vostok.ServiceDiscovery
 
         private void RemoveApplication()
         {
-            replicasContainer.Remove();
-            applicationContainer.Remove();
+            replicasContainer.Clear();
+            applicationContainer.Clear();
         }
     }
 
@@ -258,7 +260,7 @@ namespace Vostok.ServiceDiscovery
         private long version = long.MinValue;
         private readonly object sync = new object();
 
-        public void Remove()
+        public void Clear()
         {
             lock (sync)
             {
