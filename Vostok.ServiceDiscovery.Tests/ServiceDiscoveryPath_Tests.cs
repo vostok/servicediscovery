@@ -111,5 +111,18 @@ namespace Vostok.ServiceDiscovery.Tests
                 .Should()
                 .Be(null);
         }
+
+        [Test]
+        public void Escape_should_escape_strange_symbols()
+        {
+            ServiceDiscoveryPath.Escape("AAA/aaa").Should().Be("AAA%2Faaa");
+        }
+
+        [TestCase("asdf")]
+        [TestCase("asdf/ x y z")]
+        public void Unescape_should_unescape_escaped(string segment)
+        {
+            ServiceDiscoveryPath.Unescape(ServiceDiscoveryPath.Escape(segment)).Should().Be(segment);
+        }
     }
 }
