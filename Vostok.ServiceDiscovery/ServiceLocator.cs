@@ -102,8 +102,7 @@ namespace Vostok.ServiceDiscovery
 
             var visitedEnvironments = new HashSet<string>();
 
-            // Note(kungurtsev): if environment info or application replicas have not initially filled due to connection errors, do not go to parent environment.
-            while (environment.Info != null && environment.Replicas != null)
+            while (true)
             {
                 if (!visitedEnvironments.Add(environment.Name))
                 {
@@ -111,17 +110,16 @@ namespace Vostok.ServiceDiscovery
                     return null;
                 }
 
-                var goToParent = environment.Info.ParentEnvironment != null 
-                                 && environment.Replicas.Length == 0 
-                                 && environment.Info.SkipIfEmpty();
+                var topology = environment.ServiceTopology;
+                var parentEnvironment = environment.Environment?.ParentEnvironment;
 
-                if (!goToParent)
-                    return new ServiceTopology(environment.Replicas, environment.Info.Properties);
+                var goToParent = topology == null || topology.Replicas.Count == 0 && environment.Environment.SkipIfEmpty();
 
-                environment = GetApplicationEnvironment(environment.Info.ParentEnvironment);
+                if (parentEnvironment == null || !goToParent)
+                    return topology;
+
+                environment = GetApplicationEnvironment(parentEnvironment);
             }
-
-            return null;
         }
 
         public void UpdateApplicationEnvironment(string environmentName)
@@ -142,16 +140,23 @@ namespace Vostok.ServiceDiscovery
 
         private ApplicationEnvironment UpdateApplicationEnvironment(ApplicationEnvironment environment)
         {
-            var getDataResult = zooKeeperClient.GetData(serviceDiscoveryPath.BuildEnvironmentPath(environment.Name));
-            environment.UpdateInfo(getDataResult, log);
+            var environmentData = zooKeeperClient.GetData(serviceDiscoveryPath.BuildEnvironmentPath(environment.Name));
+            environment.UpdateEnvironment(environmentData, log);
 
             var applicationPath = serviceDiscoveryPath.BuildApplicationPath(environment.Name, application);
 
-            var existsResult = zooKeeperClient.Exists(new ExistsRequest(applicationPath) {Watcher = nodeWatcher});
-            if (environment.NeedUpdateReplicas(existsResult, log))
+            var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) {Watcher = nodeWatcher});
+            environment.UpdateApplication(applicationData, log);
+
+            if (applicationData.IsSuccessful)
             {
-                var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) {Watcher = nodeWatcher});
+                var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) { Watcher = nodeWatcher });
                 environment.UpdateReplicas(getChildrenResult, log);
+            }
+            else
+            {
+                // Note(kungurtsev): watch if node will be created.
+                zooKeeperClient.Exists(new ExistsRequest(applicationPath) {Watcher = nodeWatcher});
             }
 
             return environment;
@@ -161,70 +166,60 @@ namespace Vostok.ServiceDiscovery
     internal class ApplicationEnvironment
     {
         public readonly string Name;
-        private readonly VersionedContainer<EnvironmentInfo> infoContainer;
+        private readonly VersionedContainer<EnvironmentInfo> environmentContainer;
+        private readonly VersionedContainer<ApplicationInfo> applicationContainer;
         private readonly VersionedContainer<Uri[]> replicasContainer;
         
         public ApplicationEnvironment(string name)
         {
             Name = name;
-            infoContainer = new VersionedContainer<EnvironmentInfo>();
+            environmentContainer = new VersionedContainer<EnvironmentInfo>();
+            applicationContainer = new VersionedContainer<ApplicationInfo>();
             replicasContainer = new VersionedContainer<Uri[]>();
         }
 
-        public EnvironmentInfo Info => infoContainer.Value;
+        public EnvironmentInfo Environment => environmentContainer.Value;
 
-        public Uri[] Replicas => replicasContainer.Value;
+        public ServiceTopology ServiceTopology => BuildServiceTopology();
 
-        public void UpdateInfo(GetDataResult dataResult, ILog log)
+        public void UpdateEnvironment(GetDataResult environmentData, ILog log)
         {
-            if (!dataResult.IsSuccessful)
+            if (!environmentData.IsSuccessful)
                 return;
 
             try
             {
-                infoContainer.Update(dataResult.Stat.ModifiedZxId, () => 
-                    EnvironmentNodeDataSerializer.Deserialize(dataResult.Data));
+                environmentContainer.Update(environmentData.Stat.ModifiedZxId, () => 
+                    EnvironmentNodeDataSerializer.Deserialize(environmentData.Data));
             }
             catch (Exception e)
             {
-                log.Error(e, "Failed to update environment info for path '{Path}'.", dataResult.Path);
+                log.Error(e, "Failed to update environment info for path '{Path}'.", environmentData.Path);
             }
         }
 
-        public bool NeedUpdateReplicas(ExistsResult existsResult, ILog log)
+        public void UpdateApplication(GetDataResult applicationData, ILog log)
         {
-            if (!existsResult.IsSuccessful)
-                return false;
+            if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
+                RemoveApplication();
+            if (!applicationData.IsSuccessful)
+                return;
 
             try
             {
-                if (existsResult.Stat == null)
-                {
-                    replicasContainer.Update(-1, () => null);
-                    return false;
-                }
-
-                var replicasCount = existsResult.Stat.NumberOfChildren;
-                var replicasZxId = existsResult.Stat.ModifiedChildrenZxId;
-
-                if (replicasCount == 0)
-                {
-                    replicasContainer.Update(replicasZxId, () => new Uri[0]);
-                    return false;
-                }
-
-                return replicasContainer.NeedUpdate(replicasZxId);
+                applicationContainer.Update(applicationData.Stat.ModifiedZxId, () =>
+                    ApplicationNodeDataSerializer.Deserialize(applicationData.Data));
             }
             catch (Exception e)
             {
-                log.Error(e, "Failed to check need update replicas for path '{Path}'.", existsResult.Path);
+                log.Error(e, "Failed to update application info for path '{Path}'.", applicationData.Path);
             }
-
-            return false;
         }
 
         public void UpdateReplicas(GetChildrenResult childrenResult, ILog log)
         {
+            if (childrenResult.Status == ZooKeeperStatus.NodeNotFound)
+                RemoveApplication();
             if (!childrenResult.IsSuccessful)
                 return;
 
@@ -238,31 +233,55 @@ namespace Vostok.ServiceDiscovery
                 log.Error(e, "Failed to update replicas for path '{Path}'.", childrenResult.Path);
             }
         }
+
+        private ServiceTopology BuildServiceTopology()
+        {
+            var application = applicationContainer.Value;
+            var replicas = replicasContainer.Value;
+
+            if (application == null || replicas == null)
+                return null;
+
+            return new ServiceTopology(replicas, application.Properties);
+        }
+
+        private void RemoveApplication()
+        {
+            replicasContainer.Remove();
+            applicationContainer.Remove();
+        }
     }
 
     internal class VersionedContainer<T> where T : class
     {
         public volatile T Value;
-        private long version = -1;
+        private long version = long.MinValue;
         private readonly object sync = new object();
+
+        public void Remove()
+        {
+            lock (sync)
+            {
+                Value = null;
+                version = long.MinValue;
+            }
+        }
 
         public void Update(long newVersion, Func<T> valueProvider)
         {
-            if (!NeedUpdate(newVersion))
+            if (newVersion <= version)
                 return;
 
             lock (sync)
             {
-                if (!NeedUpdate(newVersion))
+                if (newVersion <= version)
                     return;
                 Value = valueProvider();
                 version = newVersion;
             }
         }
 
-        public bool NeedUpdate(long newVersion)
-        {
-            return newVersion == -1 || newVersion > version;
-        }
+        public override string ToString() =>
+            $"{nameof(Value)}: {Value}, {nameof(version)}: {version}";
     }
 }
