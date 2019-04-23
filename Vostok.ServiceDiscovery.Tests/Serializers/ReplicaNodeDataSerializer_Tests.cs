@@ -2,8 +2,9 @@
 using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Serializers;
 
-namespace Vostok.ServiceDiscovery.Tests
+namespace Vostok.ServiceDiscovery.Tests.Serializers
 {
     [TestFixture]
     public class ReplicaNodeDataSerializer_Tests

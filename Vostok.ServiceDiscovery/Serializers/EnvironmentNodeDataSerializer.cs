@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Vostok.Commons.Binary;
 
-namespace Vostok.ServiceDiscovery
+namespace Vostok.ServiceDiscovery.Serializers
 {
     internal static class EnvironmentNodeDataSerializer
     {

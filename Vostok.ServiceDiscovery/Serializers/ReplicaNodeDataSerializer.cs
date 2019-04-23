@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 
-namespace Vostok.ServiceDiscovery
+namespace Vostok.ServiceDiscovery.Serializers
 {
     internal static class ReplicaNodeDataSerializer
     {

@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Serializers;
 
-namespace Vostok.ServiceDiscovery.Tests
+namespace Vostok.ServiceDiscovery.Tests.Serializers
 {
     [TestFixture]
     internal class EnvironmentNodeDataSerializer_Tests
