@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using Vostok.ZooKeeper.Client.Abstractions;
 
-namespace Vostok.ServiceDiscovery
+namespace Vostok.ServiceDiscovery.Helpers
 {
     internal class ServiceDiscoveryPath
     {

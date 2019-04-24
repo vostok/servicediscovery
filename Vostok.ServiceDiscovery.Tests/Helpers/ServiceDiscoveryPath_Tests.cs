@@ -1,7 +1,8 @@
 ﻿using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Helpers;
 
-namespace Vostok.ServiceDiscovery.Tests
+namespace Vostok.ServiceDiscovery.Tests.Helpers
 {
     [TestFixture]
     internal class ServiceDiscoveryPath_Tests

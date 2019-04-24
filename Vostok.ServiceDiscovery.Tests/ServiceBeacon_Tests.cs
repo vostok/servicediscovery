@@ -10,6 +10,7 @@ using NUnit.Framework;
 using Vostok.Commons.Helpers.Observable;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
+using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;

@@ -7,6 +7,7 @@ using Vostok.Commons.Threading;
 using Vostok.Commons.Time;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
+using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
