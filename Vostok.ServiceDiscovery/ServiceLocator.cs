@@ -153,7 +153,7 @@ namespace Vostok.ServiceDiscovery
                 var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) { Watcher = nodeWatcher });
                 environment.UpdateReplicas(getChildrenResult, log);
             }
-            else
+            else if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
             {
                 // Note(kungurtsev): watch if node will be created.
                 zooKeeperClient.Exists(new ExistsRequest(applicationPath) {Watcher = nodeWatcher});
@@ -185,7 +185,7 @@ namespace Vostok.ServiceDiscovery
         public void UpdateEnvironment(GetDataResult environmentData, ILog log)
         {
             if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
-                RemoveApplication();
+                RemoveEnvironment();
             if (!environmentData.IsSuccessful)
                 return;
 
@@ -247,10 +247,16 @@ namespace Vostok.ServiceDiscovery
             return new ServiceTopology(replicas, application.Properties);
         }
 
+        private void RemoveEnvironment()
+        {
+            environmentContainer.Clear();
+            RemoveApplication();
+        }
+
         private void RemoveApplication()
         {
-            replicasContainer.Clear();
             applicationContainer.Clear();
+            replicasContainer.Clear();
         }
     }
 

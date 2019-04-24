@@ -36,12 +36,12 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             if (!Ensemble.IsRunning)
                 Ensemble.Start();
+            ZooKeeperClient.Delete(new ServiceBeaconSettings().ZooKeeperNodePath);
         }
 
         [TearDown]
         public void TearDown()
         {
-            ZooKeeperClient.Delete(new ServiceBeaconSettings().ZooKeeperNodePath);
         }
 
         [OneTimeTearDown]
