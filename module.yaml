@@ -18,6 +18,7 @@ notests *default:
     - vostok.commons.time/src
     - vostok.commons.environment/src
     - vostok.commons.binary/src
+    - vostok.commons.collections
 
 full-build > notests:
   deps:
