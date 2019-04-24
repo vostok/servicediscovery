@@ -151,14 +151,11 @@ namespace Vostok.ServiceDiscovery
 
         private void OnCompleted()
         {
-            lock (startStopSync)
+            log.Warn("Someone else has disposed ZooKeeper client.");
+            if (isRunning.TrySetFalse())
             {
-                log.Warn("Someone else has disposed ZooKeeper client.");
-                if (isRunning.TrySetFalse())
-                {
-                    checkNodeSignal.Set();
-                    // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
-                }
+                checkNodeSignal.Set();
+                // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
             }
         }
 

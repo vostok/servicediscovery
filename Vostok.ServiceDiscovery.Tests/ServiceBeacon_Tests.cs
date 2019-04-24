@@ -156,7 +156,26 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public void Should_not_throw_if_someone_else_dispose_zookeeper_client()
+        public void Should_not_throw_if_someone_else_dispose_zookeeper_client_before_start()
+        {
+            var disposedClient = GetZooKeeperClient();
+            disposedClient.Dispose();
+
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+
+            var t = Task.Run(() =>
+            {
+                using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
+                {
+                    beacon.Start();
+                }
+            });
+
+            t.ShouldCompleteIn(DefaultTimeout);
+        }
+
+        [Test]
+        public void Should_not_throw_if_someone_else_dispose_zookeeper_client_after_start()
         {
             var disposedClient = GetZooKeeperClient();
 
