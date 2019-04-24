@@ -4,17 +4,10 @@ using JetBrains.Annotations;
 
 namespace Vostok.ServiceDiscovery
 {
-    /// <summary>
-    /// Represents replica information.
-    /// </summary>
-    [PublicAPI]
-    public class ReplicaInfo
+    internal class ReplicaInfo
     {
         private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
 
-        /// <param name="environment">Application environment. Example: <c>default</c>.</param>
-        /// <param name="application">Application name. Example: <c>hercules.api</c>.</param>
-        /// <param name="replica">Replica url or description. Example: <c>http://localhost:888/</c>, <c>process-name(pid)</c>.</param>
         public ReplicaInfo([NotNull] string environment, [NotNull] string application, [NotNull] string replica)
         {
             Environment = environment ?? throw new ArgumentNullException(nameof(environment));
@@ -34,11 +27,9 @@ namespace Vostok.ServiceDiscovery
         [NotNull]
         public IReadOnlyDictionary<string, string> Properties => properties;
 
-        [NotNull]
-        public ReplicaInfo AddProperty([NotNull] string key, [CanBeNull] string value)
+        public void AddProperty([NotNull] string key, [CanBeNull] string value)
         {
             properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
-            return this;
         }
     }
 }

@@ -9,10 +9,13 @@ namespace Vostok.ServiceDiscovery.Tests
     [TestFixture]
     internal class ReplicaInfoBuilder_Tests
     {
-        [Test]
-        public void Should_fill_default_settings()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Should_fill_default_settings(bool nullSetup)
         {
-            var info = new ReplicaInfoBuilder().Build();
+            var info = nullSetup
+                ? ReplicaInfoBuilder.Build(null)
+                : ReplicaInfoBuilder.Build(_ => {});
 
             info.Environment.Should().Be("default");
             info.Application.Should().NotBeNullOrEmpty();

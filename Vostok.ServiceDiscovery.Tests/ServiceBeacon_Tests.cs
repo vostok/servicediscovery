@@ -12,7 +12,6 @@ using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
-using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -52,11 +51,60 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
 
-                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath).BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath)
+                    .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(data);
 
                 dict["key"].Should().Be("value");
+            }
+        }
+
+        [Test]
+        public void Should_use_replica_builder()
+        {
+            var url = "https://github.com/vostok";
+
+            CreateEnvironmentNode("default");
+
+            using (var beacon = new ServiceBeacon(
+                ZooKeeperClient,
+                builder =>
+                {
+                    builder.Url = new Uri(url);
+                    builder.Application = "test";
+                }))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath)
+                    .BuildReplicaPath("default", "test", url);
+                var data = ZooKeeperClient.GetData(path).Data;
+                var dict = ReplicaNodeDataSerializer.Deserialize(data);
+
+                dict[ReplicaInfoKeys.Replica].Should().Be(url);
+                dict[ReplicaInfoKeys.Application].Should().Be("test");
+            }
+        }
+
+        [Test]
+        public void Should_use_default_replica_builder()
+        {
+            CreateEnvironmentNode("default");
+
+            using (var beacon = new ServiceBeacon(ZooKeeperClient))
+            {
+                beacon.Start();
+                beacon.WaitForRegistration().ShouldCompleteIn(DefaultTimeout);
+
+                var builder = ReplicaInfoBuilder.Build(null);
+                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath)
+                    .BuildReplicaPath(builder.Environment, builder.Application, builder.Replica);
+                var data = ZooKeeperClient.GetData(path).Data;
+                var dict = ReplicaNodeDataSerializer.Deserialize(data);
+
+                dict[ReplicaInfoKeys.Application].Should().Be(builder.Application);
             }
         }
 

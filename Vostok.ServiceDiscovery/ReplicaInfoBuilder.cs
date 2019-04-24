@@ -10,7 +10,7 @@ namespace Vostok.ServiceDiscovery
         private const string DependenciesDelimiter = ";";
         private List<KeyValuePair<string, string>> properties = new List<KeyValuePair<string, string>>();
 
-        public ReplicaInfoBuilder()
+        private ReplicaInfoBuilder()
         {
             Environment = "default";
             Application = Commons.Environment.EnvironmentInfo.Application;
@@ -26,7 +26,7 @@ namespace Vostok.ServiceDiscovery
         public static ReplicaInfo Build(ReplicaInfoBuilderSetup setup)
         {
             var builder = new ReplicaInfoBuilder();
-            setup(builder);
+            setup?.Invoke(builder);
             return builder.Build();
         }
 

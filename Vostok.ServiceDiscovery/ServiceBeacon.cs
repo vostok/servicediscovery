@@ -26,7 +26,6 @@ namespace Vostok.ServiceDiscovery
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ServiceBeaconSettings settings;
-        private readonly ReplicaInfo replicaInfo;
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
         private readonly ILog log;
         private readonly object startStopSync = new object();
@@ -37,29 +36,21 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
-            [CanBeNull] ReplicaInfoBuilderSetup replicaInfoBuilderSetup,
-            [CanBeNull] ILog log)
-            : this(zooKeeperClient, replicaInfoBuilderSetup, null, log)
-        {
-        }
-
-        public ServiceBeacon(
-            [NotNull] IZooKeeperClient zooKeeperClient,
-            [CanBeNull] ReplicaInfoBuilderSetup replicaInfoBuilderSetup,
-            [CanBeNull] ServiceBeaconSettings settings,
-            [CanBeNull] ILog log)
+            [CanBeNull] ReplicaInfoBuilderSetup replicaInfoBuilderSetup = null,
+            [CanBeNull] ServiceBeaconSettings settings = null,
+            [CanBeNull] ILog log = null)
             : this(zooKeeperClient, ReplicaInfoBuilder.Build(replicaInfoBuilderSetup), settings, log)
         {
         }
 
-        public ServiceBeacon(
+        internal ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
             [NotNull] ReplicaInfo replicaInfo,
             [CanBeNull] ServiceBeaconSettings settings,
             [CanBeNull] ILog log)
         {
             this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
-            this.replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
+            replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
             this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
 
