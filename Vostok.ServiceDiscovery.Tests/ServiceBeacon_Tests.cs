@@ -52,7 +52,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
-                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath)
+                var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodePath)
                     .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(data);
@@ -79,7 +79,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
-                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath)
+                var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodePath)
                     .BuildReplicaPath("default", "test", url);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(data);
@@ -100,7 +100,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 var builder = ReplicaInfoBuilder.Build(null);
-                var path = new ServiceDiscoveryPath(new ServiceBeaconSettings().ZooKeeperNodePath)
+                var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodePath)
                     .BuildReplicaPath(builder.Environment, builder.Application, builder.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(data);

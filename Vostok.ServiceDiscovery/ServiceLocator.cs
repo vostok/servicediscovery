@@ -24,7 +24,7 @@ namespace Vostok.ServiceDiscovery
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceLocatorSettings settings;
         private readonly ILog log;
-        private readonly ServiceDiscoveryPath serviceDiscoveryPath;
+        private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ConcurrentDictionary<string, ApplicationEnvironments> applications = new ConcurrentDictionary<string, ApplicationEnvironments>();
 
@@ -37,7 +37,7 @@ namespace Vostok.ServiceDiscovery
             this.settings = settings ?? new ServiceLocatorSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceLocator>();
 
-            serviceDiscoveryPath = new ServiceDiscoveryPath(this.settings.ZooKeeperNodePath);
+            pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodePath);
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
 
@@ -45,7 +45,7 @@ namespace Vostok.ServiceDiscovery
         [NotNull]
         public IServiceTopology Locate(string environment, string application)
         {
-            var environments = applications.GetOrAdd(application, a => new ApplicationEnvironments(a, zooKeeperClient, nodeWatcher, serviceDiscoveryPath, log));
+            var environments = applications.GetOrAdd(application, a => new ApplicationEnvironments(a, zooKeeperClient, nodeWatcher, pathHelper, log));
             return environments.Locate(environment);
         }
 
@@ -67,7 +67,7 @@ namespace Vostok.ServiceDiscovery
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
         {
-            var parsedPath = serviceDiscoveryPath.TryParse(path);
+            var parsedPath = pathHelper.TryParse(path);
 
             if (parsedPath?.environment == null || parsedPath.Value.application == null || parsedPath.Value.replica != null)
             {
@@ -85,16 +85,16 @@ namespace Vostok.ServiceDiscovery
         private readonly string application;
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
-        private readonly ServiceDiscoveryPath serviceDiscoveryPath;
+        private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ILog log;
         private readonly ConcurrentDictionary<string, ApplicationEnvironment> environments = new ConcurrentDictionary<string, ApplicationEnvironment>();
 
-        public ApplicationEnvironments(string application, IZooKeeperClient zooKeeperClient, AdHocNodeWatcher nodeWatcher, ServiceDiscoveryPath serviceDiscoveryPath, ILog log)
+        public ApplicationEnvironments(string application, IZooKeeperClient zooKeeperClient, AdHocNodeWatcher nodeWatcher, ServiceDiscoveryPathHelper pathHelper, ILog log)
         {
             this.application = application;
             this.zooKeeperClient = zooKeeperClient;
             this.nodeWatcher = nodeWatcher;
-            this.serviceDiscoveryPath = serviceDiscoveryPath;
+            this.pathHelper = pathHelper;
             this.log = log;
         }
 
@@ -142,10 +142,10 @@ namespace Vostok.ServiceDiscovery
 
         private ApplicationEnvironment UpdateApplicationEnvironment(ApplicationEnvironment environment)
         {
-            var environmentData = zooKeeperClient.GetData(serviceDiscoveryPath.BuildEnvironmentPath(environment.Name));
+            var environmentData = zooKeeperClient.GetData(pathHelper.BuildEnvironmentPath(environment.Name));
             environment.UpdateEnvironment(environmentData, log);
 
-            var applicationPath = serviceDiscoveryPath.BuildApplicationPath(environment.Name, application);
+            var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
 
             var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) {Watcher = nodeWatcher});
             environment.UpdateApplication(applicationData, log);
@@ -230,7 +230,7 @@ namespace Vostok.ServiceDiscovery
             try
             {
                 replicasContainer.Update(childrenResult.Stat.ModifiedChildrenZxId, () => 
-                    UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPath.Unescape)));
+                    UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)));
             }
             catch (Exception e)
             {

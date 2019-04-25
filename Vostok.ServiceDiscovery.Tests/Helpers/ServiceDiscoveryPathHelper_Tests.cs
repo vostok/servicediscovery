@@ -5,7 +5,7 @@ using Vostok.ServiceDiscovery.Helpers;
 namespace Vostok.ServiceDiscovery.Tests.Helpers
 {
     [TestFixture]
-    internal class ServiceDiscoveryPath_Tests
+    internal class ServiceDiscoveryPathHelper_Tests
     {
         [TestCase(null)]
         [TestCase("")]
@@ -16,7 +16,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
             var application = "App.1";
             var replica = "http://some-infra-host123:13528/";
 
-            var path = new ServiceDiscoveryPath(emptyPrefix);
+            var path = new ServiceDiscoveryPathHelper(emptyPrefix);
             path.BuildEnvironmentPath(environment).Should().Be("/default");
             path.BuildApplicationPath(environment, application).Should().Be("/default/App.1");
             path.BuildReplicaPath(environment, application, replica).Should().Be("/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
@@ -32,7 +32,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
             var application = "App.1";
             var replica = "http://some-infra-host123:13528/";
 
-            var path = new ServiceDiscoveryPath(prefix);
+            var path = new ServiceDiscoveryPathHelper(prefix);
             path.BuildEnvironmentPath(environment).Should().Be("/prefix/nested/default");
             path.BuildApplicationPath(environment, application).Should().Be("/prefix/nested/default/App.1");
             path.BuildReplicaPath(environment, application, replica).Should().Be("/prefix/nested/default/App.1/http%3A%2F%2Fsome-infra-host123%3A13528%2F");
@@ -41,19 +41,19 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         [Test]
         public void Build_should_escape_environment_in_lower_case()
         {
-            new ServiceDiscoveryPath(null).BuildReplicaPath("EEE/eee", "s", "r").Should().Be("/eee%2Feee/s/r");
+            new ServiceDiscoveryPathHelper(null).BuildReplicaPath("EEE/eee", "s", "r").Should().Be("/eee%2Feee/s/r");
         }
 
         [Test]
         public void Build_should_escape_application()
         {
-            new ServiceDiscoveryPath(null).BuildReplicaPath("e", "AAA/aaa", "r").Should().Be("/e/AAA%2Faaa/r");
+            new ServiceDiscoveryPathHelper(null).BuildReplicaPath("e", "AAA/aaa", "r").Should().Be("/e/AAA%2Faaa/r");
         }
 
         [Test]
         public void Build_should_escape_replica()
         {
-            new ServiceDiscoveryPath(null).BuildReplicaPath("e", "s", "RRR/rrr:88").Should().Be("/e/s/RRR%2Frrr%3A88");
+            new ServiceDiscoveryPathHelper(null).BuildReplicaPath("e", "s", "RRR/rrr:88").Should().Be("/e/s/RRR%2Frrr%3A88");
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
             [Values("application", "AAA/aaa")] string application,
             [Values("replica", "RRR/rrr")] string replica)
         {
-            var path = new ServiceDiscoveryPath(prefix);
+            var path = new ServiceDiscoveryPathHelper(prefix);
 
             path.TryParse(path.BuildEnvironmentPath(environment))
                 .Should()
@@ -84,7 +84,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         [TestCase("prefix1", "/prefix2/env")]
         public void TryParse_should_not_parse_not_matching_paths(string prefix, string path)
         {
-            new ServiceDiscoveryPath(prefix).TryParse(path)
+            new ServiceDiscoveryPathHelper(prefix).TryParse(path)
                 .Should()
                 .Be(null);
         }
@@ -92,14 +92,14 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         [Test]
         public void Escape_should_escape_strange_symbols()
         {
-            ServiceDiscoveryPath.Escape("AAA/aaa").Should().Be("AAA%2Faaa");
+            ServiceDiscoveryPathHelper.Escape("AAA/aaa").Should().Be("AAA%2Faaa");
         }
 
         [TestCase("asdf")]
         [TestCase("asdf/ x y z")]
         public void Unescape_should_unescape_escaped(string segment)
         {
-            ServiceDiscoveryPath.Unescape(ServiceDiscoveryPath.Escape(segment)).Should().Be(segment);
+            ServiceDiscoveryPathHelper.Unescape(ServiceDiscoveryPathHelper.Escape(segment)).Should().Be(segment);
         }
     }
 }

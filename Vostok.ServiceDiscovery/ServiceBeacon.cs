@@ -56,10 +56,10 @@ namespace Vostok.ServiceDiscovery
             this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
 
-            var serviceDiscoveryPath = new ServiceDiscoveryPath(this.settings.ZooKeeperNodePath);
-            environmentNodePath = serviceDiscoveryPath.BuildEnvironmentPath(replicaInfo.Environment);
-            applicationNodePath = serviceDiscoveryPath.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
-            replicaNodePath = serviceDiscoveryPath.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
+            var pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodePath);
+            environmentNodePath = pathHelper.BuildEnvironmentPath(replicaInfo.Environment);
+            applicationNodePath = pathHelper.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
+            replicaNodePath = pathHelper.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
             replicaNodeData = ReplicaNodeDataSerializer.Serialize(replicaInfo.Properties);
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);

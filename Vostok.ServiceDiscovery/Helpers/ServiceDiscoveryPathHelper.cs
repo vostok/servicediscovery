@@ -4,12 +4,12 @@ using Vostok.ZooKeeper.Client.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Helpers
 {
-    internal class ServiceDiscoveryPath
+    internal class ServiceDiscoveryPathHelper
     {
         private readonly string prefix;
         private readonly Regex pathRegex;
 
-        public ServiceDiscoveryPath(string prefix)
+        public ServiceDiscoveryPathHelper(string prefix)
         {
             if (string.IsNullOrEmpty(prefix) || prefix == ZooKeeperPath.Root)
                 this.prefix = "";
