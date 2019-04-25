@@ -85,7 +85,7 @@ namespace Vostok.ServiceDiscovery
                 if (isRunning.TrySetFalse())
                 {
                     checkNodeSignal.Set();
-                    beaconTask.Wait();
+                    beaconTask.GetAwaiter().GetResult();
                     DropNodeIfExists();
                 }
             }
@@ -103,7 +103,7 @@ namespace Vostok.ServiceDiscovery
         /// Waits for first registration after <see cref="Start"/> method call.
         /// </summary>
         [NotNull]
-        public Task WaitForRegistration() => nodeCreatedOnceSignal.WaitAsync();
+        public Task WaitForRegistrationAsync() => nodeCreatedOnceSignal.WaitAsync();
 
         private async Task BeaconTask()
         {
@@ -131,12 +131,12 @@ namespace Vostok.ServiceDiscovery
             }
             catch (Exception exception)
             {
-                log.Error(exception, "Failed ServiceBeacon iteration.");
+                log.Error(exception, "Failed iteration.");
             }
 
             var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet()
                 ? settings.IterationPeriod
-                : 1.Seconds();
+                : settings.StartIterationPeriod;
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }
 
@@ -214,13 +214,8 @@ namespace Vostok.ServiceDiscovery
 
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
 
-            if (create.Status == ZooKeeperStatus.Ok || create.Status == ZooKeeperStatus.NodeAlreadyExists)
-            {
-                nodeCreatedOnceSignal.Set();
-                return;
-            }
-
-            log.Error("Node creation has failed.");
+            if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)
+                log.Error("Node creation has failed.");
         }
 
         private async Task<bool> EnvironmentExists()
