@@ -144,6 +144,8 @@ namespace Vostok.ServiceDiscovery
         {
             var environmentData = zooKeeperClient.GetData(pathHelper.BuildEnvironmentPath(environment.Name));
             environment.UpdateEnvironment(environmentData, log);
+            if (!environmentData.IsSuccessful)
+                return environment;
 
             var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
 
