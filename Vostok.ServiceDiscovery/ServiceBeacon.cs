@@ -32,7 +32,8 @@ namespace Vostok.ServiceDiscovery
         private readonly object startStopSync = new object();
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
-        private volatile AtomicBoolean isRunning = false;
+        private readonly AtomicBoolean isRunning = false;
+        private readonly AtomicBoolean clientDisposed = false;
         private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
         public ServiceBeacon(
@@ -86,7 +87,10 @@ namespace Vostok.ServiceDiscovery
                 {
                     checkNodeSignal.Set();
                     beaconTask.GetAwaiter().GetResult();
-                    DropNodeIfExists();
+                    if (!DeleteNodeAsync().GetAwaiter().GetResult())
+                    {
+                        Task.Run(DeleteNodeTask);
+                    }
                 }
             }
         }
@@ -127,7 +131,7 @@ namespace Vostok.ServiceDiscovery
             try
             {
                 checkNodeSignal.Reset();
-                await EnsureNodeExists().ConfigureAwait(false);
+                await EnsureNodeExistsAsync().ConfigureAwait(false);
             }
             catch (Exception exception)
             {
@@ -138,6 +142,18 @@ namespace Vostok.ServiceDiscovery
                 ? settings.IterationPeriod
                 : settings.StartIterationPeriod;
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
+        }
+
+        private async Task DeleteNodeTask()
+        {
+            var observer = new AdHocConnectionStateObserver(null, OnCompleted);
+            using (zooKeeperClient.OnConnectionStateChanged.Subscribe(observer))
+            {
+                while (!clientDisposed && !await DeleteNodeAsync().ConfigureAwait(false))
+                {
+                    await Task.Delay(settings.DeleteNodeIterationPeriod).ConfigureAwait(false);
+                }
+            }
         }
 
         private void OnCompleted()
@@ -167,27 +183,30 @@ namespace Vostok.ServiceDiscovery
             checkNodeSignal.Set();
         }
 
-        private async Task EnsureNodeExists()
+        private async Task EnsureNodeExistsAsync()
         {
-            if (!await EnvironmentExists().ConfigureAwait(false))
+            if (!await EnvironmentExistsAsync().ConfigureAwait(false))
                 return;
 
-            var exists = await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
-            if (exists.IsSuccessful && exists.Stat != null)
+            var existsNode = await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
+            if (!existsNode.IsSuccessful)
+                return;
+
+            if (existsNode.Stat != null)
             {
-                if (exists.Stat.EphemeralOwner == zooKeeperClient.SessionId)
+                if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
                     nodeCreatedOnceSignal.Set();
                     return;
                 }
 
                 var lastConnected = new DateTime(Interlocked.Read(ref lastConnectedTimestamp), DateTimeKind.Utc);
-                var nodeCreationTime = exists.Stat.CreatedTime;
+                var nodeCreationTime = existsNode.Stat.CreatedTime;
                 if (nodeCreationTime > lastConnected)
                 {
                     log.Warn(
                         $"Node with path '{replicaNodePath}' already exists " +
-                        $"and has owner session id = {exists.Stat.EphemeralOwner:x16}, " +
+                        $"and has owner session id = {existsNode.Stat.EphemeralOwner:x16}, " +
                         $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
                         $"But it was created recently (at {nodeCreationTime}) so we won't touch it. " +
                         "This may indicate several beacons with same environment, application and replica exist.");
@@ -198,27 +217,32 @@ namespace Vostok.ServiceDiscovery
                 log.Warn(
                     $"Node with path '{replicaNodePath}' already exists, " +
                     "but looks like a stale one from ourselves. " +
-                    $"It has owner session id = {exists.Stat.EphemeralOwner:x16}, " +
+                    $"It has owner session id = {existsNode.Stat.EphemeralOwner:x16}, " +
                     $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
                     $"It was created at {nodeCreationTime}. " +
                     "Will delete it and create a new one.");
 
-                DropNodeIfExists();
+                if (!await DeleteNodeAsync().ConfigureAwait(false))
+                    return;
             }
 
             var createRequest = new CreateRequest(replicaNodePath, CreateMode.Ephemeral)
             {
                 Data = replicaNodeData
             };
+
             var create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
-
-            await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
-
+            
             if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)
+            { 
                 log.Error("Node creation has failed.");
+                return;
+            }
+
+            await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) { Watcher = nodeWatcher }).ConfigureAwait(false);
         }
 
-        private async Task<bool> EnvironmentExists()
+        private async Task<bool> EnvironmentExistsAsync()
         {
             var environmentExists = await zooKeeperClient.ExistsAsync(new ExistsRequest(environmentNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
             if (!environmentExists.IsSuccessful)
@@ -232,16 +256,10 @@ namespace Vostok.ServiceDiscovery
             return true;
         }
 
-        private void DropNodeIfExists()
+        private async Task<bool> DeleteNodeAsync()
         {
-            for (var attempt = 0; attempt < settings.DeleteNodeAttempts; attempt++)
-            {
-                var deleteResult = zooKeeperClient.Delete(replicaNodePath);
-                if (deleteResult.IsSuccessful)
-                    return;
-            }
-
-            log.Error($"Node removal has failed {settings.DeleteNodeAttempts} times.");
+            var deleteResult = await zooKeeperClient.DeleteAsync(replicaNodePath).ConfigureAwait(false);
+            return deleteResult.IsSuccessful;
         }
     }
 }

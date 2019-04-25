@@ -167,6 +167,30 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Stop_should_delete_node_after_reconnect()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                beacon.Start();
+                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                Ensemble.Stop();
+
+                beacon.Stop();
+
+                Ensemble.Start();
+
+                ReplicaRegistered(replica).Should().BeFalse();
+            }
+        }
+
+        [Test]
         public void Dispose_should_delete_node()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");

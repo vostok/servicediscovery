@@ -10,8 +10,6 @@ namespace Vostok.ServiceDiscovery
     [PublicAPI]
     public class ServiceBeaconSettings
     {
-        public int DeleteNodeAttempts = 10;
-
         public string ZooKeeperNodePath { get; set; } = "/service-discovery/v2";
 
         public TimeSpan MinimumTimeBetweenIterations { get; set; } = 500.Milliseconds();
@@ -19,5 +17,7 @@ namespace Vostok.ServiceDiscovery
         public TimeSpan IterationPeriod { get; set; } = 1.Minutes();
 
         public TimeSpan StartIterationPeriod { get; set; } = 1.Seconds();
+
+        public TimeSpan DeleteNodeIterationPeriod { get; set; } = 1.Seconds();
     }
 }
