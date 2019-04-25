@@ -24,7 +24,7 @@ namespace Vostok.ServiceDiscovery
             Dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
         }
 
-        public static ReplicaInfo Build(ReplicaInfoBuilderSetup setup)
+        public static ReplicaInfo Build(ReplicaInfoSetup setup)
         {
             var builder = new ReplicaInfoBuilder();
             setup?.Invoke(builder);

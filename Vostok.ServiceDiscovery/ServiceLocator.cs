@@ -30,8 +30,8 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceLocator(
             [NotNull] IZooKeeperClient zooKeeperClient,
-            [CanBeNull] ServiceLocatorSettings settings,
-            [CanBeNull] ILog log)
+            [CanBeNull] ServiceLocatorSettings settings = null,
+            [CanBeNull] ILog log = null)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.settings = settings ?? new ServiceLocatorSettings();
