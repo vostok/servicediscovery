@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 
 namespace Vostok.ServiceDiscovery.Tests.Serializers

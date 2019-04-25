@@ -2,6 +2,7 @@
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Tests.Helpers
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Tests
 {

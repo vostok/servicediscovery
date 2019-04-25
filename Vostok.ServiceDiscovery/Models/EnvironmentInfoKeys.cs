@@ -1,4 +1,4 @@
-﻿namespace Vostok.ServiceDiscovery
+﻿namespace Vostok.ServiceDiscovery.Models
 {
     internal static class EnvironmentInfoKeys
     {

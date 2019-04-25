@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Annotations;
 using Vostok.Commons.Binary;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers
 {

@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace Vostok.ServiceDiscovery
+namespace Vostok.ServiceDiscovery.Models
 {
     [PublicAPI]
     public static class ReplicaInfoKeys

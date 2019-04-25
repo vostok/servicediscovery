@@ -8,6 +8,7 @@ using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Console;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;

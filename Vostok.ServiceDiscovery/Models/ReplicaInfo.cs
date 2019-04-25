@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace Vostok.ServiceDiscovery
+namespace Vostok.ServiceDiscovery.Models
 {
     internal class ReplicaInfo
     {

@@ -7,6 +7,7 @@ using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Helpers.Url;
 using Vostok.Commons.Testing;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Tests
 {

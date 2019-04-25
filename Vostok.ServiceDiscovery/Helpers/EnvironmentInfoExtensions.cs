@@ -1,4 +1,6 @@
-﻿namespace Vostok.ServiceDiscovery.Helpers
+﻿using Vostok.ServiceDiscovery.Models;
+
+namespace Vostok.ServiceDiscovery.Helpers
 {
     internal static class EnvironmentInfoExtensions
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Vostok.Commons.Environment;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery
 {

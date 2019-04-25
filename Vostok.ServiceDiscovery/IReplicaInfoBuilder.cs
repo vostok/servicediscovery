@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery
 {

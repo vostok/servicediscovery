@@ -11,6 +11,7 @@ using Vostok.Commons.Helpers.Observable;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
