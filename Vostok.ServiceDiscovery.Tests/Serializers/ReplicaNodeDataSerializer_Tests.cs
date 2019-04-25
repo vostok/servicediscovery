@@ -25,6 +25,22 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
+        public void Serialize_should_ignore_null_and_empty_values()
+        {
+            var serialized = ReplicaNodeDataSerializer.Serialize(
+                new Dictionary<string, string>
+                {
+                    {"a", null},
+                    {"b", "value"},
+                    {"c", "" }
+                });
+
+            var str = Encoding.UTF8.GetString(serialized);
+            var expected = new List<string> { "b = value" };
+            str.Should().Be(string.Join("\n", expected));
+        }
+
+        [Test]
         public void Deserialize_should_deserialize_serialized()
         {
             var dict = new Dictionary<string, string>

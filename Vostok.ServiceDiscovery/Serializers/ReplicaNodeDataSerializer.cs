@@ -17,9 +17,9 @@ namespace Vostok.ServiceDiscovery.Serializers
             properties = properties ?? new Dictionary<string, string>();
             var content = string.Join(
                 LinesDelimiter,
-                properties.Select(
-                    item =>
-                        $"{item.Key}{KeyValueDelimiter}{item.Value}".Replace(LinesDelimiter, " ")));
+                properties
+                    .Where(item => !string.IsNullOrEmpty(item.Value))
+                    .Select(item => $"{item.Key}{KeyValueDelimiter}{item.Value}".Replace(LinesDelimiter, " ")));
             return Encoding.UTF8.GetBytes(content);
         }
 
