@@ -12,8 +12,8 @@ namespace Vostok.ServiceDiscovery.Tests.Models
         public void Should_add_properties()
         {
             var info = new ReplicaInfo("environment", "application", "replica");
-            info.AddProperty("Process name", "Vostok.App.1");
-            info.AddProperty("Process ID", "4242");
+            info.SetProperty("Process name", "Vostok.App.1");
+            info.SetProperty("Process ID", "4242");
 
             info.Properties
                 .Should()

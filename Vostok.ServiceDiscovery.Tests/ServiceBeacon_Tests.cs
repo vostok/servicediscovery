@@ -44,7 +44,7 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Start_should_create_node_with_replica_properties()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
-            replica.AddProperty("key", "value");
+            replica.SetProperty("key", "value");
             CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(replica))
@@ -70,11 +70,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             using (var beacon = new ServiceBeacon(
                 ZooKeeperClient,
-                builder =>
-                {
-                    builder.Url = new Uri(url);
-                    builder.Application = "test";
-                }))
+                setup => setup.SetUrl(new Uri(url)).SetApplication("test")))
             {
                 beacon.Start();
                 beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);

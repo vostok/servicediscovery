@@ -8,73 +8,73 @@ namespace Vostok.ServiceDiscovery
     /// <summary>
     /// <para>Represents a configuration of <see cref="ReplicaInfoBuilder"/> instance which may be filled during <see cref="ServiceBeacon"/> construction.</para>
     /// <para>All parameters are optional.</para>
-    /// <para>If you want to register service, <see cref="Url"/> or <see cref="Port"/> should be specified.</para>
+    /// <para>If you want to register service, url or port should be specified.</para>
     /// </summary>
     [PublicAPI]
     public interface IReplicaInfoBuilder
     {
         /// <summary>
-        /// <para>Application environment.</para>
+        /// <para>Sets application environment.</para>
         /// <para>Default value: <c>default</c>.</para>
         /// </summary>
-        string Environment { set; }
+        IReplicaInfoBuilder SetEnvironment(string environment);
 
         /// <summary>
-        /// <para>Application name.</para>
+        /// <para>Sets application name.</para>
         /// <para>Default value: current application name.</para>
         /// </summary>
-        string Application { set; }
+        IReplicaInfoBuilder SetApplication(string application);
 
         /// <summary>
-        /// <para>Replica url.</para>
-        /// <para>If is not specified and <see cref="Port"/> is not <c>null</c>,
-        ///     will be constructed from <see cref="Scheme"/>, current host name, <see cref="Port"/> and <see cref="VirtualPath"/>.</para>
+        /// <para>Sets replica url.</para>
+        /// <para>By default, it will be constructed from scheme, current host name, port and virtual path,
+        ///     if port is specified.</para>
         /// </summary>
-        Uri Url { set; }
+        IReplicaInfoBuilder SetUrl(Uri url);
 
         /// <summary>
-        /// <para>Replica url port.</para>
-        /// <para>If is not specified, will be filled from <see cref="Url"/>.</para>
+        /// <para>Sets replica url port.</para>
+        /// <para>If is not specified, it will be filled from url.</para>
         /// <para>Default value: <c>null</c>.</para>
         /// </summary>
-        int? Port { set; }
+        IReplicaInfoBuilder SetPort(int port);
 
         /// <summary>
-        /// <para>Replica url scheme.</para>
-        /// <para>If is not specified, will be filled from <see cref="Url"/>.</para>
+        /// <para>Sets replica url scheme.</para>
+        /// <para>If is not specified, it will be filled from url.</para>
         /// <para>Default value: <c>http</c>.</para>
         /// </summary>
-        string Scheme { set; }
+        IReplicaInfoBuilder SetScheme(string scheme);
 
         /// <summary>
-        /// <para>Replica url virtual path.</para>
-        /// <para>If is not specified, will be filled from <see cref="Url"/>.</para>
+        /// <para>Sets replica url virtual path.</para>
+        /// <para>If is not specified, it will be filled from url.</para>
         /// <para>Default value: <c>null</c></para>
         /// </summary>
-        string VirtualPath { set; }
+        IReplicaInfoBuilder SetVirtualPath(string virtualPath);
 
         /// <summary>
-        /// <para>Build commit hash.</para>
-        /// <para>By default, will be parsed from <c>AssemblyTitle</c> of entry assembly.</para>
+        /// <para>Sets build commit hash.</para>
+        /// <para>By default, it will be parsed from <c>AssemblyTitle</c> of entry assembly.</para>
         /// </summary>
-        string CommitHash { set; }
+        IReplicaInfoBuilder SetCommitHash(string commitHash);
 
         /// <summary>
         /// <para>Build date.</para>
-        /// <para>By default, will be parsed from <c>AssemblyTitle</c> of entry assembly.</para>
+        /// <para>By default, it will be parsed from <c>AssemblyTitle</c> of entry assembly.</para>
         /// </summary>
-        string ReleaseDate { set; }
+        IReplicaInfoBuilder SetReleaseDate(string releaseDate);
 
         /// <summary>
         /// <para>Assembly dependencies.</para>
-        /// <para>By default will be parsed from all <c>.dll</c>. and <c>.exe</c> files of entry assembly directory.</para>
+        /// <para>By default it will be parsed from all <c>.dll</c>. and <c>.exe</c> files of entry assembly directory.</para>
         /// </summary>
-        List<string> Dependencies { set; }
+        IReplicaInfoBuilder SetDependencies(IEnumerable<string> dependencies);
 
         /// <summary>
-        /// <para>Adds custom <paramref name="key"/>-<paramref name="value"/> property.</para>
+        /// <para>Sets custom <paramref name="key"/>-<paramref name="value"/> property.</para>
         /// <para>Default key names can be found in <see cref="ReplicaInfoKeys"/>.</para>
         /// </summary>
-        IReplicaInfoBuilder AddProperty([NotNull] string key, [CanBeNull] string value);
+        IReplicaInfoBuilder SetProperty([NotNull] string key, [CanBeNull] string value);
     }
 }

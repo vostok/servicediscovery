@@ -3,25 +3,46 @@ using System.Collections.Generic;
 using System.Linq;
 using Vostok.Commons.Environment;
 using Vostok.ServiceDiscovery.Models;
+using EnvironmentInfo = Vostok.Commons.Environment.EnvironmentInfo;
 
 namespace Vostok.ServiceDiscovery
 {
     internal class ReplicaInfoBuilder : IReplicaInfoBuilder
     {
         private const string DependenciesDelimiter = ";";
-        private List<KeyValuePair<string, string>> properties = new List<KeyValuePair<string, string>>();
 
+        private string environment;
+        private string application;
+        private string replica;
+
+        private Uri url;
+        private string scheme;
+        private readonly string host;
+        private int? port;
+        private string virtualPath;
+
+        private readonly string processName;
+        private readonly int? processId;
+        private readonly string baseDirectory;
+
+        private string commitHash;
+        private string releaseDate;
+
+        private List<string> dependencies;
+
+        private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
+        
         private ReplicaInfoBuilder()
         {
-            Environment = "default";
-            Application = Commons.Environment.EnvironmentInfo.Application;
-            Host = Commons.Environment.EnvironmentInfo.Host;
-            ProcessName = Commons.Environment.EnvironmentInfo.ProcessName;
-            ProcessId = Commons.Environment.EnvironmentInfo.ProcessId;
-            BaseDirectory = Commons.Environment.EnvironmentInfo.BaseDirectory;
-            CommitHash = AssemblyCommitHashExtractor.ExtractFromEntryAssembly();
-            ReleaseDate = AssemblyBuildTimeExtractor.ExtractFromEntryAssembly()?.ToString("O");
-            Dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
+            environment = "default";
+            application = EnvironmentInfo.Application;
+            host = EnvironmentInfo.Host;
+            processName = EnvironmentInfo.ProcessName;
+            processId = EnvironmentInfo.ProcessId;
+            baseDirectory = EnvironmentInfo.BaseDirectory;
+            commitHash = AssemblyCommitHashExtractor.ExtractFromEntryAssembly();
+            releaseDate = AssemblyBuildTimeExtractor.ExtractFromEntryAssembly()?.ToString("O");
+            dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
         }
 
         public static ReplicaInfo Build(ReplicaInfoSetup setup)
@@ -31,44 +52,19 @@ namespace Vostok.ServiceDiscovery
             return builder.Build();
         }
 
-        public string Environment { get; set; }
-        public string Application { get; set; }
-        public string Replica { get; set; }
-
-        public Uri Url { get; set; }
-        public string Scheme { get; set; }
-        public string Host { get; set; }
-        public int? Port { get; set; }
-        public string VirtualPath { get; set; }
-
-        public string ProcessName { get; set; }
-        public int? ProcessId { get; set; }
-        public string BaseDirectory { get; set; }
-
-        public string CommitHash { get; set; }
-        public string ReleaseDate { get; set; }
-
-        public List<string> Dependencies { get; set; }
-
-        public IReplicaInfoBuilder AddProperty(string key, string value)
-        {
-            properties.Add(new KeyValuePair<string, string>(key ?? throw new ArgumentNullException(nameof(key)), value));
-            return this;
-        }
-
         public ReplicaInfo Build()
         {
-            Url = Url ?? BuildUrl(Scheme, Port, VirtualPath);
-            Replica = Url?.ToString() ?? $"{Commons.Environment.EnvironmentInfo.Host}({Commons.Environment.EnvironmentInfo.ProcessId})";
+            url = url ?? BuildUrl(scheme, port, virtualPath);
+            replica = url?.ToString() ?? $"{EnvironmentInfo.Host}({EnvironmentInfo.ProcessId})";
 
-            if (Url != null)
+            if (url != null)
             {
-                Scheme = Url.Scheme;
-                Port = Url.Port;
-                VirtualPath = Url.AbsolutePath;
+                scheme = url.Scheme;
+                port = url.Port;
+                virtualPath = url.AbsolutePath;
             }
 
-            var result = new ReplicaInfo(Environment, Application, Replica);
+            var result = new ReplicaInfo(environment, application, replica);
 
             FillProperties(result);
 
@@ -83,7 +79,7 @@ namespace Vostok.ServiceDiscovery
             return new UriBuilder
             {
                 Scheme = scheme ?? "http",
-                Host = Commons.Environment.EnvironmentInfo.Host,
+                Host = EnvironmentInfo.Host,
                 Port = port.Value,
                 Path = virtualPath ?? ""
             }.Uri;
@@ -91,32 +87,98 @@ namespace Vostok.ServiceDiscovery
 
         private void FillProperties(ReplicaInfo replicaInfo)
         {
-            replicaInfo.AddProperty(ReplicaInfoKeys.Environment, Environment);
-            replicaInfo.AddProperty(ReplicaInfoKeys.Application, Application);
-            replicaInfo.AddProperty(ReplicaInfoKeys.Replica, Replica);
-            replicaInfo.AddProperty(ReplicaInfoKeys.Url, Url?.ToString());
-            replicaInfo.AddProperty(ReplicaInfoKeys.Host, Host);
-            replicaInfo.AddProperty(ReplicaInfoKeys.ProcessName, ProcessName);
-            replicaInfo.AddProperty(ReplicaInfoKeys.ProcessId, ProcessId?.ToString());
-            replicaInfo.AddProperty(ReplicaInfoKeys.BaseDirectory, BaseDirectory);
-            replicaInfo.AddProperty(ReplicaInfoKeys.CommitHash, CommitHash);
-            replicaInfo.AddProperty(ReplicaInfoKeys.ReleaseDate, ReleaseDate);
-            replicaInfo.AddProperty(ReplicaInfoKeys.Dependencies, FormatDependencies());
-            replicaInfo.AddProperty(ReplicaInfoKeys.Port, Port?.ToString());
+            replicaInfo.SetProperty(ReplicaInfoKeys.Environment, environment);
+            replicaInfo.SetProperty(ReplicaInfoKeys.Application, application);
+            replicaInfo.SetProperty(ReplicaInfoKeys.Replica, replica);
+            replicaInfo.SetProperty(ReplicaInfoKeys.Url, url?.ToString());
+            replicaInfo.SetProperty(ReplicaInfoKeys.Host, host);
+            replicaInfo.SetProperty(ReplicaInfoKeys.ProcessName, processName);
+            replicaInfo.SetProperty(ReplicaInfoKeys.ProcessId, processId?.ToString());
+            replicaInfo.SetProperty(ReplicaInfoKeys.BaseDirectory, baseDirectory);
+            replicaInfo.SetProperty(ReplicaInfoKeys.CommitHash, commitHash);
+            replicaInfo.SetProperty(ReplicaInfoKeys.ReleaseDate, releaseDate);
+            replicaInfo.SetProperty(ReplicaInfoKeys.Dependencies, FormatDependencies());
+            replicaInfo.SetProperty(ReplicaInfoKeys.Port, port?.ToString());
 
             foreach (var property in properties)
             {
-                replicaInfo.AddProperty(property.Key, property.Value);
+                replicaInfo.SetProperty(property.Key, property.Value);
             }
         }
 
         private string FormatDependencies()
         {
-            return Dependencies == null
+            return dependencies == null
                 ? null
                 : string.Join(
                     DependenciesDelimiter,
-                    Dependencies.Select(d => d?.Replace(DependenciesDelimiter, "_")));
+                    dependencies.Select(d => d?.Replace(DependenciesDelimiter, "_")));
         }
+
+        #region FluentPublicSetters
+        // ReSharper disable ParameterHidesMember
+
+        public IReplicaInfoBuilder SetEnvironment(string environment)
+        {
+            this.environment = environment;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetApplication(string application)
+        {
+            this.application = application;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetUrl(Uri url)
+        {
+            this.url = url;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetPort(int port)
+        {
+            this.port = port;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetScheme(string scheme)
+        {
+            this.scheme = scheme;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetVirtualPath(string virtualPath)
+        {
+            this.virtualPath = virtualPath;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetCommitHash(string commitHash)
+        {
+            this.commitHash = commitHash;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetReleaseDate(string releaseDate)
+        {
+            this.releaseDate = releaseDate;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetDependencies(IEnumerable<string> dependencies)
+        {
+            this.dependencies = dependencies.ToList();
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetProperty(string key, string value)
+        {
+            properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
+            return this;
+        }
+
+        // ReSharper restore ParameterHidesMember
+        #endregion
     }
 }

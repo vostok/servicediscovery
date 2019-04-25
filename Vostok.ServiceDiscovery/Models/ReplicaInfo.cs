@@ -27,7 +27,7 @@ namespace Vostok.ServiceDiscovery.Models
         [NotNull]
         public IReadOnlyDictionary<string, string> Properties => properties;
 
-        public void AddProperty([NotNull] string key, [CanBeNull] string value)
+        public void SetProperty([NotNull] string key, [CanBeNull] string value)
         {
             properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
         }
