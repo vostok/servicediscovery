@@ -72,7 +72,6 @@ namespace Vostok.ServiceDiscovery
                 if (isRunning.TrySetTrue())
                 {
                     nodeCreatedOnceSignal.Reset();
-                    checkNodeSignal.Set();
                     beaconTask = Task.Run(BeaconTask);
                 }
             }
