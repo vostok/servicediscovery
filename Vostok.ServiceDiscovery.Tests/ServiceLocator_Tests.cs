@@ -467,6 +467,36 @@ namespace Vostok.ServiceDiscovery.Tests
             }
         }
 
+        [Test]
+        public void Should_return_same_topology_instance_if_nothing_changed()
+        {
+            var replica1 = new ReplicaInfo("default", "vostok", "https://github.com/vostok1");
+            var replica2 = new ReplicaInfo("default", "vostok", "https://github.com/vostok2");
+
+            CreateEnvironmentNode("default");
+
+            CreateApplicationNode("default", "vostok");
+
+            CreateReplicaNode(replica1);
+
+            using (var locator = GetServiceLocator())
+            {
+                var topo1 = locator.Locate("default", "vostok");
+                var topo2 = locator.Locate("default", "vostok");
+                ReferenceEquals(topo1, topo2).Should().BeTrue();
+
+                CreateEnvironmentNode("default", "parent");
+                var topo3 = locator.Locate("default", "vostok");
+                ReferenceEquals(topo2, topo3).Should().BeTrue();
+
+                CreateReplicaNode(replica2);
+
+                // ReSharper disable once AccessToDisposedClosure
+                Action action = () => ReferenceEquals(topo3, locator.Locate("default", "vostok")).Should().BeFalse();
+                action.ShouldPassIn(DefaultTimeout);
+            }
+        }
+
         private static void ShouldLocate(ServiceLocator locator, string environment, string application, params string[] replicas)
         {
             Action assertion = () => { ShouldLocateImmediately(locator, environment, application, replicas); };
@@ -477,6 +507,7 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var topology = locator.Locate(environment, application);
             topology.Should().NotBeNull();
+            // ReSharper disable once PossibleNullReferenceException
             topology.Replicas.Should().BeEquivalentTo(UrlParser.Parse(replicas).Cast<object>());
         }
 
