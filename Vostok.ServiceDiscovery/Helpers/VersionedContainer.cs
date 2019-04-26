@@ -9,17 +9,18 @@ namespace Vostok.ServiceDiscovery.Helpers
         private readonly object sync = new object();
         private long version = long.MinValue;
 
-        public void Update(long newVersion, Func<T> valueProvider)
+        public bool Update(long newVersion, Func<T> valueProvider)
         {
             if (newVersion <= version)
-                return;
+                return false;
 
             lock (sync)
             {
                 if (newVersion <= version)
-                    return;
+                    return false;
                 Value = valueProvider();
                 version = newVersion;
+                return true;
             }
         }
 

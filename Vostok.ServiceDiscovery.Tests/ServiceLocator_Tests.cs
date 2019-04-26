@@ -325,12 +325,14 @@ namespace Vostok.ServiceDiscovery.Tests
 
             using (var locator = GetServiceLocator())
             {
+                // ReSharper disable once PossibleNullReferenceException
                 locator.Locate("default", "vostok").Properties.Should().BeEquivalentTo(properties);
 
                 properties["key3"] = "value3";
                 CreateApplicationNode("default", "vostok", properties);
 
                 // ReSharper disable once AccessToDisposedClosure
+                // ReSharper disable once PossibleNullReferenceException
                 Action action = () => { locator.Locate("default", "vostok").Properties.Should().BeEquivalentTo(properties); };
 
                 action.ShouldPassIn(DefaultTimeout);

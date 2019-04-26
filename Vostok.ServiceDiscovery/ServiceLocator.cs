@@ -140,8 +140,8 @@ namespace Vostok.ServiceDiscovery
 
         private void OnConnectionStateChanged(ConnectionState connectionState)
         {
-            // Note(kungurtsev): sometimes need to perform some operation to force ZooKeeperClient reconnect.
-            updateCacheSignal.Set();
+            if (connectionState == ConnectionState.Connected)
+                updateCacheSignal.Set();
         }
 
         private void OnNodeEvent(NodeChangedEventType type, string path)

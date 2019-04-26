@@ -16,6 +16,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly VersionedContainer<EnvironmentInfo> environmentContainer;
         private readonly VersionedContainer<ApplicationInfo> applicationContainer;
         private readonly VersionedContainer<Uri[]> replicasContainer;
+        public ServiceTopology ServiceTopology;
 
         public ApplicationEnvironment(string name)
         {
@@ -26,8 +27,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         }
 
         public EnvironmentInfo Environment => environmentContainer.Value;
-
-        public ServiceTopology ServiceTopology => BuildServiceTopology();
 
         public void UpdateEnvironment(GetDataResult environmentData, ILog log)
         {
@@ -58,10 +57,14 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
             try
             {
-                applicationContainer.Update(
+                if (applicationContainer.Update(
                     applicationData.Stat.ModifiedZxId,
                     () =>
-                        ApplicationNodeDataSerializer.Deserialize(applicationData.Data));
+                        ApplicationNodeDataSerializer.Deserialize(applicationData.Data))
+                )
+                {
+                    UpdateServiceTopology();
+                }
             }
             catch (Exception e)
             {
@@ -78,23 +81,19 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
             try
             {
-                replicasContainer.Update(
+                if (replicasContainer.Update(
                     childrenResult.Stat.ModifiedChildrenZxId,
                     () =>
-                        UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)));
+                        UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)))
+                )
+                {
+                    UpdateServiceTopology();
+                }
             }
             catch (Exception e)
             {
                 log.Error(e, "Failed to update replicas for path '{Path}'.", childrenResult.Path);
             }
-        }
-
-        private ServiceTopology BuildServiceTopology()
-        {
-            var application = applicationContainer.Value;
-            var replicas = replicasContainer.Value;
-
-            return ServiceTopology.Build(replicas, application?.Properties);
         }
 
         private void RemoveEnvironment()
@@ -107,6 +106,13 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             applicationContainer.Clear();
             replicasContainer.Clear();
+
+            UpdateServiceTopology();
+        }
+
+        private void UpdateServiceTopology()
+        {
+            ServiceTopology = ServiceTopology.Build(replicasContainer.Value, applicationContainer.Value?.Properties);
         }
     }
 }

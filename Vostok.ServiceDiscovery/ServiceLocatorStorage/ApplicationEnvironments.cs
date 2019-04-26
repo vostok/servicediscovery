@@ -29,6 +29,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.log = log;
         }
 
+        /// <inheritdoc cref="ServiceLocator.Locate"/>
         public IServiceTopology Locate(string environmentName)
         {
             var environment = GetApplicationEnvironment(environmentName);
@@ -79,19 +80,24 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private ApplicationEnvironment GetApplicationEnvironment(string environment)
         {
             var lazy = new Lazy<ApplicationEnvironment>(
-                () => UpdateApplicationEnvironment(new ApplicationEnvironment(environment)),
+                () =>
+                {
+                    var applicationEnvironment = new ApplicationEnvironment(environment);
+                    UpdateApplicationEnvironment(applicationEnvironment);
+                    return applicationEnvironment;
+                },
                 LazyThreadSafetyMode.ExecutionAndPublication);
             return environments.GetOrAdd(environment, _ => lazy).Value;
         }
 
-        private ApplicationEnvironment UpdateApplicationEnvironment(ApplicationEnvironment environment)
+        private void UpdateApplicationEnvironment(ApplicationEnvironment environment)
         {
             try
             {
                 var environmentData = zooKeeperClient.GetData(pathHelper.BuildEnvironmentPath(environment.Name));
                 environment.UpdateEnvironment(environmentData, log);
                 if (!environmentData.IsSuccessful)
-                    return environment;
+                    return;
 
                 var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
                 var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) {Watcher = nodeWatcher});
@@ -112,8 +118,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 log.Error(e, "Failed to update '{Application}' application in '{Environment}' environment.", application, environment.Name);
             }
-
-            return environment;
         }
     }
 }

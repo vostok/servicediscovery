@@ -24,7 +24,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
             for (var i = 0; i < 10; i++)
             {
                 // ReSharper disable once AccessToModifiedClosure
-                container.Update(i, () => i.ToString());
+                container.Update(i, () => i.ToString()).Should().BeTrue();
                 container.Value.Should().Be(i.ToString());
             }
         }
@@ -34,8 +34,8 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         {
             var container = new VersionedContainer<string>();
 
-            container.Update(2, () => "x");
-            container.Update(1, () => throw new AssertionException("Should not be called."));
+            container.Update(2, () => "x").Should().BeTrue();
+            container.Update(1, () => throw new AssertionException("Should not be called.")).Should().BeFalse();
 
             container.Value.Should().Be("x");
         }
@@ -70,13 +70,13 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         {
             var container = new VersionedContainer<string>();
 
-            container.Update(10, () => "x");
+            container.Update(10, () => "x").Should().BeTrue();
             container.Value.Should().Be("x");
 
             container.Clear();
             container.Value.Should().BeNull();
 
-            container.Update(1, () => "y");
+            container.Update(1, () => "y").Should().BeTrue();
             container.Value.Should().Be("y");
         }
     }
