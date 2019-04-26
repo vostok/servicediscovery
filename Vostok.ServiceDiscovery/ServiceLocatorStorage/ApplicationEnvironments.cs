@@ -54,7 +54,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
         }
 
-        public void Update()
+        public void UpdateCache()
         {
             foreach (var kvp in environments)
             {

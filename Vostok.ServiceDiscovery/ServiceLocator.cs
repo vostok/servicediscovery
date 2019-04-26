@@ -21,7 +21,7 @@ namespace Vostok.ServiceDiscovery
         private const int Running = 1;
         private const int Disposed = 2;
         private readonly AtomicInt state = new AtomicInt(NotStarted);
-        private readonly AsyncManualResetEvent updateSignal = new AsyncManualResetEvent(true);
+        private readonly AsyncManualResetEvent updateCacheSignal = new AsyncManualResetEvent(true);
 
         private readonly ConcurrentDictionary<string, ApplicationEnvironments> applications = new ConcurrentDictionary<string, ApplicationEnvironments>();
 
@@ -30,7 +30,7 @@ namespace Vostok.ServiceDiscovery
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
-        private volatile Task updateTask;
+        private volatile Task updateCacheTask;
 
         public ServiceLocator(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -50,7 +50,7 @@ namespace Vostok.ServiceDiscovery
         {
             try
             {
-                StartUpdateTask();
+                StartUpdateCacheTask();
 
                 var environments = applications.GetOrAdd(application, a => new ApplicationEnvironments(a, zooKeeperClient, nodeWatcher, pathHelper, log));
                 return environments.Locate(environment);
@@ -64,76 +64,60 @@ namespace Vostok.ServiceDiscovery
 
         public void Dispose()
         {
-            StopUpdateTask();
+            StopUpdateCacheTask();
         }
 
-        private void StartUpdateTask()
+        private void StartUpdateCacheTask()
         {
             if (state != NotStarted)
                 return;
 
             if (state.TryIncreaseTo(Running))
             {
-                updateTask = Task.Run(Update);
+                updateCacheTask = Task.Run(UpdateCacheTask);
             }
         }
 
-        private void StopUpdateTask()
+        private void StopUpdateCacheTask()
         {
             if (state.TryIncreaseTo(Disposed))
             {
-                updateSignal.Set();
+                updateCacheSignal.Set();
             }
         }
 
-        private async Task Update()
+        private async Task UpdateCacheTask()
         {
             var observer = new AdHocConnectionStateObserver(OnConnectionStateChanged, OnCompleted);
             using (zooKeeperClient.OnConnectionStateChanged.Subscribe(observer))
             {
                 while (state == Running)
                 {
-                    await UpdateTaskIteration().ConfigureAwait(false);
+                    await UpdateCacheTaskIteration().ConfigureAwait(false);
                 }
             }
         }
 
-        private async Task UpdateTaskIteration()
+        private async Task UpdateCacheTaskIteration()
         {
             try
             {
-                updateSignal.Reset();
+                updateCacheSignal.Reset();
 
                 foreach (var kvp in applications)
                 {
-                    kvp.Value.Update();
+                    kvp.Value.UpdateCache();
                 }
             }
             catch (Exception exception)
             {
-                log.Error(exception, "Failed iteration.");
+                log.Error(exception, "Failed update cache iteration.");
             }
 
-            await updateSignal.WaitAsync().WaitAsync(settings.IterationPeriod).ConfigureAwait(false);
+            await updateCacheSignal.WaitAsync().WaitAsync(settings.IterationPeriod).ConfigureAwait(false);
         }
 
-        private void OnCompleted()
-        {
-            log.Warn("Someone else has disposed ZooKeeper client.");
-            if (state.TryIncreaseTo(Disposed))
-            {
-                updateSignal.Set();
-                // Note(kungurtsev): does not wait updateTask, because it will deadlock CachingObservable.
-            }
-        }
-
-        private void OnConnectionStateChanged(ConnectionState connectionState)
-        {
-            // Note(kungurtsev): sometimes need to perform some operation to force ZooKeeperClient reconnect.
-            updateSignal.Set();
-        }
-
-        private void Update(string environment, string application)
+        private void UpdateCache(string environment, string application)
         {
             if (!applications.TryGetValue(application, out var environments))
             {
@@ -142,6 +126,22 @@ namespace Vostok.ServiceDiscovery
             }
 
             environments.UpdateApplicationEnvironment(environment);
+        }
+
+        private void OnCompleted()
+        {
+            log.Warn("Someone else has disposed ZooKeeper client.");
+            if (state.TryIncreaseTo(Disposed))
+            {
+                updateCacheSignal.Set();
+                // Note(kungurtsev): does not wait updateCacheTask, because it will deadlock CachingObservable.
+            }
+        }
+
+        private void OnConnectionStateChanged(ConnectionState connectionState)
+        {
+            // Note(kungurtsev): sometimes need to perform some operation to force ZooKeeperClient reconnect.
+            updateCacheSignal.Set();
         }
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
@@ -155,7 +155,7 @@ namespace Vostok.ServiceDiscovery
             }
 
             // Note(kungurtsev): run in new thread, because we shouldn't block ZooKeeperClient.
-            Task.Run(() => Update(parsedPath.Value.environment, parsedPath.Value.application));
+            Task.Run(() => UpdateCache(parsedPath.Value.environment, parsedPath.Value.application));
         }
     }
 }
