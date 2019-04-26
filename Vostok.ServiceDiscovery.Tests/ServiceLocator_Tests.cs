@@ -180,6 +180,53 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Should_update_environment_properties()
+        {
+            var replicaParent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok/parent");
+            
+            CreateEnvironmentNode("parent");
+            CreateEnvironmentNode("child", "parent", new Dictionary<string, string> { { EnvironmentInfoKeys.SkipIfEmpty, "True" } });
+
+            CreateApplicationNode("child", "vostok");
+            CreateApplicationNode("parent", "vostok");
+
+            CreateReplicaNode(replicaParent);
+
+            using (var locator = GetServiceLocator(1.Seconds()))
+            {
+                ShouldLocate(locator, "child", "vostok", replicaParent.Replica);
+                ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
+
+                CreateEnvironmentNode("child", "parent", new Dictionary<string, string> { { EnvironmentInfoKeys.SkipIfEmpty, "False" } });
+
+                ShouldLocate(locator, "child", "vostok");
+                ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
+            }
+        }
+
+        [Test]
+        public void Should_update_environment_parent()
+        {
+            var replicaParent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok/parent");
+
+            CreateEnvironmentNode("parent");
+            CreateEnvironmentNode("child");
+
+            CreateReplicaNode(replicaParent);
+
+            using (var locator = GetServiceLocator(1.Seconds()))
+            {
+                ShouldNotLocate(locator, "child", "vostok");
+                ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
+
+                CreateEnvironmentNode("child", "parent");
+
+                ShouldLocate(locator, "child", "vostok", replicaParent.Replica);
+                ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
+            }
+        }
+
+        [Test]
         public void Should_track_replicas_registration_in_nested_environments()
         {
             var replica1Parent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok1/parent");
@@ -297,7 +344,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             CreateReplicaNode(replica);
 
-            using (var locator = GetServiceLocator())
+            using (var locator = GetServiceLocator(1.Seconds()))
             {
                 ShouldLocate(locator, "child", "vostok", replica.Replica);
 
@@ -522,9 +569,12 @@ namespace Vostok.ServiceDiscovery.Tests
             locator.Locate(environment, application).Should().BeNull();
         }
 
-        private ServiceLocator GetServiceLocator(string logPrefix = null)
+        private ServiceLocator GetServiceLocator(TimeSpan? iterationPeriod = null)
         {
-            return new ServiceLocator(ZooKeeperClient, null, string.IsNullOrEmpty(logPrefix) ? Log : Log.ForContext(logPrefix));
+            return new ServiceLocator(ZooKeeperClient, new ServiceLocatorSettings
+            {
+                IterationPeriod = iterationPeriod ?? 60.Seconds()
+            }, Log);
         }
     }
 }
