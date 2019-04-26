@@ -135,7 +135,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas2, 2), log);
 
             environment.Environment.Should().BeEquivalentTo(environment2);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas2), application2.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas2), application2.Properties));
 
             environment.UpdateEnvironment(GetDataResult.Unsuccessful(ZooKeeperStatus.NodeNotFound, "", null), log);
 
@@ -147,7 +147,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
         }
 
         [Test]
@@ -158,7 +158,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas2, 2), log);
 
             environment.Environment.Should().BeEquivalentTo(environment2);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas2), application2.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas2), application2.Properties));
 
             environment.UpdateApplication(GetDataResult.Unsuccessful(ZooKeeperStatus.NodeNotFound, "", null), log);
 
@@ -170,7 +170,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
 
             environment.Environment.Should().BeEquivalentTo(environment2);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
         }
 
         [Test]
@@ -181,7 +181,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas2, 2), log);
 
             environment.Environment.Should().BeEquivalentTo(environment2);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas2), application2.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas2), application2.Properties));
 
             environment.UpdateReplicas(GetChildrenResult.Unsuccessful(ZooKeeperStatus.NodeNotFound, "", null), log);
 
@@ -193,7 +193,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
 
             environment.Environment.Should().BeEquivalentTo(environment2);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
         }
 
         [Test]
@@ -204,12 +204,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
 
             environment.UpdateEnvironment(GetDataResult.Successful("", new byte[] {1, 2, 3}, new NodeStat(0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
         }
 
         [Test]
@@ -220,12 +220,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
 
             environment.UpdateApplication(GetDataResult.Successful("", new byte[] {1, 2, 3}, new NodeStat(0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
         }
 
         [Test]
@@ -236,12 +236,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
 
             environment.UpdateReplicas(GetChildrenResult.Successful("", new string[] {null}, new NodeStat(0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0)), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
-            environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
+            environment.ServiceTopology.Should().BeEquivalentTo(ServiceTopology.Build(UrlParser.Parse(replicas1), application1.Properties));
         }
 
         private static GetDataResult EnvironmentData(EnvironmentInfo info, long zxId)

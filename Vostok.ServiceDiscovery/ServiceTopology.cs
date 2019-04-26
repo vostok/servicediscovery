@@ -1,21 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Abstractions;
 
 namespace Vostok.ServiceDiscovery
 {
     internal class ServiceTopology : IServiceTopology
     {
-        public ServiceTopology(IReadOnlyList<Uri> replicas, IReadOnlyDictionary<string, string> properties)
+        private ServiceTopology([NotNull] IReadOnlyList<Uri> replicas, [CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
-            Replicas = replicas ?? new List<Uri>();
+            Replicas = replicas;
 
             Properties = new ServiceTopologyProperties(properties);
+        }
+
+        public static ServiceTopology Build(IReadOnlyList<Uri> replicas, IReadOnlyDictionary<string, string> properties)
+        {
+            return replicas == null
+                ? null
+                : new ServiceTopology(replicas, properties);
         }
 
         /// <inheritdoc />
         public IReadOnlyList<Uri> Replicas { get; }
 
+        /// <inheritdoc />
         public IServiceTopologyProperties Properties { get; }
     }
 }

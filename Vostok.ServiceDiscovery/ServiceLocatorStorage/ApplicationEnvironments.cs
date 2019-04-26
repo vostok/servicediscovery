@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
@@ -16,8 +17,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ServiceDiscoveryPathHelper pathHelper;
+        private readonly ConcurrentDictionary<string, Lazy<ApplicationEnvironment>> environments = new ConcurrentDictionary<string, Lazy<ApplicationEnvironment>>();
         private readonly ILog log;
-        private readonly ConcurrentDictionary<string, ApplicationEnvironment> environments = new ConcurrentDictionary<string, ApplicationEnvironment>();
 
         public ApplicationEnvironments(string application, IZooKeeperClient zooKeeperClient, AdHocNodeWatcher nodeWatcher, ServiceDiscoveryPathHelper pathHelper, ILog log)
         {
@@ -38,16 +39,18 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 if (!visitedEnvironments.Add(environment.Name))
                 {
-                    log.Warn("Cycled when resolving environment {Environment} parents.", environmentName);
+                    log.Warn("Cycled when resolving '{Environment}' environment parents.", environmentName);
                     return null;
                 }
 
                 var topology = environment.ServiceTopology;
+
                 var parentEnvironment = environment.Environment?.ParentEnvironment;
+                if (parentEnvironment == null)
+                    return topology;
 
                 var goToParent = topology == null || topology.Replicas.Count == 0 && environment.Environment.SkipIfEmpty();
-
-                if (parentEnvironment == null || !goToParent)
+                if (!goToParent)
                     return topology;
 
                 environment = GetApplicationEnvironment(parentEnvironment);
@@ -58,11 +61,11 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             foreach (var kvp in environments)
             {
-                UpdateApplicationEnvironment(kvp.Value);
+                UpdateApplicationEnvironment(kvp.Value.Value);
             }
         }
 
-        public void UpdateApplicationEnvironment(string environmentName)
+        public void UpdateCache(string environmentName)
         {
             if (!environments.TryGetValue(environmentName, out var environment))
             {
@@ -70,12 +73,15 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 return;
             }
 
-            UpdateApplicationEnvironment(environment);
+            UpdateApplicationEnvironment(environment.Value);
         }
 
         private ApplicationEnvironment GetApplicationEnvironment(string environment)
         {
-            return environments.GetOrAdd(environment, e => UpdateApplicationEnvironment(new ApplicationEnvironment(e)));
+            var lazy = new Lazy<ApplicationEnvironment>(
+                () => UpdateApplicationEnvironment(new ApplicationEnvironment(environment)),
+                LazyThreadSafetyMode.ExecutionAndPublication);
+            return environments.GetOrAdd(environment, _ => lazy).Value;
         }
 
         private ApplicationEnvironment UpdateApplicationEnvironment(ApplicationEnvironment environment)
@@ -104,7 +110,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
             catch (Exception e)
             {
-                log.Error(e, "Failed to update application environment {Application} {Environment}.", application, environment.Name);
+                log.Error(e, "Failed to update '{Application}' application in '{Environment}' environment.", application, environment.Name);
             }
 
             return environment;

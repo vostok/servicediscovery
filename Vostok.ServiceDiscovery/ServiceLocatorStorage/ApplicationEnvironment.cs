@@ -94,9 +94,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             var application = applicationContainer.Value;
             var replicas = replicasContainer.Value;
 
-            return replicas == null
-                ? null
-                : new ServiceTopology(replicas, application?.Properties);
+            return ServiceTopology.Build(replicas, application?.Properties);
         }
 
         private void RemoveEnvironment()

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.ServiceDiscovery.Abstractions;
 
@@ -10,7 +11,7 @@ namespace Vostok.ServiceDiscovery
     {
         private readonly ImmutableArrayDictionary<string, string> properties;
 
-        public ServiceTopologyProperties(IReadOnlyDictionary<string, string> properties)
+        public ServiceTopologyProperties([CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
             properties = properties ?? new Dictionary<string, string>();
             this.properties = new ImmutableArrayDictionary<string, string>(properties.Count);

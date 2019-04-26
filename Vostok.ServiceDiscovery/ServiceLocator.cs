@@ -57,7 +57,7 @@ namespace Vostok.ServiceDiscovery
             }
             catch (Exception e)
             {
-                log.Error(e, "Failed to locate '{Application}' application in '{Environment}' environment.");
+                log.Error(e, "Failed to locate '{Application}' application in '{Environment}' environment.", application, environment);
                 return null;
             }
         }
@@ -125,7 +125,7 @@ namespace Vostok.ServiceDiscovery
                 return;
             }
 
-            environments.UpdateApplicationEnvironment(environment);
+            environments.UpdateCache(environment);
         }
 
         private void OnCompleted()
