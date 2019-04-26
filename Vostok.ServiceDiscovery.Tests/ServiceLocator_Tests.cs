@@ -457,7 +457,15 @@ namespace Vostok.ServiceDiscovery.Tests
             }
         }
 
-        private void ShouldLocate(ServiceLocator locator, string environment, string application, params string[] replicas)
+        [Test]
+        public void Should_not_throw_immediately_disposed()
+        {
+            using (GetServiceLocator())
+            {
+            }
+        }
+
+        private static void ShouldLocate(ServiceLocator locator, string environment, string application, params string[] replicas)
         {
             Action assertion = () =>
             {
@@ -473,7 +481,7 @@ namespace Vostok.ServiceDiscovery.Tests
             topology.Replicas.Should().BeEquivalentTo(UrlParser.Parse(replicas).Cast<object>());
         }
 
-        private void ShouldNotLocate(ServiceLocator locator, string environment, string application)
+        private static void ShouldNotLocate(ServiceLocator locator, string environment, string application)
         {
             Action assertion = () =>
             {

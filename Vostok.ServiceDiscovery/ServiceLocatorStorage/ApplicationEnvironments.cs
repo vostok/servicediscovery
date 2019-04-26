@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
@@ -53,6 +54,14 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
         }
 
+        public void Update()
+        {
+            foreach (var kvp in environments)
+            {
+                UpdateApplicationEnvironment(kvp.Value);
+            }
+        }
+
         public void UpdateApplicationEnvironment(string environmentName)
         {
             if (!environments.TryGetValue(environmentName, out var environment))
@@ -71,24 +80,31 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         private ApplicationEnvironment UpdateApplicationEnvironment(ApplicationEnvironment environment)
         {
-            var environmentData = zooKeeperClient.GetData(pathHelper.BuildEnvironmentPath(environment.Name));
-            environment.UpdateEnvironment(environmentData, log);
-            if (!environmentData.IsSuccessful)
-                return environment;
-
-            var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
-            var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) {Watcher = nodeWatcher});
-            environment.UpdateApplication(applicationData, log);
-
-            if (applicationData.IsSuccessful)
+            try
             {
-                var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) { Watcher = nodeWatcher });
-                environment.UpdateReplicas(getChildrenResult, log);
+                var environmentData = zooKeeperClient.GetData(pathHelper.BuildEnvironmentPath(environment.Name));
+                environment.UpdateEnvironment(environmentData, log);
+                if (!environmentData.IsSuccessful)
+                    return environment;
+
+                var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
+                var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) {Watcher = nodeWatcher});
+                environment.UpdateApplication(applicationData, log);
+
+                if (applicationData.IsSuccessful)
+                {
+                    var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) { Watcher = nodeWatcher });
+                    environment.UpdateReplicas(getChildrenResult, log);
+                }
+                else if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
+                {
+                    // Note(kungurtsev): watch if node will be created.
+                    zooKeeperClient.Exists(new ExistsRequest(applicationPath) {Watcher = nodeWatcher});
+                }
             }
-            else if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
+            catch (Exception e)
             {
-                // Note(kungurtsev): watch if node will be created.
-                zooKeeperClient.Exists(new ExistsRequest(applicationPath) {Watcher = nodeWatcher});
+                log.Error(e, "Failed to update application environment {Application} {Environment}.", application, environment.Name);
             }
 
             return environment;

@@ -131,6 +131,7 @@ namespace Vostok.ServiceDiscovery
             try
             {
                 checkNodeSignal.Reset();
+
                 await EnsureNodeExistsAsync().ConfigureAwait(false);
             }
             catch (Exception exception)

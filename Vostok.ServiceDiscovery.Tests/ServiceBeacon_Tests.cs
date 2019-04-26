@@ -546,5 +546,15 @@ namespace Vostok.ServiceDiscovery.Tests
                 }
             }
         }
+
+        [Test]
+        public void Should_not_throw_immediately_disposed()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+
+            using (GetServiceBeacon(replica))
+            {
+            }
+        }
     }
 }
