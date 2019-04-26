@@ -16,7 +16,7 @@ namespace Vostok.ServiceDiscovery
 
         public TimeSpan IterationPeriod { get; set; } = 1.Minutes();
 
-        public TimeSpan StartIterationPeriod { get; set; } = 1.Seconds();
+        public TimeSpan InitialRegistrationIterationPeriod { get; set; } = 1.Seconds();
 
         public TimeSpan DeleteNodeIterationPeriod { get; set; } = 1.Seconds();
     }

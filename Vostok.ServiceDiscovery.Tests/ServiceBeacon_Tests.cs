@@ -34,7 +34,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 ReplicaRegistered(replica).Should().BeTrue();
             }
@@ -50,7 +50,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodePath)
                     .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
@@ -73,7 +73,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 setup => setup.SetUrl(new Uri(url)).SetApplication("test")))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodePath)
                     .BuildReplicaPath("default", "test", url);
@@ -93,7 +93,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = new ServiceBeacon(ZooKeeperClient))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 var builder = ReplicaInfoBuilder.Build(null);
                 var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodePath)
@@ -153,7 +153,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 beacon.Stop();
@@ -173,7 +173,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 Ensemble.Stop();
@@ -201,7 +201,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
             }
 
@@ -219,7 +219,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 for (var times = 0; times < 3; times++)
                 {
                     beacon.Start();
-                    beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                    beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                     ReplicaRegistered(replica).Should().BeTrue();
 
                     beacon.Stop();
@@ -261,7 +261,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 disposedClient.Dispose();
@@ -280,11 +280,11 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldNotCompleteIn(1.Seconds());
+                beacon.WaitForInitialRegistrationAsync().ShouldNotCompleteIn(1.Seconds());
 
                 Ensemble.Start();
 
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
             }
         }
@@ -298,7 +298,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 Ensemble.Stop();
@@ -318,7 +318,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 KillSession(ZooKeeperClient).Wait();
@@ -335,7 +335,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldNotCompleteIn(0.5.Seconds());
+                beacon.WaitForInitialRegistrationAsync().ShouldNotCompleteIn(0.5.Seconds());
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 for (var times = 0; times < 3; times++)
@@ -361,7 +361,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 for (var times = 0; times < 3; times++)
@@ -382,7 +382,7 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(replica))
             {
                 beacon.Start();
-                beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
 
                 for (var times = 0; times < 3; times++)
@@ -412,7 +412,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     beacon.Start();
 
                 foreach (var beacon in beacons)
-                    beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                    beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 foreach (var replica in replicas)
                     ReplicaRegistered(replica).Should().BeTrue();
@@ -439,7 +439,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     beacon.Start();
 
                 foreach (var beacon in beacons)
-                    beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                    beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 foreach (var replica in replicas)
                     ReplicaRegistered(replica).Should().BeTrue();
@@ -465,7 +465,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     beacon.Start();
 
                 foreach (var beacon in beacons)
-                    beacon.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                    beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 foreach (var replica in replicas)
                     ReplicaRegistered(replica).Should().BeTrue();
@@ -485,10 +485,10 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon1.Start();
-                beacon1.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon1.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 beacon2.Start();
-                beacon2.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon2.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 ReplicaRegistered(replica).Should().BeTrue();
 
@@ -526,10 +526,10 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica).Should().BeFalse();
 
                 beacon1.Start();
-                beacon1.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon1.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 beacon2.Start();
-                beacon2.WaitForRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                beacon2.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
                 ReplicaRegistered(replica).Should().BeTrue();
 

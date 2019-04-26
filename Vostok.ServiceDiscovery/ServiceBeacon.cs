@@ -32,9 +32,9 @@ namespace Vostok.ServiceDiscovery
         private readonly object startStopSync = new object();
         private readonly AtomicBoolean isRunning = false;
         private readonly AtomicBoolean clientDisposed = false;
+        private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
-        private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -107,7 +107,7 @@ namespace Vostok.ServiceDiscovery
         /// Waits for first registration after <see cref="Start"/> method call.
         /// </summary>
         [NotNull]
-        public Task WaitForRegistrationAsync() => nodeCreatedOnceSignal.WaitAsync();
+        public Task WaitForInitialRegistrationAsync() => nodeCreatedOnceSignal.WaitAsync();
 
         private async Task BeaconTask()
         {
@@ -141,7 +141,7 @@ namespace Vostok.ServiceDiscovery
 
             var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet()
                 ? settings.IterationPeriod
-                : settings.StartIterationPeriod;
+                : settings.InitialRegistrationIterationPeriod;
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
         }
 
@@ -160,6 +160,9 @@ namespace Vostok.ServiceDiscovery
         private void OnCompleted()
         {
             log.Warn("Someone else has disposed ZooKeeper client.");
+
+            clientDisposed.TrySetTrue();
+
             if (isRunning.TrySetFalse())
             {
                 checkNodeSignal.Set();
@@ -180,7 +183,7 @@ namespace Vostok.ServiceDiscovery
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
         {
-            // Note(kungurtsev): even if we received modify data event, we should put new watchers on the node
+            // Note(kungurtsev): even if we received modify data event, we should put new watchers on the node.
             checkNodeSignal.Set();
         }
 
@@ -246,8 +249,12 @@ namespace Vostok.ServiceDiscovery
         private async Task<bool> EnvironmentExistsAsync()
         {
             var environmentExists = await zooKeeperClient.ExistsAsync(new ExistsRequest(environmentNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
+
             if (!environmentExists.IsSuccessful)
+            {
                 return false;
+            }
+
             if (!environmentExists.Exists)
             {
                 log.Warn("Node for current environment does not exist at path '{Path}'.", environmentNodePath);
