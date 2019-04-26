@@ -46,13 +46,20 @@ namespace Vostok.ServiceDiscovery
         }
 
         /// <inheritdoc />
-        [NotNull]
         public IServiceTopology Locate(string environment, string application)
         {
-            StartUpdateTask();
+            try
+            {
+                StartUpdateTask();
 
-            var environments = applications.GetOrAdd(application, a => new ApplicationEnvironments(a, zooKeeperClient, nodeWatcher, pathHelper, log));
-            return environments.Locate(environment);
+                var environments = applications.GetOrAdd(application, a => new ApplicationEnvironments(a, zooKeeperClient, nodeWatcher, pathHelper, log));
+                return environments.Locate(environment);
+            }
+            catch (Exception e)
+            {
+                log.Error(e, "Failed to locate '{Application}' application in '{Environment}' environment.");
+                return null;
+            }
         }
 
         public void Dispose()
