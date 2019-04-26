@@ -182,7 +182,11 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 Ensemble.Start();
 
-                ReplicaRegistered(replica).Should().BeFalse();
+                Action action = () =>
+                {
+                    ReplicaRegistered(replica).Should().BeFalse();
+                };
+                action.ShouldPassIn(DefaultTimeout);
             }
         }
 
