@@ -21,7 +21,6 @@ namespace Vostok.ServiceDiscovery
         private const int Running = 1;
         private const int Disposed = 2;
         private readonly AtomicInt state = new AtomicInt(NotStarted);
-        private volatile Task updateTask;
         private readonly AsyncManualResetEvent updateSignal = new AsyncManualResetEvent(true);
 
         private readonly ConcurrentDictionary<string, ApplicationEnvironments> applications = new ConcurrentDictionary<string, ApplicationEnvironments>();
@@ -31,6 +30,7 @@ namespace Vostok.ServiceDiscovery
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
+        private volatile Task updateTask;
 
         public ServiceLocator(
             [NotNull] IZooKeeperClient zooKeeperClient,

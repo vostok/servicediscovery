@@ -93,7 +93,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (applicationData.IsSuccessful)
                 {
-                    var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) { Watcher = nodeWatcher });
+                    var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) {Watcher = nodeWatcher});
                     environment.UpdateReplicas(getChildrenResult, log);
                 }
                 else if (applicationData.Status == ZooKeeperStatus.NodeNotFound)

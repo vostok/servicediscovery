@@ -16,7 +16,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly VersionedContainer<EnvironmentInfo> environmentContainer;
         private readonly VersionedContainer<ApplicationInfo> applicationContainer;
         private readonly VersionedContainer<Uri[]> replicasContainer;
-        
+
         public ApplicationEnvironment(string name)
         {
             Name = name;
@@ -38,8 +38,10 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
             try
             {
-                environmentContainer.Update(environmentData.Stat.ModifiedZxId, () => 
-                    EnvironmentNodeDataSerializer.Deserialize(environmentData.Data));
+                environmentContainer.Update(
+                    environmentData.Stat.ModifiedZxId,
+                    () =>
+                        EnvironmentNodeDataSerializer.Deserialize(environmentData.Data));
             }
             catch (Exception e)
             {
@@ -56,8 +58,10 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
             try
             {
-                applicationContainer.Update(applicationData.Stat.ModifiedZxId, () =>
-                    ApplicationNodeDataSerializer.Deserialize(applicationData.Data));
+                applicationContainer.Update(
+                    applicationData.Stat.ModifiedZxId,
+                    () =>
+                        ApplicationNodeDataSerializer.Deserialize(applicationData.Data));
             }
             catch (Exception e)
             {
@@ -74,8 +78,10 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
             try
             {
-                replicasContainer.Update(childrenResult.Stat.ModifiedChildrenZxId, () => 
-                    UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)));
+                replicasContainer.Update(
+                    childrenResult.Stat.ModifiedChildrenZxId,
+                    () =>
+                        UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)));
             }
             catch (Exception e)
             {
@@ -88,8 +94,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             var application = applicationContainer.Value;
             var replicas = replicasContainer.Value;
 
-            return replicas == null 
-                ? null 
+            return replicas == null
+                ? null
                 : new ServiceTopology(replicas, application?.Properties);
         }
 

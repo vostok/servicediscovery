@@ -50,10 +50,11 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
 
             Parallel.ForEach(
                 updates,
-                new ParallelOptions { MaxDegreeOfParallelism = 10 },
+                new ParallelOptions {MaxDegreeOfParallelism = 10},
                 u =>
                 {
-                    container.Update(u,
+                    container.Update(
+                        u,
                         () =>
                         {
                             Thread.Sleep(u % 100);

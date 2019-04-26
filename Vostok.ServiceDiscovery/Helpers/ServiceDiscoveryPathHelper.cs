@@ -16,7 +16,6 @@ namespace Vostok.ServiceDiscovery.Helpers
             else
                 this.prefix = $"/{prefix.Trim('/')}";
 
-
             pathRegex = new Regex(
                 $@"^{this.prefix}(/(?<environment>[^/]+)(/(?<application>[^/]+)(/(?<replica>[^/]+))?)?)?$",
                 RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);

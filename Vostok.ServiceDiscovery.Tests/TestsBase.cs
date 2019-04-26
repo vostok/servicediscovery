@@ -127,7 +127,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
         }
-        
+
         protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null)
         {
             client = client ?? ZooKeeperClient;

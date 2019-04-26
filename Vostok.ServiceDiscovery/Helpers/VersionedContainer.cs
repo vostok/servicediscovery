@@ -2,11 +2,12 @@
 
 namespace Vostok.ServiceDiscovery.Helpers
 {
-    internal class VersionedContainer<T> where T : class
+    internal class VersionedContainer<T>
+        where T : class
     {
         public volatile T Value;
-        private long version = long.MinValue;
         private readonly object sync = new object();
+        private long version = long.MinValue;
 
         public void Update(long newVersion, Func<T> valueProvider)
         {

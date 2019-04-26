@@ -4,6 +4,7 @@ using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.ServiceDiscovery.Models;
+using EnvironmentInfo = Vostok.Commons.Environment.EnvironmentInfo;
 
 namespace Vostok.ServiceDiscovery.Tests
 {
@@ -88,7 +89,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetPort(123)
                     .SetVirtualPath("vostok"));
 
-            var host = Commons.Environment.EnvironmentInfo.Host.ToLowerInvariant();
+            var host = EnvironmentInfo.Host.ToLowerInvariant();
 
             info.Replica.Should().Be($"https://{host}:123/vostok");
 
@@ -106,7 +107,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var info = ReplicaInfoBuilder.Build(
                 setup => setup.SetPort(123));
 
-            var host = Commons.Environment.EnvironmentInfo.Host.ToLowerInvariant();
+            var host = EnvironmentInfo.Host.ToLowerInvariant();
 
             info.Replica.Should().Be($"http://{host}:123/");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be($"http://{host}:123/");
@@ -118,7 +119,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var info = ReplicaInfoBuilder.Build(
                 setup => setup.SetPort(80));
 
-            var host = Commons.Environment.EnvironmentInfo.Host.ToLowerInvariant();
+            var host = EnvironmentInfo.Host.ToLowerInvariant();
 
             info.Replica.Should().Be($"http://{host}/");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be($"http://{host}/");
@@ -131,7 +132,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var info = ReplicaInfoBuilder.Build(
                 builder => {});
 
-            var host = Commons.Environment.EnvironmentInfo.Host;
+            var host = EnvironmentInfo.Host;
 
             info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be($"{host}({Process.GetCurrentProcess().Id})");
@@ -172,7 +173,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var info = ReplicaInfoBuilder.Build(
                 builder => { builder.SetProperty(ReplicaInfoKeys.Replica, "value"); });
 
-            var host = Commons.Environment.EnvironmentInfo.Host;
+            var host = EnvironmentInfo.Host;
 
             info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
             info.Properties[ReplicaInfoKeys.Replica].Should().Be("value");

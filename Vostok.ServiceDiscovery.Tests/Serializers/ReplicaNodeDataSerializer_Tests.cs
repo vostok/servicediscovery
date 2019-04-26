@@ -32,11 +32,11 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                 {
                     {"a", null},
                     {"b", "value"},
-                    {"c", "" }
+                    {"c", ""}
                 });
 
             var str = Encoding.UTF8.GetString(serialized);
-            var expected = new List<string> { "b = value" };
+            var expected = new List<string> {"b = value"};
             str.Should().Be(string.Join("\n", expected));
         }
 

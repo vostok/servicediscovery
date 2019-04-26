@@ -23,34 +23,44 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var propertiesC = propertiesB.Remove("key");
 
-            dict.Should().BeEquivalentTo(new Dictionary<string, string>
-            {
-                {"key", "value"}
-            });
+            dict.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"key", "value"}
+                    });
 
-            properties.Should().BeEquivalentTo(new Dictionary<string, string>
-            {
-                {"key", "value"}
-            });
+            properties.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"key", "value"}
+                    });
 
-            propertiesA.Should().BeEquivalentTo(new Dictionary<string, string>
-            {
-                {"key", "value"},
-                {"A", "aaa" }
-            });
+            propertiesA.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"key", "value"},
+                        {"A", "aaa"}
+                    });
 
-            propertiesB.Should().BeEquivalentTo(new Dictionary<string, string>
-            {
-                {"key", "value"},
-                {"A", "aaa" },
-                {"B", "bbb" }
-            });
+            propertiesB.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"key", "value"},
+                        {"A", "aaa"},
+                        {"B", "bbb"}
+                    });
 
-            propertiesC.Should().BeEquivalentTo(new Dictionary<string, string>
-            {
-                {"A", "aaa" },
-                {"B", "bbb" }
-            });
+            propertiesC.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"A", "aaa"},
+                        {"B", "bbb"}
+                    });
         }
     }
 }

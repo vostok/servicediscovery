@@ -30,10 +30,10 @@ namespace Vostok.ServiceDiscovery
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
         private readonly ILog log;
         private readonly object startStopSync = new object();
-        private long lastConnectedTimestamp;
-        private volatile Task beaconTask;
         private readonly AtomicBoolean isRunning = false;
         private readonly AtomicBoolean clientDisposed = false;
+        private long lastConnectedTimestamp;
+        private volatile Task beaconTask;
         private volatile AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
 
         public ServiceBeacon(
@@ -233,14 +233,14 @@ namespace Vostok.ServiceDiscovery
             };
 
             var create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
-            
+
             if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)
-            { 
+            {
                 log.Error("Node creation has failed.");
                 return;
             }
 
-            await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) { Watcher = nodeWatcher }).ConfigureAwait(false);
+            await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
         }
 
         private async Task<bool> EnvironmentExistsAsync()

@@ -29,27 +29,33 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         {
             environment = new ApplicationEnvironment("name");
 
-            environment1 = new EnvironmentInfo("parent1", new Dictionary<string, string>
-            {
-                {"key", "value1"}
-            });
+            environment1 = new EnvironmentInfo(
+                "parent1",
+                new Dictionary<string, string>
+                {
+                    {"key", "value1"}
+                });
 
-            environment2 = new EnvironmentInfo("parent2", new Dictionary<string, string>
-            {
-                {"key", "value2"}
-            });
+            environment2 = new EnvironmentInfo(
+                "parent2",
+                new Dictionary<string, string>
+                {
+                    {"key", "value2"}
+                });
 
-            application1 = new ApplicationInfo(new Dictionary<string, string>
-            {
-                {"key", "value1"}
-            });
+            application1 = new ApplicationInfo(
+                new Dictionary<string, string>
+                {
+                    {"key", "value1"}
+                });
 
-            application2 = new ApplicationInfo(new Dictionary<string, string>
-            {
-                {"key", "value2"}
-            });
+            application2 = new ApplicationInfo(
+                new Dictionary<string, string>
+                {
+                    {"key", "value2"}
+                });
 
-            replicas1 = new[] { "http://x.ru", "http://y.ru" };
+            replicas1 = new[] {"http://x.ru", "http://y.ru"};
             replicas2 = new string[0];
         }
 
@@ -80,7 +86,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         [Test]
         public void Should_store_application_properties()
         {
-            environment.UpdateReplicas(ReplicasChildrenResult(new []{"x"}, 1), log);
+            environment.UpdateReplicas(ReplicasChildrenResult(new[] {"x"}, 1), log);
 
             environment.UpdateApplication(ApplicationData(application1, 1), log);
 
@@ -103,7 +109,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.ServiceTopology.Replicas.Should().BeEquivalentTo(UrlParser.Parse(replicas1).Cast<object>());
 
             environment.UpdateReplicas(ReplicasChildrenResult(replicas2, 2), log);
-            
+
             environment.ServiceTopology.Replicas.Should().BeEquivalentTo(UrlParser.Parse(replicas2).Cast<object>());
 
             environment.UpdateReplicas(ReplicasChildrenResult(replicas1, 1), log);
@@ -200,7 +206,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.Environment.Should().BeEquivalentTo(environment1);
             environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
 
-            environment.UpdateEnvironment(GetDataResult.Successful("", new byte[]{1, 2, 3}, new NodeStat(0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)), log);
+            environment.UpdateEnvironment(GetDataResult.Successful("", new byte[] {1, 2, 3}, new NodeStat(0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
             environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
@@ -216,7 +222,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.Environment.Should().BeEquivalentTo(environment1);
             environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
 
-            environment.UpdateApplication(GetDataResult.Successful("", new byte[] { 1, 2, 3 }, new NodeStat(0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)), log);
+            environment.UpdateApplication(GetDataResult.Successful("", new byte[] {1, 2, 3}, new NodeStat(0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
             environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
@@ -232,7 +238,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             environment.Environment.Should().BeEquivalentTo(environment1);
             environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));
 
-            environment.UpdateReplicas(GetChildrenResult.Successful("", new string[]{null}, new NodeStat(0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0)), log);
+            environment.UpdateReplicas(GetChildrenResult.Successful("", new string[] {null}, new NodeStat(0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0)), log);
 
             environment.Environment.Should().BeEquivalentTo(environment1);
             environment.ServiceTopology.Should().BeEquivalentTo(new ServiceTopology(UrlParser.Parse(replicas1), application1.Properties));

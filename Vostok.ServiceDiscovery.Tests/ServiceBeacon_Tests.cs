@@ -232,13 +232,14 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
 
-            var t = Task.Run(() =>
-            {
-                using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
+            var t = Task.Run(
+                () =>
                 {
-                    beacon.Start();
-                }
-            });
+                    using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
+                    {
+                        beacon.Start();
+                    }
+                });
 
             t.ShouldCompleteIn(DefaultTimeout);
         }

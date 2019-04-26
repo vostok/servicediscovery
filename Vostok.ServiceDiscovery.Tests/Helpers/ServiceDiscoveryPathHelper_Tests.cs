@@ -59,7 +59,8 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         [Test]
         [Combinatorial]
         public void TryParse_should_parse_replica_path(
-            [Values(null, "prefix/node", "/prefix/node", "prefix/node/", "/prefix/node/")] string prefix,
+            [Values(null, "prefix/node", "/prefix/node", "prefix/node/", "/prefix/node/")]
+            string prefix,
             [Values("environment", "EEE/eee")] string environment,
             [Values("application", "AAA/aaa")] string application,
             [Values("replica", "RRR/rrr")] string replica)

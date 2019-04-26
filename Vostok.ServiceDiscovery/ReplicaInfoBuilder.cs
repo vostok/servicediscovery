@@ -10,6 +10,13 @@ namespace Vostok.ServiceDiscovery
     internal class ReplicaInfoBuilder : IReplicaInfoBuilder
     {
         private const string DependenciesDelimiter = ";";
+        private readonly string host;
+
+        private readonly string processName;
+        private readonly int? processId;
+        private readonly string baseDirectory;
+
+        private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
 
         private string environment;
         private string application;
@@ -17,21 +24,14 @@ namespace Vostok.ServiceDiscovery
 
         private Uri url;
         private string scheme;
-        private readonly string host;
         private int? port;
         private string virtualPath;
-
-        private readonly string processName;
-        private readonly int? processId;
-        private readonly string baseDirectory;
 
         private string commitHash;
         private string releaseDate;
 
         private List<string> dependencies;
 
-        private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
-        
         private ReplicaInfoBuilder()
         {
             environment = "default";
@@ -116,6 +116,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         #region FluentPublicSetters
+
         // ReSharper disable ParameterHidesMember
 
         public IReplicaInfoBuilder SetEnvironment(string environment)
@@ -179,6 +180,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         // ReSharper restore ParameterHidesMember
+
         #endregion
     }
 }

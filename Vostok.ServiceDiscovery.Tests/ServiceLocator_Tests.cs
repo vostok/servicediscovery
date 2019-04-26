@@ -112,7 +112,7 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_skip_environment_without_application()
         {
             var replica = new ReplicaInfo("parent", "vostok", "https://github.com/vostok");
-            
+
             CreateEnvironmentNode("parent");
             CreateEnvironmentNode("child", "parent");
 
@@ -394,7 +394,7 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_not_locate_without_application()
         {
             CreateEnvironmentNode("default");
-            
+
             using (var locator = GetServiceLocator())
             {
                 ShouldNotLocate(locator, "default", "vostok");
@@ -420,7 +420,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             CreateEnvironmentNode("default", "default");
             CreateReplicaNode(replica);
-            
+
             using (var locator = GetServiceLocator())
             {
                 ShouldLocate(locator, "default", "vostok", replica.Replica);
@@ -467,10 +467,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
         private static void ShouldLocate(ServiceLocator locator, string environment, string application, params string[] replicas)
         {
-            Action assertion = () =>
-            {
-                ShouldLocateImmediately(locator, environment, application, replicas);
-            };
+            Action assertion = () => { ShouldLocateImmediately(locator, environment, application, replicas); };
             assertion.ShouldPassIn(DefaultTimeout);
         }
 
@@ -483,10 +480,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
         private static void ShouldNotLocate(ServiceLocator locator, string environment, string application)
         {
-            Action assertion = () =>
-            {
-                ShouldNotLocateImmediately(locator, environment, application);
-            };
+            Action assertion = () => { ShouldNotLocateImmediately(locator, environment, application); };
             assertion.ShouldPassIn(DefaultTimeout);
         }
 
