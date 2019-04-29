@@ -41,7 +41,7 @@ namespace Vostok.ServiceDiscovery
             this.settings = settings ?? new ServiceLocatorSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceLocator>();
 
-            pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodePath);
+            pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix);
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
 
