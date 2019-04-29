@@ -87,7 +87,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 setup => setup
                     .SetScheme("https")
                     .SetPort(123)
-                    .SetVirtualPath("vostok"));
+                    .SetUrlPath("vostok"));
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
