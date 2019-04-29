@@ -20,6 +20,7 @@ namespace Vostok.ServiceDiscovery
     [PublicAPI]
     public class ServiceBeacon : IServiceBeacon, IDisposable
     {
+        private readonly ReplicaInfo replicaInfo;
         private readonly string environmentNodePath;
         private readonly string applicationNodePath;
         private readonly string replicaNodePath;
@@ -52,7 +53,7 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ILog log)
         {
             this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
-            replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
+            this.replicaInfo = replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
             this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
 
@@ -114,6 +115,9 @@ namespace Vostok.ServiceDiscovery
             var observer = new AdHocConnectionStateObserver(OnConnectionStateChanged, OnCompleted);
             using (zooKeeperClient.OnConnectionStateChanged.Subscribe(observer))
             {
+                log.Info("Registering an instance of application '{Application}' in environment '{Environment}' with id = '{Instance}'.",
+                    replicaInfo.Application, replicaInfo.Environment, replicaInfo.Replica);
+
                 while (isRunning)
                 {
                     var budget = TimeBudget.StartNew(settings.MinimumTimeBetweenIterations);
