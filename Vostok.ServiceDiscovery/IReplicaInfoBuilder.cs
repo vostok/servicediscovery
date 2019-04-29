@@ -6,9 +6,9 @@ using Vostok.ServiceDiscovery.Models;
 namespace Vostok.ServiceDiscovery
 {
     /// <summary>
-    /// <para>Represents a configuration of <see cref="ReplicaInfoBuilder"/> instance which may be filled during <see cref="ServiceBeacon"/> construction.</para>
+    /// <para><see cref="IReplicaInfoBuilder"/> is used to specify application instance details on <see cref="ServiceBeacon"/> construction.</para>
     /// <para>All parameters are optional.</para>
-    /// <para>If you want to register service, url or port should be specified.</para>
+    /// <para>Use <see cref="SetUrl"/> or <see cref="SetPort"/> to advertise the application as an HTTP service.</para>
     /// </summary>
     [PublicAPI]
     public interface IReplicaInfoBuilder
@@ -17,64 +17,76 @@ namespace Vostok.ServiceDiscovery
         /// <para>Sets application environment.</para>
         /// <para>Default value: <c>default</c>.</para>
         /// </summary>
-        IReplicaInfoBuilder SetEnvironment(string environment);
+        [NotNull]
+        IReplicaInfoBuilder SetEnvironment([NotNull] string environment);
 
         /// <summary>
         /// <para>Sets application name.</para>
-        /// <para>Default value: current application name.</para>
+        /// <para>Default value: current entry assembly name.</para>
         /// </summary>
-        IReplicaInfoBuilder SetApplication(string application);
+        [NotNull]
+        IReplicaInfoBuilder SetApplication([NotNull] string application);
 
         /// <summary>
-        /// <para>Sets replica url.</para>
-        /// <para>By default, it will be constructed from scheme, current host name, port and virtual path,
-        ///     if port is specified.</para>
+        /// <para>Sets replica HTTP url.</para>
+        /// <para>By default, it will be constructed from scheme, current host name, port and virtual path, if port is specified.</para>
+        /// <para>Should not be called in conjunction with <see cref="SetPort"/>, <see cref="SetScheme"/> and <see cref="SetUrlPath"/>.</para>
+        /// <para>Setting this property will instruct <see cref="ServiceBeacon"/> to advertise application as an HTTP service.</para>
         /// </summary>
-        IReplicaInfoBuilder SetUrl(Uri url);
+        [NotNull]
+        IReplicaInfoBuilder SetUrl([NotNull] Uri url);
 
         /// <summary>
-        /// <para>Sets replica url port.</para>
-        /// <para>If is not specified, it will be filled from url.</para>
-        /// <para>Default value: <c>null</c>.</para>
+        /// <para>Specifies the port the application uses to listen for HTTP requests.</para>
+        /// <para>Default value: none.</para>
+        /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
+        /// <para>Setting this property will instruct <see cref="ServiceBeacon"/> to advertise application as an HTTP service.</para>
         /// </summary>
+        [NotNull]
         IReplicaInfoBuilder SetPort(int port);
 
         /// <summary>
         /// <para>Sets replica url scheme.</para>
-        /// <para>If is not specified, it will be filled from url.</para>
         /// <para>Default value: <c>http</c>.</para>
+        /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
         /// </summary>
-        IReplicaInfoBuilder SetScheme(string scheme);
+        [NotNull]
+        IReplicaInfoBuilder SetScheme([NotNull] string scheme);
 
         /// <summary>
-        /// <para>Sets replica url virtual path.</para>
-        /// <para>If is not specified, it will be filled from url.</para>
+        /// <para>Sets replica url path.</para>
         /// <para>Default value: <c>null</c></para>
+        /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
         /// </summary>
-        IReplicaInfoBuilder SetVirtualPath(string virtualPath);
+        [NotNull]
+        IReplicaInfoBuilder SetUrlPath([NotNull] string path);
 
         /// <summary>
         /// <para>Sets build commit hash.</para>
-        /// <para>By default, it will be parsed from <c>AssemblyTitle</c> of entry assembly.</para>
+        /// <para>By default, it will be parsed from <c>AssemblyTitle</c> attribute of entry assembly.</para>
         /// </summary>
-        IReplicaInfoBuilder SetCommitHash(string commitHash);
+        [NotNull]
+        IReplicaInfoBuilder SetCommitHash([NotNull] string commitHash);
 
         /// <summary>
-        /// <para>Build date.</para>
-        /// <para>By default, it will be parsed from <c>AssemblyTitle</c> of entry assembly.</para>
+        /// <para>Sets application build date.</para>
+        /// <para>By default, it will be parsed from <c>AssemblyTitle</c> attribute of entry assembly.</para>
         /// </summary>
-        IReplicaInfoBuilder SetReleaseDate(string releaseDate);
+        [NotNull]
+        IReplicaInfoBuilder SetReleaseDate([NotNull] string releaseDate);
 
         /// <summary>
-        /// <para>Assembly dependencies.</para>
-        /// <para>By default it will be parsed from all <c>.dll</c>. and <c>.exe</c> files of entry assembly directory.</para>
+        /// <para>Sets application dependencies (libraries along with their versions).</para>
+        /// <para>By default it will be parsed from all <c>.dll</c>. and <c>.exe</c> files in the entry assembly directory.</para>
         /// </summary>
-        IReplicaInfoBuilder SetDependencies(IEnumerable<string> dependencies);
+        [NotNull]
+        IReplicaInfoBuilder SetDependencies([NotNull] IEnumerable<string> dependencies);
 
         /// <summary>
-        /// <para>Sets custom <paramref name="key"/>-<paramref name="value"/> property.</para>
-        /// <para>Default key names can be found in <see cref="ReplicaInfoKeys"/>.</para>
+        /// <para>Sets a custom <paramref name="key"/>-<paramref name="value"/> property.</para>
+        /// <para>Built-in key names can be found in <see cref="ReplicaInfoKeys"/>.</para>
         /// </summary>
+        [NotNull]
         IReplicaInfoBuilder SetProperty([NotNull] string key, [CanBeNull] string value);
     }
 }

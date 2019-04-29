@@ -10,7 +10,7 @@ namespace Vostok.ServiceDiscovery
     [PublicAPI]
     public class ServiceBeaconSettings
     {
-        public string ZooKeeperNodePath { get; set; } = "/service-discovery/v2";
+        public string ZooKeeperNodesPrefix { get; set; } = "/service-discovery/v2";
 
         public TimeSpan MinimumTimeBetweenIterations { get; set; } = 500.Milliseconds();
 

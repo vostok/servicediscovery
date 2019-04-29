@@ -149,9 +149,9 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
 
-        public IReplicaInfoBuilder SetVirtualPath(string virtualPath)
+        public IReplicaInfoBuilder SetUrlPath(string path)
         {
-            this.virtualPath = virtualPath;
+            this.virtualPath = path;
             return this;
         }
 
