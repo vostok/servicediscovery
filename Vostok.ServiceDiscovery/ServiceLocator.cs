@@ -64,7 +64,10 @@ namespace Vostok.ServiceDiscovery
 
         public void Dispose()
         {
-            StopUpdateCacheTask();
+            if (state.TryIncreaseTo(Disposed))
+            {
+                updateCacheSignal.Set();
+            }
         }
 
         private void StartUpdateCacheTask()
@@ -75,14 +78,6 @@ namespace Vostok.ServiceDiscovery
             if (state.TryIncreaseTo(Running))
             {
                 updateCacheTask = Task.Run(UpdateCacheTask);
-            }
-        }
-
-        private void StopUpdateCacheTask()
-        {
-            if (state.TryIncreaseTo(Disposed))
-            {
-                updateCacheSignal.Set();
             }
         }
 
