@@ -1,7 +1,10 @@
-﻿namespace Vostok.ServiceDiscovery
+﻿using JetBrains.Annotations;
+
+namespace Vostok.ServiceDiscovery
 {
     /// <summary>
-    /// Delegate which configures <see cref="IReplicaInfoBuilder"/>.
+    /// A delegate that configures <see cref="IReplicaInfoBuilder"/> during <see cref="ServiceBeacon"/> construction.
     /// </summary>
-    public delegate void ReplicaInfoSetup(IReplicaInfoBuilder builder);
+    [PublicAPI]
+    public delegate void ReplicaInfoSetup([NotNull] IReplicaInfoBuilder builder);
 }
