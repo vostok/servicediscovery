@@ -86,6 +86,8 @@ namespace Vostok.ServiceDiscovery
             {
                 if (isRunning.TrySetFalse())
                 {
+                    log.Info("Stopped. Unregistering..");
+
                     checkNodeSignal.Set();
                     beaconTask.GetAwaiter().GetResult();
                     if (!DeleteNodeAsync().GetAwaiter().GetResult())
