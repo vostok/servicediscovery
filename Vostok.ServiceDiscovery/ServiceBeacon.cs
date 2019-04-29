@@ -213,22 +213,24 @@ namespace Vostok.ServiceDiscovery
                 if (nodeCreationTime > lastConnected)
                 {
                     log.Warn(
-                        $"Node with path '{replicaNodePath}' already exists " +
-                        $"and has owner session id = {existsNode.Stat.EphemeralOwner:x16}, " +
-                        $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
-                        $"But it was created recently (at {nodeCreationTime}) so we won't touch it. " +
-                        "This may indicate several beacons with same environment, application and replica exist.");
+                        "Node with path '{ReplicaNodePath}' already exists " +
+                        "and has owner session id = {NodeEphemeralOwner:x16}, " +
+                        "which differs from our id = {ClientSessionId:x16}. " +
+                        "But it was created recently (at {NodeCreationTime}) so we won't touch it. " +
+                        "This may indicate several beacons with same environment, application and replica exist.",
+                        replicaNodePath, existsNode.Stat.EphemeralOwner, zooKeeperClient.SessionId, nodeCreationTime);
 
                     return;
                 }
 
                 log.Warn(
-                    $"Node with path '{replicaNodePath}' already exists, " +
+                    "Node with path '{ReplicaNodePath}' already exists, " +
                     "but looks like a stale one from ourselves. " +
-                    $"It has owner session id = {existsNode.Stat.EphemeralOwner:x16}, " +
-                    $"which differs from our id = {zooKeeperClient.SessionId:x16}. " +
-                    $"It was created at {nodeCreationTime}. " +
-                    "Will delete it and create a new one.");
+                    "It has owner session id = {NodeEphemeralOwner:x16}, " +
+                    "which differs from our id = {ClientSessionId:x16}. " +
+                    "It was created at {NodeCreationTime}. " +
+                    "Will delete it and create a new one.",
+                    replicaNodePath, existsNode.Stat.EphemeralOwner, zooKeeperClient.SessionId, nodeCreationTime);
 
                 if (!await DeleteNodeAsync().ConfigureAwait(false))
                     return;
