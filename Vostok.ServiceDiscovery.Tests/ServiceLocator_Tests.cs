@@ -227,6 +227,28 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Should_track_application_replicas()
+        {
+            CreateEnvironmentNode("default");
+
+            CreateApplicationNode("default", "vostok");
+            
+            using (var locator = GetServiceLocator())
+            {
+                for (var times = 0; times < 5; times++)
+                {
+                    // ReSharper disable once AccessToModifiedClosure
+                    Action action = () => { locator.Locate("default", "vostok").Replicas.Count.Should().Be(times); };
+
+                    action.ShouldPassIn(DefaultTimeout);
+
+                    var replica = new ReplicaInfo("default", "vostok", $"https://github.com/vostok/{times}");
+                    CreateReplicaNode(replica);
+                }
+            }
+        }
+
+        [Test]
         public void Should_track_replicas_registration_in_nested_environments()
         {
             var replica1Parent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok1/parent");
@@ -355,6 +377,28 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Should_not_go_to_parent_if_application_node_added_to_current_environment()
+        {
+            var replica = new ReplicaInfo("parent", "vostok", "https://github.com/vostok");
+
+            CreateEnvironmentNode("parent");
+            CreateEnvironmentNode("child", "parent");
+
+            CreateApplicationNode("parent", "vostok");
+
+            CreateReplicaNode(replica);
+
+            using (var locator = GetServiceLocator())
+            {
+                ShouldLocate(locator, "child", "vostok", replica.Replica);
+
+                CreateApplicationNode("child", "vostok");
+
+                ShouldLocate(locator, "child", "vostok");
+            }
+        }
+
+        [Test]
         public void Should_track_application_properties()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
@@ -375,14 +419,17 @@ namespace Vostok.ServiceDiscovery.Tests
                 // ReSharper disable once PossibleNullReferenceException
                 locator.Locate("default", "vostok").Properties.Should().BeEquivalentTo(properties);
 
-                properties["key3"] = "value3";
-                CreateApplicationNode("default", "vostok", properties);
+                for (var times = 0; times < 5; times++)
+                {
+                    properties["iteration"] = times.ToString();
+                    CreateApplicationNode("default", "vostok", properties);
 
-                // ReSharper disable once AccessToDisposedClosure
-                // ReSharper disable once PossibleNullReferenceException
-                Action action = () => { locator.Locate("default", "vostok").Properties.Should().BeEquivalentTo(properties); };
+                    // ReSharper disable once AccessToDisposedClosure
+                    // ReSharper disable once PossibleNullReferenceException
+                    Action action = () => { locator.Locate("default", "vostok").Properties.Should().BeEquivalentTo(properties); };
 
-                action.ShouldPassIn(DefaultTimeout);
+                    action.ShouldPassIn(DefaultTimeout);
+                }
             }
         }
 

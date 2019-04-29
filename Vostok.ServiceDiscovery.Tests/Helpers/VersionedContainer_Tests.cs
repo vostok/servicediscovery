@@ -30,12 +30,25 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         }
 
         [Test]
-        public void Update_should_ignore_smaller_versions()
+        public void NeedUpdate_should_be_false_for_smaller_or_equal_versions()
+        {
+            var container = new VersionedContainer<string>();
+
+            container.Update(2, () => "x").Should().BeTrue();
+
+            container.NeedUpdate(1).Should().BeFalse();
+            container.NeedUpdate(2).Should().BeFalse();
+            container.NeedUpdate(3).Should().BeTrue();
+        }
+
+        [Test]
+        public void Update_should_ignore_smaller_or_equal_versions()
         {
             var container = new VersionedContainer<string>();
 
             container.Update(2, () => "x").Should().BeTrue();
             container.Update(1, () => throw new AssertionException("Should not be called.")).Should().BeFalse();
+            container.Update(2, () => throw new AssertionException("Should not be called.")).Should().BeFalse();
 
             container.Value.Should().Be("x");
         }

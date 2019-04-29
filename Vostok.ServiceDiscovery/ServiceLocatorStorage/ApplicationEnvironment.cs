@@ -48,7 +48,21 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
         }
 
-        public void UpdateApplication(GetDataResult applicationData, ILog log)
+        public bool NeedUpdateApplicationInfo(ExistsResult applicationExists)
+        {
+            if (!applicationExists.IsSuccessful)
+                return false;
+
+            if (applicationExists.Stat == null)
+            {
+                RemoveApplication();
+                return false;
+            }
+
+            return applicationContainer.NeedUpdate(applicationExists.Stat.ModifiedZxId);
+        }
+
+        public void UpdateApplicationInfo(GetDataResult applicationData, ILog log)
         {
             if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
                 RemoveApplication();
@@ -72,19 +86,33 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
         }
 
-        public void UpdateReplicas(GetChildrenResult childrenResult, ILog log)
+        public bool NeedUpdateApplicationReplicas(ExistsResult applicationExists)
         {
-            if (childrenResult.Status == ZooKeeperStatus.NodeNotFound)
+            if (!applicationExists.IsSuccessful)
+                return false;
+
+            if (applicationExists.Stat == null)
+            {
                 RemoveApplication();
-            if (!childrenResult.IsSuccessful)
+                return false;
+            }
+
+            return replicasContainer.NeedUpdate(applicationExists.Stat.ModifiedChildrenZxId);
+        }
+
+        public void UpdateApplicationReplicas(GetChildrenResult applicationChildren, ILog log)
+        {
+            if (applicationChildren.Status == ZooKeeperStatus.NodeNotFound)
+                RemoveApplication();
+            if (!applicationChildren.IsSuccessful)
                 return;
 
             try
             {
                 if (replicasContainer.Update(
-                    childrenResult.Stat.ModifiedChildrenZxId,
+                    applicationChildren.Stat.ModifiedChildrenZxId,
                     () =>
-                        UrlParser.Parse(childrenResult.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)))
+                        UrlParser.Parse(applicationChildren.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)))
                 )
                 {
                     UpdateServiceTopology();
@@ -92,7 +120,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
             catch (Exception e)
             {
-                log.Error(e, "Failed to update replicas for path '{Path}'.", childrenResult.Path);
+                log.Error(e, "Failed to update replicas for path '{Path}'.", applicationChildren.Path);
             }
         }
 

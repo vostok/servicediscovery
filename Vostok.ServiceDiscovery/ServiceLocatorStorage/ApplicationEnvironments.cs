@@ -94,24 +94,28 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             try
             {
-                var environmentData = zooKeeperClient.GetData(pathHelper.BuildEnvironmentPath(environment.Name));
+                var environmentPath = pathHelper.BuildEnvironmentPath(environment.Name);
+                var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
+
+                var environmentData = zooKeeperClient.GetData(environmentPath);
                 environment.UpdateEnvironment(environmentData, log);
                 if (!environmentData.IsSuccessful)
                     return;
 
-                var applicationPath = pathHelper.BuildApplicationPath(environment.Name, application);
-                var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) {Watcher = nodeWatcher});
-                environment.UpdateApplication(applicationData, log);
+                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationPath) { Watcher = nodeWatcher });
+                if (!applicationExists.IsSuccessful)
+                    return;
 
-                if (applicationData.IsSuccessful)
+                if (environment.NeedUpdateApplicationInfo(applicationExists))
                 {
-                    var getChildrenResult = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) {Watcher = nodeWatcher});
-                    environment.UpdateReplicas(getChildrenResult, log);
+                    var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationPath) { Watcher = nodeWatcher });
+                    environment.UpdateApplicationInfo(applicationData, log);
                 }
-                else if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
+
+                if (environment.NeedUpdateApplicationReplicas(applicationExists))
                 {
-                    // Note(kungurtsev): watch if node will be created.
-                    zooKeeperClient.Exists(new ExistsRequest(applicationPath) {Watcher = nodeWatcher});
+                    var applicationChildren = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationPath) { Watcher = nodeWatcher });
+                    environment.UpdateApplicationReplicas(applicationChildren, log);
                 }
             }
             catch (Exception e)
