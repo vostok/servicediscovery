@@ -25,7 +25,7 @@ namespace Vostok.ServiceDiscovery
         private Uri url;
         private string scheme;
         private int? port;
-        private string virtualPath;
+        private string urlPath;
 
         private string commitHash;
         private string releaseDate;
@@ -54,14 +54,14 @@ namespace Vostok.ServiceDiscovery
 
         public ReplicaInfo Build()
         {
-            url = url ?? BuildUrl(scheme, port, virtualPath);
+            url = url ?? BuildUrl(scheme, port, urlPath);
             replica = url?.ToString() ?? $"{EnvironmentInfo.Host}({EnvironmentInfo.ProcessId})";
 
             if (url != null)
             {
                 scheme = url.Scheme;
                 port = url.Port;
-                virtualPath = url.AbsolutePath;
+                urlPath = url.AbsolutePath;
             }
 
             var result = new ReplicaInfo(environment, application, replica);
@@ -151,7 +151,7 @@ namespace Vostok.ServiceDiscovery
 
         public IReplicaInfoBuilder SetUrlPath(string path)
         {
-            this.virtualPath = path;
+            urlPath = path;
             return this;
         }
 
