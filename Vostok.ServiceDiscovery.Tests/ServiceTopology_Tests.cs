@@ -29,8 +29,8 @@ namespace Vostok.ServiceDiscovery.Tests
             var replicas = new List<Uri> {new Uri("http://x.ru"), new Uri("http://y.ru")};
             var properties = new Dictionary<string, string>
             {
-                {"key1", "value1" },
-                {"key2", "value2" },
+                {"key1", "value1"},
+                {"key2", "value2"}
             };
             var topology = ServiceTopology.Build(replicas, properties);
             topology.Should().NotBeNull();

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
@@ -52,10 +51,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
             Parallel.ForEach(
                 updates,
                 new ParallelOptions {MaxDegreeOfParallelism = 10},
-                u =>
-                {
-                    container.Update(u, u.ToString());
-                });
+                u => { container.Update(u, u.ToString()); });
 
             container.Value.Should().Be(updates.Max().ToString());
         }

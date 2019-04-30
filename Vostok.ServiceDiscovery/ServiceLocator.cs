@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Extensions;
@@ -41,7 +40,7 @@ namespace Vostok.ServiceDiscovery
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceLocator>();
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix);
-            
+
             environmentsStorage = new EnvironmentsStorage(zooKeeperClient, pathHelper, log);
             applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, log);
         }
@@ -60,6 +59,11 @@ namespace Vostok.ServiceDiscovery
                 log.Error(e, "Failed to locate '{Application}' application in '{Environment}' environment.", application, environment);
                 return null;
             }
+        }
+
+        public void Dispose()
+        {
+            StopUpdateCacheTask();
         }
 
         private IServiceTopology LocateInner(string environmentName, string applicationName)
@@ -87,11 +91,6 @@ namespace Vostok.ServiceDiscovery
 
             log.Warn("Cycled when resolving '{Application}' application in '{Environment}'.", applicationName, environmentName);
             return null;
-        }
-
-        public void Dispose()
-        {
-            StopUpdateCacheTask();
         }
 
         private void StartUpdateCacheTask()

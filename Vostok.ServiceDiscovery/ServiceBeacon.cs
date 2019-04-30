@@ -117,8 +117,11 @@ namespace Vostok.ServiceDiscovery
             var observer = new AdHocConnectionStateObserver(OnConnectionStateChanged, OnCompleted);
             using (zooKeeperClient.OnConnectionStateChanged.Subscribe(observer))
             {
-                log.Info("Registering an instance of application '{Application}' in environment '{Environment}' with id = '{Instance}'.",
-                    replicaInfo.Application, replicaInfo.Environment, replicaInfo.Replica);
+                log.Info(
+                    "Registering an instance of application '{Application}' in environment '{Environment}' with id = '{Instance}'.",
+                    replicaInfo.Application,
+                    replicaInfo.Environment,
+                    replicaInfo.Replica);
 
                 while (isRunning)
                 {
@@ -220,7 +223,10 @@ namespace Vostok.ServiceDiscovery
                         "which differs from our id = {ClientSessionId:x16}. " +
                         "But it was created recently (at {NodeCreationTime}) so we won't touch it. " +
                         "This may indicate several beacons with same environment, application and replica exist.",
-                        replicaNodePath, existsNode.Stat.EphemeralOwner, zooKeeperClient.SessionId, nodeCreationTime);
+                        replicaNodePath,
+                        existsNode.Stat.EphemeralOwner,
+                        zooKeeperClient.SessionId,
+                        nodeCreationTime);
 
                     return;
                 }
@@ -232,7 +238,10 @@ namespace Vostok.ServiceDiscovery
                     "which differs from our id = {ClientSessionId:x16}. " +
                     "It was created at {NodeCreationTime}. " +
                     "Will delete it and create a new one.",
-                    replicaNodePath, existsNode.Stat.EphemeralOwner, zooKeeperClient.SessionId, nodeCreationTime);
+                    replicaNodePath,
+                    existsNode.Stat.EphemeralOwner,
+                    zooKeeperClient.SessionId,
+                    nodeCreationTime);
 
                 if (!await DeleteNodeAsync().ConfigureAwait(false))
                     return;

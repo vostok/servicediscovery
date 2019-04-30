@@ -10,7 +10,7 @@ using Vostok.ZooKeeper.Client.Abstractions;
 namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 {
     [TestFixture]
-    internal class ApplicationsStorage_Tests :TestsBase
+    internal class ApplicationsStorage_Tests : TestsBase
     {
         [Test]
         public void Should_track_application_properties()
@@ -18,7 +18,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateEnvironmentNode("default");
             CreateApplicationNode("default", "application");
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
-            
+
             using (var storage = GetApplicationsStorage())
             {
                 for (var times = 0; times < 10; times++)
@@ -102,18 +102,27 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateApplicationNode("environment1", "application1", new Dictionary<string, string> {{"key", "1/1"}});
 
             CreateEnvironmentNode("environment2");
-            CreateApplicationNode("environment2", "application1", new Dictionary<string, string> { { "key", "2/1" } });
-            CreateApplicationNode("environment2", "application2", new Dictionary<string, string> { { "key", "2/2" } });
+            CreateApplicationNode("environment2", "application1", new Dictionary<string, string> {{"key", "2/1"}});
+            CreateApplicationNode("environment2", "application2", new Dictionary<string, string> {{"key", "2/2"}});
 
             using (var storage = GetApplicationsStorage())
             {
-                ShouldReturnImmediately(storage, "environment1", "application1", 
-                    ServiceTopology.Build(new Uri[0], new Dictionary<string, string> { { "key", "1/1" } }));
+                ShouldReturnImmediately(
+                    storage,
+                    "environment1",
+                    "application1",
+                    ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}}));
 
-                ShouldReturnImmediately(storage, "environment2", "application1",
-                    ServiceTopology.Build(new Uri[0], new Dictionary<string, string> { { "key", "2/1" } }));
-                ShouldReturnImmediately(storage, "environment2", "application2",
-                    ServiceTopology.Build(new Uri[0], new Dictionary<string, string> { { "key", "2/2" } }));
+                ShouldReturnImmediately(
+                    storage,
+                    "environment2",
+                    "application1",
+                    ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "2/1"}}));
+                ShouldReturnImmediately(
+                    storage,
+                    "environment2",
+                    "application2",
+                    ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "2/2"}}));
             }
         }
 
@@ -149,16 +158,16 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         public void Should_not_update_after_dispose()
         {
             CreateEnvironmentNode("default");
-            CreateApplicationNode("default", "application", new Dictionary<string, string>() {{"key", "value1"}});
+            CreateApplicationNode("default", "application", new Dictionary<string, string> {{"key", "value1"}});
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
 
             using (var storage = GetApplicationsStorage())
             {
-                var expected = ServiceTopology.Build(new List<Uri> { new Uri("https://github.com/vostok") }, new Dictionary<string, string>() { { "key", "value1" }});
+                var expected = ServiceTopology.Build(new List<Uri> {new Uri("https://github.com/vostok")}, new Dictionary<string, string> {{"key", "value1"}});
                 ShouldReturnImmediately(storage, "default", "application", expected);
 
                 storage.Dispose();
-                CreateApplicationNode("default", "application", new Dictionary<string, string>() { { "key", "value2" } });
+                CreateApplicationNode("default", "application", new Dictionary<string, string> {{"key", "value2"}});
 
                 storage.UpdateAll();
                 ShouldReturnImmediately(storage, "default", "application", expected);
@@ -169,12 +178,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         public void Should_not_update_to_invalid_application_properties()
         {
             CreateEnvironmentNode("default");
-            CreateApplicationNode("default", "application", new Dictionary<string, string>() { { "key", "value" } });
+            CreateApplicationNode("default", "application", new Dictionary<string, string> {{"key", "value"}});
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
 
             using (var storage = GetApplicationsStorage())
             {
-                var expected = ServiceTopology.Build(new List<Uri> { new Uri("https://github.com/vostok") }, new Dictionary<string, string>() { { "key", "value" } });
+                var expected = ServiceTopology.Build(new List<Uri> {new Uri("https://github.com/vostok")}, new Dictionary<string, string> {{"key", "value"}});
                 ShouldReturnImmediately(storage, "default", "application", expected);
 
                 ZooKeeperClient.SetData(PathHelper.BuildApplicationPath("default", "application"), new byte[] {1, 2, 3});
@@ -189,7 +198,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         {
             CreateEnvironmentNode("default");
             CreateApplicationNode("default", "application");
-            
+
             using (var storage = GetApplicationsStorage())
             {
                 var expectedReplicas = new List<Uri>();

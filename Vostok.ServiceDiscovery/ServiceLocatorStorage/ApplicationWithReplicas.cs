@@ -13,6 +13,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 {
     internal class ApplicationWithReplicas
     {
+        public ServiceTopology ServiceTopology;
         private readonly string environmentName;
         private readonly string applicationName;
         private readonly string applicationNodePath;
@@ -23,10 +24,13 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
 
-        public ServiceTopology ServiceTopology;
-
-        public ApplicationWithReplicas(string environmentName, string applicationName, string applicationNodePath, 
-                                       IZooKeeperClient zooKeeperClient, AdHocNodeWatcher nodeWatcher, ILog log)
+        public ApplicationWithReplicas(
+            string environmentName,
+            string applicationName,
+            string applicationNodePath,
+            IZooKeeperClient zooKeeperClient,
+            AdHocNodeWatcher nodeWatcher,
+            ILog log)
         {
             this.environmentName = environmentName;
             this.applicationName = applicationName;
@@ -42,11 +46,12 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             try
             {
-                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) { Watcher = nodeWatcher });
+                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = nodeWatcher});
                 if (!applicationExists.IsSuccessful)
                 {
                     return;
                 }
+
                 if (applicationExists.Stat == null)
                 {
                     Clear();
@@ -55,7 +60,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (applicationContainer.NeedUpdate(applicationExists.Stat.ModifiedZxId))
                 {
-                    var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationNodePath) { Watcher = nodeWatcher });
+                    var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationNodePath) {Watcher = nodeWatcher});
                     if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
                         Clear();
                     if (!applicationData.IsSuccessful)

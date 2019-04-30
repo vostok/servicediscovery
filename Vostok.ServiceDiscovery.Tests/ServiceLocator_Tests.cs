@@ -183,9 +183,9 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_update_environment_properties()
         {
             var replicaParent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok/parent");
-            
+
             CreateEnvironmentNode("parent");
-            CreateEnvironmentNode("child", "parent", new Dictionary<string, string> { { EnvironmentInfoKeys.SkipIfEmpty, "True" } });
+            CreateEnvironmentNode("child", "parent", new Dictionary<string, string> {{EnvironmentInfoKeys.SkipIfEmpty, "True"}});
 
             CreateApplicationNode("child", "vostok");
             CreateApplicationNode("parent", "vostok");
@@ -197,7 +197,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 ShouldLocate(locator, "child", "vostok", replicaParent.Replica);
                 ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
 
-                CreateEnvironmentNode("child", "parent", new Dictionary<string, string> { { EnvironmentInfoKeys.SkipIfEmpty, "False" } });
+                CreateEnvironmentNode("child", "parent", new Dictionary<string, string> {{EnvironmentInfoKeys.SkipIfEmpty, "False"}});
 
                 ShouldLocate(locator, "child", "vostok");
                 ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
@@ -232,7 +232,7 @@ namespace Vostok.ServiceDiscovery.Tests
             CreateEnvironmentNode("default");
 
             CreateApplicationNode("default", "vostok");
-            
+
             using (var locator = GetServiceLocator())
             {
                 for (var times = 0; times < 5; times++)
@@ -620,10 +620,13 @@ namespace Vostok.ServiceDiscovery.Tests
 
         private ServiceLocator GetServiceLocator(TimeSpan? iterationPeriod = null)
         {
-            return new ServiceLocator(ZooKeeperClient, new ServiceLocatorSettings
-            {
-                IterationPeriod = iterationPeriod ?? 60.Seconds()
-            }, Log);
+            return new ServiceLocator(
+                ZooKeeperClient,
+                new ServiceLocatorSettings
+                {
+                    IterationPeriod = iterationPeriod ?? 60.Seconds()
+                },
+                Log);
         }
     }
 }

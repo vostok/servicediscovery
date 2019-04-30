@@ -39,10 +39,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         [Test]
         public void Should_track_environment_creation_and_deletion()
         {
-            var info = new EnvironmentInfo("parent", new Dictionary<string, string>
-            {
-                { "key", "value" }
-            });
+            var info = new EnvironmentInfo(
+                "parent",
+                new Dictionary<string, string>
+                {
+                    {"key", "value"}
+                });
 
             using (var storage = GetEnvironmentsStorage())
             {
@@ -68,7 +70,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             using (var storage = GetEnvironmentsStorage())
             {
                 for (var i = 0; i < 10; i++)
-                    CreateEnvironmentNode($"environment_{i}", $"environment_{i+1}");
+                    CreateEnvironmentNode($"environment_{i}", $"environment_{i + 1}");
 
                 for (var i = 0; i < 10; i++)
                     ShouldReturnImmediately(storage, $"environment_{i}", new EnvironmentInfo($"environment_{i + 1}", null));
