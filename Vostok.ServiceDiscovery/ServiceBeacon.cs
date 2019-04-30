@@ -139,8 +139,6 @@ namespace Vostok.ServiceDiscovery
         {
             try
             {
-                checkNodeSignal.Reset();
-
                 await EnsureNodeExistsAsync().ConfigureAwait(false);
             }
             catch (Exception exception)
@@ -152,6 +150,7 @@ namespace Vostok.ServiceDiscovery
                 ? settings.IterationPeriod
                 : settings.InitialRegistrationIterationPeriod;
             await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
+            checkNodeSignal.Reset();
         }
 
         private async Task DeleteNodeTask()

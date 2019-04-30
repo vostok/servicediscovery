@@ -70,7 +70,7 @@ namespace Vostok.ServiceDiscovery
 
                 updateCacheSignal.Set();
 
-                updateCacheTask.GetAwaiter().GetResult();
+                updateCacheTask?.GetAwaiter().GetResult();
             }
         }
 
@@ -128,8 +128,6 @@ namespace Vostok.ServiceDiscovery
         {
             try
             {
-                updateCacheSignal.Reset();
-
                 environmentsStorage.UpdateAll();
                 applicationsStorage.UpdateAll();
             }
@@ -139,6 +137,7 @@ namespace Vostok.ServiceDiscovery
             }
 
             await updateCacheSignal.WaitAsync().WaitAsync(settings.IterationPeriod).ConfigureAwait(false);
+            updateCacheSignal.Reset();
         }
 
         private void OnCompleted()
