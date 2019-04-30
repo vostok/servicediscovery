@@ -5,7 +5,7 @@ using Vostok.Commons.Time;
 namespace Vostok.ServiceDiscovery
 {
     /// <summary>
-    /// Represents <see cref="ServiceLocatorSettings"/> settings.
+    /// Represents <see cref="ServiceLocator"/> settings.
     /// </summary>
     [PublicAPI]
     public class ServiceLocatorSettings
