@@ -22,14 +22,12 @@ namespace Vostok.ServiceDiscovery
         private const int Disposed = 2;
         private readonly AtomicInt state = new AtomicInt(NotStarted);
         private readonly AsyncManualResetEvent updateCacheSignal = new AsyncManualResetEvent(true);
-        private readonly EnvironmentsStorage environmentsLocator;
-
-        private readonly ConcurrentDictionary<string, ApplicationEnvironments> applications = new ConcurrentDictionary<string, ApplicationEnvironments>();
+        private readonly EnvironmentsStorage environmentsStorage;
+        private readonly ApplicationsStorage applicationsStorage;
 
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceLocatorSettings settings;
         private readonly ServiceDiscoveryPathHelper pathHelper;
-        private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
         private volatile Task updateCacheTask;
 
@@ -43,9 +41,9 @@ namespace Vostok.ServiceDiscovery
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceLocator>();
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix);
-            nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
-
-            environmentsLocator = new EnvironmentsStorage(zooKeeperClient, pathHelper, log);
+            
+            environmentsStorage = new EnvironmentsStorage(zooKeeperClient, pathHelper, log);
+            applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, log);
         }
 
         /// <inheritdoc />
@@ -55,14 +53,40 @@ namespace Vostok.ServiceDiscovery
             {
                 StartUpdateCacheTask();
 
-                var environments = applications.GetOrAdd(application, a => new ApplicationEnvironments(a, zooKeeperClient, nodeWatcher, pathHelper, log));
-                return environments.Locate(environment);
+                return LocateInner(environment, application);
             }
             catch (Exception e)
             {
                 log.Error(e, "Failed to locate '{Application}' application in '{Environment}' environment.", application, environment);
                 return null;
             }
+        }
+
+        private IServiceTopology LocateInner(string environmentName, string applicationName)
+        {
+            var currentEnvironmentName = environmentName;
+
+            for (var deep = 0; deep < settings.MaximumEnvironmentDeep; deep++)
+            {
+                var environment = environmentsStorage.Get(currentEnvironmentName);
+                if (environment == null)
+                    return null;
+
+                var topology = applicationsStorage.Get(currentEnvironmentName, applicationName).ServiceTopology;
+
+                var parentEnvironment = environment.ParentEnvironment;
+                if (parentEnvironment == null)
+                    return topology;
+
+                var goToParent = topology == null || topology.Replicas.Count == 0 && environment.SkipIfEmpty();
+                if (!goToParent)
+                    return topology;
+
+                currentEnvironmentName = parentEnvironment;
+            }
+
+            log.Warn("Cycled when resolving '{Application}' application in '{Environment}'.", applicationName, environmentName);
+            return null;
         }
 
         public void Dispose()
@@ -107,10 +131,8 @@ namespace Vostok.ServiceDiscovery
             {
                 updateCacheSignal.Reset();
 
-                foreach (var kvp in applications)
-                {
-                    kvp.Value.UpdateCache();
-                }
+                environmentsStorage.UpdateAll();
+                applicationsStorage.UpdateAll();
             }
             catch (Exception exception)
             {
@@ -120,22 +142,14 @@ namespace Vostok.ServiceDiscovery
             await updateCacheSignal.WaitAsync().WaitAsync(settings.IterationPeriod).ConfigureAwait(false);
         }
 
-        private void UpdateCache(string environment, string application)
-        {
-            if (!applications.TryGetValue(application, out var environments))
-            {
-                log.Warn("Failed to update unexisting '{Application}'", application);
-                return;
-            }
-
-            environments.UpdateCache(environment);
-        }
-
         private void OnCompleted()
         {
             log.Warn("Someone else has disposed ZooKeeper client.");
             if (state.TryIncreaseTo(Disposed))
             {
+                environmentsStorage.Dispose();
+                applicationsStorage.Dispose();
+
                 updateCacheSignal.Set();
                 // Note(kungurtsev): does not wait updateCacheTask, because it will deadlock CachingObservable.
             }
@@ -145,20 +159,6 @@ namespace Vostok.ServiceDiscovery
         {
             if (connectionState == ConnectionState.Connected)
                 updateCacheSignal.Set();
-        }
-
-        private void OnNodeEvent(NodeChangedEventType type, string path)
-        {
-            var parsedPath = pathHelper.TryParse(path);
-
-            if (parsedPath?.environment == null || parsedPath.Value.application == null || parsedPath.Value.replica != null)
-            {
-                log.Warn("Recieved node event of type '{NodeEventType}' on path '{NodePath}': not an application node.", type, path);
-                return;
-            }
-
-            // Note(kungurtsev): run in new thread, because we shouldn't block ZooKeeperClient.
-            Task.Run(() => UpdateCache(parsedPath.Value.environment, parsedPath.Value.application));
         }
     }
 }

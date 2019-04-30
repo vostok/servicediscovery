@@ -75,6 +75,25 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         }
 
         [Test]
+        public void Should_works_disconnected()
+        {
+            using (var storage = GetEnvironmentsStorage())
+            {
+                CreateEnvironmentNode("default", "parent");
+
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+
+                Ensemble.Stop();
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "new", null);
+
+                Ensemble.Start();
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "new", null);
+            }
+        }
+
+        [Test]
         public void Should_not_update_after_dispose()
         {
             using (var storage = GetEnvironmentsStorage())

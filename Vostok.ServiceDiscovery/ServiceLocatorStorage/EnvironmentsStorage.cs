@@ -82,7 +82,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 var environmentPath = pathHelper.BuildEnvironmentPath(name);
 
                 var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = nodeWatcher});
-
                 if (!environmentExists.IsSuccessful)
                     return;
 
@@ -98,7 +97,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     var environmentData = zooKeeperClient.GetData(new GetDataRequest(environmentPath) {Watcher = nodeWatcher});
                     if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
                         container.Clear();
-
                     if (!environmentData.IsSuccessful)
                         return;
 
