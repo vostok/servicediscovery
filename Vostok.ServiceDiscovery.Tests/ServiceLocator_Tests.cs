@@ -180,7 +180,7 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public void Should_update_environment_properties()
+        public void Should_track_environment_properties()
         {
             var replicaParent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok/parent");
 
@@ -192,7 +192,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             CreateReplicaNode(replicaParent);
 
-            using (var locator = GetServiceLocator(1.Seconds()))
+            using (var locator = GetServiceLocator())
             {
                 ShouldLocate(locator, "child", "vostok", replicaParent.Replica);
                 ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
@@ -205,7 +205,7 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public void Should_update_environment_parent()
+        public void Should_track_environment_parent()
         {
             var replicaParent = new ReplicaInfo("parent", "vostok", "https://github.com/vostok/parent");
 
@@ -214,7 +214,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             CreateReplicaNode(replicaParent);
 
-            using (var locator = GetServiceLocator(1.Seconds()))
+            using (var locator = GetServiceLocator())
             {
                 ShouldNotLocate(locator, "child", "vostok");
                 ShouldLocate(locator, "parent", "vostok", replicaParent.Replica);
@@ -368,7 +368,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             CreateReplicaNode(replica);
 
-            using (var locator = GetServiceLocator(1.Seconds()))
+            using (var locator = GetServiceLocator())
             {
                 ShouldLocate(locator, "child", "vostok", replica.Replica);
 
@@ -618,14 +618,11 @@ namespace Vostok.ServiceDiscovery.Tests
             locator.Locate(environment, application).Should().BeNull();
         }
 
-        private ServiceLocator GetServiceLocator(TimeSpan? iterationPeriod = null)
+        private ServiceLocator GetServiceLocator()
         {
             return new ServiceLocator(
                 ZooKeeperClient,
-                new ServiceLocatorSettings
-                {
-                    IterationPeriod = iterationPeriod ?? 60.Seconds()
-                },
+                null,
                 Log);
         }
     }
