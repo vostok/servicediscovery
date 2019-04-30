@@ -129,7 +129,7 @@ namespace Vostok.ServiceDiscovery
 
                     await BeaconTaskIteration().ConfigureAwait(false);
 
-                    if (!budget.HasExpired)
+                    if (!budget.HasExpired && isRunning)
                         await Task.Delay(budget.Remaining).ConfigureAwait(false);
                 }
             }
