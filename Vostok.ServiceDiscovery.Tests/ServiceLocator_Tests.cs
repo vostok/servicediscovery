@@ -238,6 +238,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 for (var times = 0; times < 5; times++)
                 {
                     // ReSharper disable once AccessToModifiedClosure
+                    // ReSharper disable once AccessToDisposedClosure
+                    // ReSharper disable once PossibleNullReferenceException
                     Action action = () => { locator.Locate("default", "vostok").Replicas.Count.Should().Be(times); };
 
                     action.ShouldPassIn(DefaultTimeout);

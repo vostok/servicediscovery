@@ -5,6 +5,7 @@ using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.ServiceLocatorStorage;
+using Vostok.ZooKeeper.Client.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 {
@@ -112,6 +113,22 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         }
 
         [Test]
+        public void Should_not_update_to_invalid_data()
+        {
+            using (var storage = GetEnvironmentsStorage())
+            {
+                CreateEnvironmentNode("default", "parent");
+
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+
+                ZooKeeperClient.SetData(PathHelper.BuildEnvironmentPath("default"), new byte[] {1, 2, 3});
+
+                storage.UpdateAll();
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+            }
+        }
+
+        [Test]
         public void UpdateAll_should_force_update()
         {
             using (var storage = GetEnvironmentsStorage())
@@ -146,7 +163,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
         private EnvironmentsStorage GetEnvironmentsStorage()
         {
-            return new EnvironmentsStorage(ZooKeeperClient, pathHelper, Log);
+            return new EnvironmentsStorage(ZooKeeperClient, PathHelper, Log);
         }
     }
 }
