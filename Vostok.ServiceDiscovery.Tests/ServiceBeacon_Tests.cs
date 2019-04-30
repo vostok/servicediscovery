@@ -209,6 +209,31 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Should_not_be_triggered_after_dispose()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+
+                beacon.Dispose();
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                CreateReplicaNode(replica);
+                DeleteReplicaNode(replica);
+                Thread.Sleep(1.Seconds());
+
+                ReplicaRegistered(replica).Should().BeFalse();
+            }
+        }
+
+        [Test]
         public void Should_be_startable_and_stoppable_multiple_times()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");

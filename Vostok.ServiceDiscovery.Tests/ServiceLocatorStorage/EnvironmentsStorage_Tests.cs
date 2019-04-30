@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using FluentAssertions;
-using FluentAssertions.Extensions;
 using NUnit.Framework;
-using Vostok.Commons.Helpers.Url;
 using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.ServiceLocatorStorage;
@@ -60,6 +57,59 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                     ShouldReturn(storage, "default", info);
 
                     DeleteEnvironmentNode("default");
+                }
+            }
+        }
+
+        [Test]
+        public void Should_store_multiple_environments()
+        {
+            using (var storage = GetEnvironmentsStorage())
+            {
+                for (var i = 0; i < 10; i++)
+                    CreateEnvironmentNode($"environment_{i}", $"environment_{i+1}");
+
+                for (var i = 0; i < 10; i++)
+                    ShouldReturnImmediately(storage, $"environment_{i}", new EnvironmentInfo($"environment_{i + 1}", null));
+            }
+        }
+
+        [Test]
+        public void Should_not_update_after_dispose()
+        {
+            using (var storage = GetEnvironmentsStorage())
+            {
+                CreateEnvironmentNode("default", "parent_1");
+
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent_1", null));
+
+                storage.Dispose();
+
+                CreateEnvironmentNode("default", "parent_2");
+                storage.UpdateAll();
+
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent_1", null));
+            }
+        }
+
+        [Test]
+        public void UpdateAll_should_force_update()
+        {
+            using (var storage = GetEnvironmentsStorage())
+            {
+                for (var times = 0; times < 10; times++)
+                {
+                    var parent = $"parent_{times}";
+                    var properties = new Dictionary<string, string>
+                    {
+                        {"key", $"value_{times}"}
+                    };
+
+                    CreateEnvironmentNode("default", parent, properties);
+                    storage.UpdateAll();
+
+                    var expected = new EnvironmentInfo(parent, properties);
+                    ShouldReturnImmediately(storage, "default", expected);
                 }
             }
         }
