@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using NUnit.Framework;
@@ -560,6 +561,68 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             using (GetServiceLocator())
             {
+            }
+        }
+
+        [Test]
+        public void Should_not_throw_if_someone_else_dispose_zookeeper_client_before_start()
+        {
+            var disposedClient = GetZooKeeperClient();
+            disposedClient.Dispose();
+
+            var t = Task.Run(
+                () =>
+                {
+                    using (new ServiceLocator(disposedClient, null, Log))
+                    {
+                    }
+                });
+
+            t.ShouldCompleteIn(DefaultTimeout);
+        }
+
+        [Test]
+        public void Should_not_throw_if_someone_else_dispose_zookeeper_client_after_start()
+        {
+            var disposedClient = GetZooKeeperClient();
+
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+
+            CreateEnvironmentNode("default");
+            CreateApplicationNode("default", "vostok");
+            CreateReplicaNode(replica);
+
+            using (var locator = new ServiceLocator(disposedClient, null, Log))
+            {
+                ShouldLocate(locator, "default", "vostok", replica.Replica);
+
+                disposedClient.Dispose();
+
+                ShouldLocate(locator, "default", "vostok", replica.Replica);
+            }
+        }
+
+        [Test]
+        public void Should_not_update_being_disposed()
+        {
+            var replica1 = new ReplicaInfo("default", "vostok", "https://github.com/vostok1");
+            var replica2 = new ReplicaInfo("default", "vostok", "https://github.com/vostok2");
+
+            CreateEnvironmentNode("default");
+            CreateApplicationNode("default", "vostok");
+
+            using (var locator = GetServiceLocator())
+            {
+                CreateReplicaNode(replica1);
+
+                ShouldLocate(locator, "default", "vostok", replica1.Replica);
+
+                locator.Dispose();
+
+                CreateReplicaNode(replica2);
+                Thread.Sleep(1.Seconds());
+
+                ShouldLocate(locator, "default", "vostok", replica1.Replica);
             }
         }
 

@@ -65,7 +65,12 @@ namespace Vostok.ServiceDiscovery
         {
             if (state.TryIncreaseTo(Disposed))
             {
+                environmentsStorage.Dispose();
+                applicationsStorage.Dispose();
+
                 updateCacheSignal.Set();
+
+                updateCacheTask.GetAwaiter().GetResult();
             }
         }
 
