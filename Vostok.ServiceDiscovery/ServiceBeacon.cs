@@ -253,6 +253,11 @@ namespace Vostok.ServiceDiscovery
 
             var create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
 
+            if (create.IsSuccessful)
+            {
+                nodeCreatedOnceSignal.Set();
+            }
+
             if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)
             {
                 log.Error("Node creation has failed.");
