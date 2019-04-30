@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Vostok.ServiceDiscovery.Helpers
+﻿namespace Vostok.ServiceDiscovery.Helpers
 {
     internal class VersionedContainer<T>
         where T : class
@@ -14,7 +12,7 @@ namespace Vostok.ServiceDiscovery.Helpers
             return newVersion > version;
         }
 
-        public bool Update(long newVersion, Func<T> valueProvider)
+        public bool Update(long newVersion, T value)
         {
             if (newVersion <= version)
                 return false;
@@ -23,7 +21,7 @@ namespace Vostok.ServiceDiscovery.Helpers
             {
                 if (newVersion <= version)
                     return false;
-                Value = valueProvider();
+                Value = value;
                 version = newVersion;
                 return true;
             }

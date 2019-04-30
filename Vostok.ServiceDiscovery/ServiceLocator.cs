@@ -22,6 +22,7 @@ namespace Vostok.ServiceDiscovery
         private const int Disposed = 2;
         private readonly AtomicInt state = new AtomicInt(NotStarted);
         private readonly AsyncManualResetEvent updateCacheSignal = new AsyncManualResetEvent(true);
+        private readonly EnvironmentsStorage environmentsLocator;
 
         private readonly ConcurrentDictionary<string, ApplicationEnvironments> applications = new ConcurrentDictionary<string, ApplicationEnvironments>();
 
@@ -43,6 +44,8 @@ namespace Vostok.ServiceDiscovery
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix);
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
+
+            environmentsLocator = new EnvironmentsStorage(zooKeeperClient, pathHelper, log);
         }
 
         /// <inheritdoc />

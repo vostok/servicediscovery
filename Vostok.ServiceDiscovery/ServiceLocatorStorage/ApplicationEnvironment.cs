@@ -39,8 +39,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 environmentContainer.Update(
                     environmentData.Stat.ModifiedZxId,
-                    () =>
-                        EnvironmentNodeDataSerializer.Deserialize(environmentData.Data));
+                    EnvironmentNodeDataSerializer.Deserialize(environmentData.Data));
             }
             catch (Exception e)
             {
@@ -73,8 +72,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 if (applicationContainer.Update(
                     applicationData.Stat.ModifiedZxId,
-                    () =>
-                        ApplicationNodeDataSerializer.Deserialize(applicationData.Data))
+                    ApplicationNodeDataSerializer.Deserialize(applicationData.Data))
                 )
                 {
                     UpdateServiceTopology();
@@ -111,8 +109,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 if (replicasContainer.Update(
                     applicationChildren.Stat.ModifiedChildrenZxId,
-                    () =>
-                        UrlParser.Parse(applicationChildren.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)))
+                    UrlParser.Parse(applicationChildren.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape)))
                 )
                 {
                     UpdateServiceTopology();

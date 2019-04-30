@@ -24,7 +24,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
             for (var i = 0; i < 10; i++)
             {
                 // ReSharper disable once AccessToModifiedClosure
-                container.Update(i, () => i.ToString()).Should().BeTrue();
+                container.Update(i, i.ToString()).Should().BeTrue();
                 container.Value.Should().Be(i.ToString());
             }
         }
@@ -34,23 +34,11 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         {
             var container = new VersionedContainer<string>();
 
-            container.Update(2, () => "x").Should().BeTrue();
+            container.Update(2, "x").Should().BeTrue();
 
             container.NeedUpdate(1).Should().BeFalse();
             container.NeedUpdate(2).Should().BeFalse();
             container.NeedUpdate(3).Should().BeTrue();
-        }
-
-        [Test]
-        public void Update_should_ignore_smaller_or_equal_versions()
-        {
-            var container = new VersionedContainer<string>();
-
-            container.Update(2, () => "x").Should().BeTrue();
-            container.Update(1, () => throw new AssertionException("Should not be called.")).Should().BeFalse();
-            container.Update(2, () => throw new AssertionException("Should not be called.")).Should().BeFalse();
-
-            container.Value.Should().Be("x");
         }
 
         [Test]
@@ -66,13 +54,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
                 new ParallelOptions {MaxDegreeOfParallelism = 10},
                 u =>
                 {
-                    container.Update(
-                        u,
-                        () =>
-                        {
-                            Thread.Sleep(u % 100);
-                            return u.ToString();
-                        });
+                    container.Update(u, u.ToString());
                 });
 
             container.Value.Should().Be(updates.Max().ToString());
@@ -83,13 +65,13 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         {
             var container = new VersionedContainer<string>();
 
-            container.Update(10, () => "x").Should().BeTrue();
+            container.Update(10, "x").Should().BeTrue();
             container.Value.Should().Be("x");
 
             container.Clear();
             container.Value.Should().BeNull();
 
-            container.Update(1, () => "y").Should().BeTrue();
+            container.Update(1, "y").Should().BeTrue();
             container.Value.Should().Be("y");
         }
     }
