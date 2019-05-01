@@ -78,17 +78,21 @@ namespace Vostok.ServiceDiscovery
         {
             var currentEnvironmentName = environmentName;
 
+            // Note(kungurtsev): not return null, if application was found in some skipped environment.
+            IServiceTopology firstResolved = null;
+
             for (var deep = 0; deep < settings.MaximumEnvironmentDeep; deep++)
             {
                 var environment = environmentsStorage.Get(currentEnvironmentName);
                 if (environment == null)
-                    return null;
+                    return firstResolved;
 
                 var topology = applicationsStorage.Get(currentEnvironmentName, applicationName).ServiceTopology;
+                firstResolved = firstResolved ?? topology;
 
                 var parentEnvironment = environment.ParentEnvironment;
                 if (parentEnvironment == null)
-                    return topology;
+                    return topology ?? firstResolved;
 
                 var goToParent = topology == null || topology.Replicas.Count == 0 && environment.SkipIfEmpty();
                 if (!goToParent)
@@ -98,7 +102,7 @@ namespace Vostok.ServiceDiscovery
             }
 
             log.Warn("Cycled when resolving '{Application}' application in '{Environment}'.", applicationName, environmentName);
-            return null;
+            return firstResolved;
         }
 
         private void StartUpdateCacheTask()

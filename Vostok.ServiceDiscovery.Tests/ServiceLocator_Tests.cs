@@ -513,6 +513,25 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Should_locate_empty_without_replicas_even_if_environment_was_skipped()
+        {
+            CreateEnvironmentNode("parent");
+            CreateEnvironmentNode("default", "parent", new Dictionary<string, string> { { EnvironmentInfoKeys.SkipIfEmpty, "True" } });
+
+            var properties = new Dictionary<string, string> { { "key", "value" } };
+            CreateApplicationNode("default", "vostok", properties);
+
+            using (var locator = GetServiceLocator())
+            {
+                var topology = locator.Locate("default", "vostok");
+                topology?.Replicas.Should().NotBeNull();
+                // ReSharper disable once PossibleNullReferenceException
+                topology.Replicas.Should().BeEmpty();
+                topology.Properties.Should().BeEquivalentTo(properties);
+            }
+        }
+
+        [Test]
         public void Should_ignore_cycled_if_resolved()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
