@@ -134,7 +134,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var settings = new ServiceBeaconSettings
             {
                 IterationPeriod = 60.Seconds(),
-                MinimumTimeBetweenIterations = 1.Seconds()
+                MinimumTimeBetweenIterations = 100.Milliseconds()
             };
             return new ServiceBeacon(client, replica, settings, Log);
         }

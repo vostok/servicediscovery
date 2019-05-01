@@ -36,6 +36,7 @@ namespace Vostok.ServiceDiscovery
         private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
+        private volatile CancellationTokenSource stopCancellationToken;
 
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -73,6 +74,7 @@ namespace Vostok.ServiceDiscovery
             {
                 if (isRunning.TrySetTrue())
                 {
+                    stopCancellationToken = new CancellationTokenSource();
                     nodeCreatedOnceSignal.Reset();
                     beaconTask = Task.Run(BeaconTask);
                 }
@@ -88,8 +90,10 @@ namespace Vostok.ServiceDiscovery
                 {
                     log.Info("Stopped. Unregistering..");
 
+                    stopCancellationToken.Cancel();
                     checkNodeSignal.Set();
                     beaconTask.GetAwaiter().GetResult();
+                    stopCancellationToken.Dispose();
                     if (!DeleteNodeAsync().GetAwaiter().GetResult())
                     {
                         Task.Run(DeleteNodeTask);
@@ -129,8 +133,8 @@ namespace Vostok.ServiceDiscovery
 
                     await BeaconTaskIteration().ConfigureAwait(false);
 
-                    if (!budget.HasExpired && isRunning)
-                        await Task.Delay(budget.Remaining).ConfigureAwait(false);
+                    if (!budget.HasExpired)
+                        await Task.Delay(budget.Remaining, stopCancellationToken.Token).SilentlyContinue().ConfigureAwait(false);
                 }
             }
         }
