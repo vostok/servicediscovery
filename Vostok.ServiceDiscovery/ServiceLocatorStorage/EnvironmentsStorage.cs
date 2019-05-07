@@ -65,7 +65,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             if (!environments.TryGetValue(name, out var container))
             {
-                log.Warn("Failed to update unexisting '{Environment}' environment.", name);
+                log.Warn("Failed to update '{Environment}' environment: it does not exist in local cache.", name);
                 return;
             }
 
@@ -104,9 +104,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     container.Update(environmentData.Stat.ModifiedZxId, info);
                 }
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                log.Error(e, "Failed to update '{Environment}' environment.", name);
+                log.Error(error, "Failed to update '{Environment}' environment.", name);
             }
         }
 
