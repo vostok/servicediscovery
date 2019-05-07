@@ -21,7 +21,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ILog log;
         private readonly AdHocNodeWatcher nodeWatcher;
-        private readonly AtomicBoolean disposed = new AtomicBoolean(false);
+        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
         public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ILog log)
         {
@@ -58,7 +58,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         public void Dispose()
         {
-            disposed.TrySetTrue();
+            isDisposed.TrySetTrue();
         }
 
         private void Update(string name)
@@ -74,7 +74,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         private void Update(string name, VersionedContainer<EnvironmentInfo> container)
         {
-            if (disposed)
+            if (isDisposed)
                 return;
 
             try
@@ -112,8 +112,10 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
         {
-            var parsedPath = pathHelper.TryParse(path);
+            if (isDisposed)
+                return;
 
+            var parsedPath = pathHelper.TryParse(path);
             if (parsedPath?.environment == null || parsedPath.Value.application != null)
             {
                 log.Warn("Recieved node event of type '{NodeEventType}' on path '{NodePath}': not an environment node.", type, path);
