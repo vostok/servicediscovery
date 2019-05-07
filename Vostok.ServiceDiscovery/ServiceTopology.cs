@@ -14,7 +14,7 @@ namespace Vostok.ServiceDiscovery
             Properties = new ServiceTopologyProperties(properties);
         }
 
-        public static ServiceTopology Build(IReadOnlyList<Uri> replicas, IReadOnlyDictionary<string, string> properties)
+        public static ServiceTopology Build([CanBeNull] IReadOnlyList<Uri> replicas, [CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
             return replicas == null
                 ? null

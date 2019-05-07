@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Url;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
@@ -13,7 +14,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 {
     internal class ApplicationWithReplicas
     {
-        public ServiceTopology ServiceTopology;
+        [CanBeNull]
+        public volatile ServiceTopology ServiceTopology;
+
         private readonly string environmentName;
         private readonly string applicationName;
         private readonly string applicationNodePath;
@@ -84,9 +87,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                         UpdateServiceTopology();
                 }
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                log.Error(e, "Failed to update '{Application} application in '{Environment}' environment.", applicationName, environmentName);
+                log.Error(error, "Failed to update '{Application} application in '{Environment}' environment.", applicationName, environmentName);
             }
         }
 

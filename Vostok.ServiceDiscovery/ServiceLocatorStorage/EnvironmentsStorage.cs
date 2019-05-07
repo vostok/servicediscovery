@@ -52,6 +52,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             foreach (var kvp in environments)
             {
+                if (isDisposed)
+                    return;
+
                 Update(kvp.Key, kvp.Value.Value);
             }
         }
@@ -118,7 +121,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             var parsedPath = pathHelper.TryParse(path);
             if (parsedPath?.environment == null || parsedPath.Value.application != null)
             {
-                log.Warn("Recieved node event of type '{NodeEventType}' on path '{NodePath}': not an environment node.", type, path);
+                log.Warn("Received node event of type '{NodeEventType}' on path '{NodePath}': not an environment node.", type, path);
                 return;
             }
 

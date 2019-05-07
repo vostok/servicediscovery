@@ -81,7 +81,7 @@ namespace Vostok.ServiceDiscovery
             // Note(kungurtsev): not return null, if application was found in some skipped environment.
             IServiceTopology firstResolved = null;
 
-            for (var deep = 0; deep < settings.MaximumEnvironmentDeep; deep++)
+            for (var depth = 0; depth < settings.MaximumEnvironmentsDepth; depth++)
             {
                 var environment = environmentsStorage.Get(currentEnvironmentName);
                 if (environment == null)
@@ -137,7 +137,7 @@ namespace Vostok.ServiceDiscovery
             }
             catch (Exception exception)
             {
-                log.Error(exception, "Failed update cache iteration.");
+                log.Error(exception, "Failed cache update iteration.");
             }
 
             await updateCacheSignal.WaitAsync().WaitAsync(settings.IterationPeriod).ConfigureAwait(false);
