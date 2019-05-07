@@ -10,20 +10,20 @@ notests *default:
     - module vostok.servicediscovery.abstractions
 
   deps:
+    - vostok.devtools
     - vostok.logging.abstractions
     - vostok.zookeeper.client.abstractions
     - vostok.servicediscovery.abstractions
-    - vostok.devtools
-    - vostok.commons.threading/src
     - vostok.commons.time/src
-    - vostok.commons.environment/src
     - vostok.commons.binary/src
-    - vostok.commons.collections
+    - vostok.commons.threading/src
+    - vostok.commons.environment/src
+    - vostok.commons.collections/src
 
 full-build > notests:
   deps:
-    - vostok.zookeeper.testing
     - vostok.logging.console
+    - vostok.zookeeper.testing
     - vostok.zookeeper.localensemble
     - vostok.zookeeper.client
     - vostok.commons.testing
