@@ -12,7 +12,7 @@ using Vostok.ZooKeeper.Client.Abstractions.Model;
 
 namespace Vostok.ServiceDiscovery
 {
-    /// <inheritdoc cref="ServiceLocator"/>
+    /// <inheritdoc cref="IServiceLocator"/>
     [PublicAPI]
     public class ServiceLocator : IServiceLocator, IDisposable
     {
