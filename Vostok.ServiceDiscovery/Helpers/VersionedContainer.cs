@@ -1,11 +1,13 @@
-﻿namespace Vostok.ServiceDiscovery.Helpers
+﻿using Vostok.Commons.Threading;
+
+namespace Vostok.ServiceDiscovery.Helpers
 {
     internal class VersionedContainer<T>
         where T : class
     {
         public volatile T Value;
         private readonly object sync = new object();
-        private long version = long.MinValue;
+        private readonly AtomicLong version = long.MinValue;
 
         public bool NeedUpdate(long newVersion)
         {
@@ -19,10 +21,9 @@
 
             lock (sync)
             {
-                if (newVersion <= version)
+                if (!version.TryIncreaseTo(newVersion))
                     return false;
                 Value = value;
-                version = newVersion;
                 return true;
             }
         }
@@ -32,7 +33,7 @@
             lock (sync)
             {
                 Value = null;
-                version = long.MinValue;
+                version.Value = long.MinValue;
             }
         }
 
