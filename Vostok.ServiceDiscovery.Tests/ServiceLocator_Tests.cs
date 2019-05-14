@@ -68,6 +68,41 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Should_locate_registered_ServiceBeacon_services_and_ignore_daemons_without_port()
+        {
+            var service1 = new ReplicaInfo("default", "vostok", "https://github.com/vostok/1");
+            var service2 = new ReplicaInfo("default", "vostok", "https://github.com/vostok/2");
+            var daemon = new ReplicaInfo("default", "vostok", "pid(123)");
+
+            CreateEnvironmentNode("default");
+            CreateApplicationNode("default", "vostok");
+
+            using (var service1Beacon = GetServiceBeacon(service1))
+            using (var locator = GetServiceLocator())
+            {
+                service1Beacon.Start();
+                WaitReplicaRegistered(service1);
+                ShouldLocateImmediately(locator, "default", "vostok", service1.Replica);
+                
+                using (var daemonBeacon = GetServiceBeacon(daemon))
+                {
+                    daemonBeacon.Start();
+                    WaitReplicaRegistered(daemon);
+
+                    Thread.Sleep(0.5.Seconds());
+                    ShouldLocateImmediately(locator, "default", "vostok", service1.Replica);
+
+                    using (var service2Beacon = GetServiceBeacon(service2))
+                    {
+                        service2Beacon.Start();
+                        WaitReplicaRegistered(service2);
+                        ShouldLocate(locator, "default", "vostok", service1.Replica, service2.Replica);
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void Should_locate_ServiceBeacon_service_after_registration()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
