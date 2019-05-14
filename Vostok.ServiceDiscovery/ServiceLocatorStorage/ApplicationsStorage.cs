@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using System.Threading.Tasks;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ZooKeeper.Client.Abstractions;
-using Vostok.ZooKeeper.Client.Abstractions.Model;
 
 namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 {
@@ -17,7 +15,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ILog log;
-        private readonly AdHocNodeWatcher nodeWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
         public ApplicationsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ILog log)
@@ -25,7 +22,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.log = log;
-            nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
 
         public ApplicationWithReplicas Get(string environment, string application)
@@ -36,7 +32,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             lazy = new Lazy<ApplicationWithReplicas>(
                 () =>
                 {
-                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, nodeWatcher, log);
+                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, log, isDisposed);
                     if (!isDisposed)
                         container.Update();
                     return container;
@@ -60,34 +56,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         public void Dispose()
         {
             isDisposed.TrySetTrue();
-        }
-
-        private void Update(string environment, string application)
-        {
-            if (!applications.TryGetValue((environment, application), out var container))
-            {
-                log.Warn("Can't update '{Application} application in '{Environment}' environment: it's not present in local cache.", application, environment);
-                return;
-            }
-
-            if (!isDisposed)
-                container.Value.Update();
-        }
-
-        private void OnNodeEvent(NodeChangedEventType type, string path)
-        {
-            if (isDisposed)
-                return;
-
-            var parsedPath = pathHelper.TryParse(path);
-            if (parsedPath?.environment == null || parsedPath.Value.application == null || parsedPath.Value.replica != null)
-            {
-                log.Warn("Recieved node event of type '{NodeEventType}' on path '{NodePath}': not an application node.", type, path);
-                return;
-            }
-
-            // Note(kungurtsev): run in new thread, because we shouldn't block ZooKeeperClient.
-            Task.Run(() => Update(parsedPath.Value.environment, parsedPath.Value.application));
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Url;
+using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
@@ -26,27 +28,33 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
+        private readonly AtomicBoolean isDisposed;
 
         public ApplicationWithReplicas(
             string environmentName,
             string applicationName,
             string applicationNodePath,
             IZooKeeperClient zooKeeperClient,
-            AdHocNodeWatcher nodeWatcher,
-            ILog log)
+            ILog log,
+            AtomicBoolean isDisposed)
         {
             this.environmentName = environmentName;
             this.applicationName = applicationName;
             this.applicationNodePath = applicationNodePath;
             this.zooKeeperClient = zooKeeperClient;
-            this.nodeWatcher = nodeWatcher;
             this.log = log;
+            this.isDisposed = isDisposed;
+
+            nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
             applicationContainer = new VersionedContainer<ApplicationInfo>();
             replicasContainer = new VersionedContainer<Uri[]>();
         }
 
         public void Update()
         {
+            if (isDisposed)
+                return;
+
             try
             {
                 var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = nodeWatcher});
@@ -91,6 +99,14 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 log.Error(error, "Failed to update '{Application} application in '{Environment}' environment.", applicationName, environmentName);
             }
+        }
+        
+        private void OnNodeEvent(NodeChangedEventType type, string path)
+        {
+            if (isDisposed)
+                return;
+
+            Task.Run(() => Update());
         }
 
         private void Clear()
