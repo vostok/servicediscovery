@@ -24,6 +24,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly string applicationNodePath;
         private readonly VersionedContainer<ApplicationInfo> applicationContainer;
         private readonly VersionedContainer<Uri[]> replicasContainer;
+        private readonly object updateServiceTopologySync = new object();
 
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
@@ -122,7 +123,10 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         private void UpdateServiceTopology()
         {
-            ServiceTopology = ServiceTopology.Build(replicasContainer.Value, applicationContainer.Value?.Properties);
+            lock (updateServiceTopologySync)
+            {
+                ServiceTopology = ServiceTopology.Build(replicasContainer.Value, applicationContainer.Value?.Properties);
+            }
         }
     }
 }
