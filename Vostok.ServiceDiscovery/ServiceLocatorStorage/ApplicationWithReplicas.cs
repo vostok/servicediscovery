@@ -14,7 +14,7 @@ using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 
 namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 {
-    internal class ApplicationWithReplicas
+    internal class ApplicationWithReplicas : IDisposable
     {
         [CanBeNull]
         public volatile ServiceTopology ServiceTopology;
@@ -28,22 +28,20 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
-        private readonly AtomicBoolean isDisposed;
+        private readonly AtomicBoolean isDisposed = false;
 
         public ApplicationWithReplicas(
             string environmentName,
             string applicationName,
             string applicationNodePath,
             IZooKeeperClient zooKeeperClient,
-            ILog log,
-            AtomicBoolean isDisposed)
+            ILog log)
         {
             this.environmentName = environmentName;
             this.applicationName = applicationName;
             this.applicationNodePath = applicationNodePath;
             this.zooKeeperClient = zooKeeperClient;
             this.log = log;
-            this.isDisposed = isDisposed;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
             applicationContainer = new VersionedContainer<ApplicationInfo>();
@@ -100,7 +98,12 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 log.Error(error, "Failed to update '{Application} application in '{Environment}' environment.", applicationName, environmentName);
             }
         }
-        
+
+        public void Dispose()
+        {
+            isDisposed.TrySetTrue();
+        }
+
         private void OnNodeEvent(NodeChangedEventType type, string path)
         {
             if (isDisposed)

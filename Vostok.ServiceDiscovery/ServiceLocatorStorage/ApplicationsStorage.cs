@@ -15,7 +15,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ILog log;
-        private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
+        private readonly AtomicBoolean isDisposed = false;
 
         public ApplicationsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ILog log)
         {
@@ -28,18 +28,23 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             if (applications.TryGetValue((environment, application), out var lazy))
                 return lazy.Value;
-
+            
             lazy = new Lazy<ApplicationWithReplicas>(
                 () =>
                 {
-                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, log, isDisposed);
+                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, log);
                     if (!isDisposed)
                         container.Update();
                     return container;
                 },
                 LazyThreadSafetyMode.ExecutionAndPublication);
 
-            return applications.GetOrAdd((environment, application), _ => lazy).Value;
+            var value = applications.GetOrAdd((environment, application), _ => lazy).Value;
+
+            if (isDisposed)
+                value.Dispose();
+
+            return value;
         }
 
         public void UpdateAll()
@@ -55,7 +60,13 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         public void Dispose()
         {
-            isDisposed.TrySetTrue();
+            if (isDisposed.TrySetTrue())
+            {
+                foreach (var kvp in applications)
+                {
+                    kvp.Value.Value.Dispose();
+                }
+            }
         }
     }
 }
