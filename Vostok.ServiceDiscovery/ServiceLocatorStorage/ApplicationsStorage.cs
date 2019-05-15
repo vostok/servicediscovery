@@ -28,7 +28,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             if (applications.TryGetValue((environment, application), out var lazy))
                 return lazy.Value;
-            
+
             lazy = new Lazy<ApplicationWithReplicas>(
                 () =>
                 {

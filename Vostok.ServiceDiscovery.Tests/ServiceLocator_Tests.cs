@@ -83,7 +83,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 service1Beacon.Start();
                 WaitReplicaRegistered(service1);
                 ShouldLocateImmediately(locator, "default", "vostok", service1.Replica);
-                
+
                 using (var daemonBeacon = GetServiceBeacon(daemon))
                 {
                     daemonBeacon.Start();
@@ -551,9 +551,9 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_locate_empty_without_replicas_even_if_environment_was_skipped()
         {
             CreateEnvironmentNode("parent");
-            CreateEnvironmentNode("default", "parent", new Dictionary<string, string> { { EnvironmentInfoKeys.SkipIfEmpty, "True" } });
+            CreateEnvironmentNode("default", "parent", new Dictionary<string, string> {{EnvironmentInfoKeys.SkipIfEmpty, "True"}});
 
-            var properties = new Dictionary<string, string> { { "key", "value" } };
+            var properties = new Dictionary<string, string> {{"key", "value"}};
             CreateApplicationNode("default", "vostok", properties);
 
             using (var locator = GetServiceLocator())

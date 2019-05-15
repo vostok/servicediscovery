@@ -10,9 +10,8 @@ namespace Vostok.ServiceDiscovery
     [PublicAPI]
     public class ServiceLocatorSettings
     {
-        public string ZooKeeperNodesPrefix { get; set; } = "/service-discovery/v2";
-
         public int MaximumEnvironmentsDepth = 5;
+        public string ZooKeeperNodesPrefix { get; set; } = "/service-discovery/v2";
 
         public TimeSpan IterationPeriod { get; set; } = 5.Seconds();
     }
