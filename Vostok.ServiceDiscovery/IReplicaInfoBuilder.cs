@@ -34,7 +34,7 @@ namespace Vostok.ServiceDiscovery
         /// <para>Setting this property will instruct <see cref="ServiceBeacon"/> to advertise application as an HTTP service.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetUrl([NotNull] Uri url);
+        IReplicaInfoBuilder SetUrl([CanBeNull] Uri url);
 
         /// <summary>
         /// <para>Specifies the port the application uses to listen for HTTP requests.</para>
@@ -43,7 +43,7 @@ namespace Vostok.ServiceDiscovery
         /// <para>Setting this property will instruct <see cref="ServiceBeacon"/> to advertise application as an HTTP service.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetPort(int port);
+        IReplicaInfoBuilder SetPort(int? port);
 
         /// <summary>
         /// <para>Sets replica url scheme.</para>
@@ -51,7 +51,7 @@ namespace Vostok.ServiceDiscovery
         /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetScheme([NotNull] string scheme);
+        IReplicaInfoBuilder SetScheme([CanBeNull] string scheme);
 
         /// <summary>
         /// <para>Sets replica url path.</para>
@@ -59,28 +59,28 @@ namespace Vostok.ServiceDiscovery
         /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetUrlPath([NotNull] string path);
+        IReplicaInfoBuilder SetUrlPath([CanBeNull] string path);
 
         /// <summary>
         /// <para>Sets build commit hash.</para>
         /// <para>By default, it will be parsed from <c>AssemblyTitle</c> attribute of entry assembly.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetCommitHash([NotNull] string commitHash);
+        IReplicaInfoBuilder SetCommitHash([CanBeNull] string commitHash);
 
         /// <summary>
         /// <para>Sets application build date.</para>
         /// <para>By default, it will be parsed from <c>AssemblyTitle</c> attribute of entry assembly.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetReleaseDate([NotNull] string releaseDate);
+        IReplicaInfoBuilder SetReleaseDate([CanBeNull] string releaseDate);
 
         /// <summary>
         /// <para>Sets application dependencies (libraries along with their versions).</para>
         /// <para>By default it will be parsed from all <c>.dll</c>. and <c>.exe</c> files in the entry assembly directory.</para>
         /// </summary>
         [NotNull]
-        IReplicaInfoBuilder SetDependencies([NotNull] IEnumerable<string> dependencies);
+        IReplicaInfoBuilder SetDependencies([CanBeNull] IEnumerable<string> dependencies);
 
         /// <summary>
         /// <para>Sets a custom <paramref name="key"/>-<paramref name="value"/> property.</para>

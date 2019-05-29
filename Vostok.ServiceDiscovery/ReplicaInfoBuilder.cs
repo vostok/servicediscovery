@@ -137,7 +137,7 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
 
-        public IReplicaInfoBuilder SetPort(int port)
+        public IReplicaInfoBuilder SetPort(int? port)
         {
             this.port = port;
             return this;
@@ -169,7 +169,7 @@ namespace Vostok.ServiceDiscovery
 
         public IReplicaInfoBuilder SetDependencies(IEnumerable<string> dependencies)
         {
-            this.dependencies = dependencies.ToList();
+            this.dependencies = dependencies?.ToList();
             return this;
         }
 
