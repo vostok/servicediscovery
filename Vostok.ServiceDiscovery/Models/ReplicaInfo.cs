@@ -10,9 +10,16 @@ namespace Vostok.ServiceDiscovery.Models
 
         public ReplicaInfo([NotNull] string environment, [NotNull] string application, [NotNull] string replica)
         {
-            Environment = environment ?? throw new ArgumentNullException(nameof(environment));
-            Application = application ?? throw new ArgumentNullException(nameof(application));
-            Replica = replica ?? throw new ArgumentNullException(nameof(replica));
+            if (string.IsNullOrWhiteSpace(environment))
+                throw new ArgumentOutOfRangeException(nameof(environment), environment);
+            if (string.IsNullOrWhiteSpace(application))
+                throw new ArgumentOutOfRangeException(nameof(application), application);
+            if (string.IsNullOrWhiteSpace(replica))
+                throw new ArgumentOutOfRangeException(nameof(replica), replica);
+
+            Environment = environment;
+            Application = application;
+            Replica = replica;
         }
 
         [NotNull]
