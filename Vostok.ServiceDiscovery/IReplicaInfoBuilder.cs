@@ -76,6 +76,13 @@ namespace Vostok.ServiceDiscovery
         IReplicaInfoBuilder SetReleaseDate([CanBeNull] string releaseDate);
 
         /// <summary>
+        /// <para>Sets process name.</para>
+        /// <para>By default, it will be taken from <c>Process.GetCurrentProcess().ProcessName</c>.</para>
+        /// </summary>
+        [NotNull]
+        IReplicaInfoBuilder SetProcessName([CanBeNull] string processName);
+
+        /// <summary>
         /// <para>Sets application dependencies (libraries along with their versions).</para>
         /// <para>By default it will be parsed from all <c>.dll</c>. and <c>.exe</c> files in the entry assembly directory.</para>
         /// </summary>

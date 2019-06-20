@@ -11,12 +11,12 @@ namespace Vostok.ServiceDiscovery
     {
         private const string DependenciesDelimiter = ";";
         private readonly string host;
-
-        private readonly string processName;
         private readonly int? processId;
         private readonly string baseDirectory;
 
         private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
+
+        private string processName;
 
         private string environment;
         private string application;
@@ -158,6 +158,12 @@ namespace Vostok.ServiceDiscovery
         public IReplicaInfoBuilder SetCommitHash(string commitHash)
         {
             this.commitHash = commitHash;
+            return this;
+        }
+
+        public IReplicaInfoBuilder SetProcessName(string processName)
+        {
+            this.processName = processName;
             return this;
         }
 
