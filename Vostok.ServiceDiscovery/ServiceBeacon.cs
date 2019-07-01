@@ -67,6 +67,8 @@ namespace Vostok.ServiceDiscovery
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
 
+        public IReplicaInfo ReplicaInfo => replicaInfo;
+
         /// <inheritdoc />
         public void Start()
         {

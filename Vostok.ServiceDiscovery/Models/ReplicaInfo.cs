@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Models
 {
-    internal class ReplicaInfo
+    internal class ReplicaInfo : IReplicaInfo
     {
         private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
 
@@ -22,16 +23,12 @@ namespace Vostok.ServiceDiscovery.Models
             Replica = replica;
         }
 
-        [NotNull]
         public string Environment { get; }
 
-        [NotNull]
         public string Application { get; }
 
-        [NotNull]
         public string Replica { get; }
 
-        [NotNull]
         public IReadOnlyDictionary<string, string> Properties => properties;
 
         public void SetProperty([NotNull] string key, [CanBeNull] string value)
