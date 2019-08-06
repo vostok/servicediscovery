@@ -39,7 +39,7 @@ namespace Vostok.ServiceDiscovery
             this.settings = settings ?? new ServiceLocatorSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceLocator>();
 
-            pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix);
+            pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
 
             environmentsStorage = new EnvironmentsStorage(zooKeeperClient, pathHelper, log);
             applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, log);

@@ -7,10 +7,13 @@ namespace Vostok.ServiceDiscovery.Helpers
     internal class ServiceDiscoveryPathHelper
     {
         private readonly string prefix;
+        private readonly IZooKeeperPathEscaper pathEscaper;
         private readonly Regex pathRegex;
 
-        public ServiceDiscoveryPathHelper(string prefix)
+        public ServiceDiscoveryPathHelper(string prefix, IZooKeeperPathEscaper pathEscaper)
         {
+            this.pathEscaper = pathEscaper ?? throw new ArgumentNullException(nameof(pathEscaper));
+
             if (string.IsNullOrEmpty(prefix) || prefix == ZooKeeperPath.Root)
                 this.prefix = "";
             else
@@ -21,11 +24,11 @@ namespace Vostok.ServiceDiscovery.Helpers
                 RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
         }
 
-        public static string Escape(string segment) =>
-            Uri.EscapeDataString(segment);
+        public string Escape(string segment) =>
+            pathEscaper.Escape(segment);
 
-        public static string Unescape(string segment) =>
-            Uri.UnescapeDataString(segment);
+        public string Unescape(string segment) =>
+            pathEscaper.Unescape(segment);
 
         public string BuildEnvironmentPath(string environment) =>
             $"{prefix}/{Escape(environment.ToLowerInvariant())}";
@@ -46,7 +49,7 @@ namespace Vostok.ServiceDiscovery.Helpers
             return (ExtractToken(match, "environment"), ExtractToken(match, "application"), ExtractToken(match, "replica"));
         }
 
-        private static string ExtractToken(Match match, string key)
+        private string ExtractToken(Match match, string key)
         {
             var token = match.Groups[key].Value;
             return token == "" ? null : Unescape(token);

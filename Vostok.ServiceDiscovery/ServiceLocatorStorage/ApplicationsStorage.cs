@@ -32,7 +32,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             lazy = new Lazy<ApplicationWithReplicas>(
                 () =>
                 {
-                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, log);
+                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, log);
                     if (!isDisposed)
                         container.Update();
                     return container;

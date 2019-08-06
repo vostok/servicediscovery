@@ -22,7 +22,7 @@ namespace Vostok.ServiceDiscovery.Tests
     {
         protected static TimeSpan DefaultTimeout = 10.Seconds();
         protected readonly ILog Log = new SynchronousConsoleLog();
-        protected readonly ServiceDiscoveryPathHelper PathHelper = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix);
+        protected readonly ServiceDiscoveryPathHelper PathHelper = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix, ZooKeeperPathEscaper.Instance);
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
 
@@ -63,10 +63,14 @@ namespace Vostok.ServiceDiscovery.Tests
 
         protected void WaitReplicaRegistered(ReplicaInfo replica, bool expected = true)
         {
+            WaitNodeExists(PathHelper.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica));
+        }
+
+        protected void WaitNodeExists(string path, bool expected = true)
+        {
             var wait = new Action(
                 () =>
                 {
-                    var path = PathHelper.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                     var exists = ZooKeeperClient.Exists(path);
                     exists.IsSuccessful.Should().Be(true);
                     exists.Exists.Should().Be(expected);

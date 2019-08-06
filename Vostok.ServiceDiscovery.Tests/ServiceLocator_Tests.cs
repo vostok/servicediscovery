@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -8,7 +9,10 @@ using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Helpers.Url;
 using Vostok.Commons.Testing;
+using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
+using Vostok.ZooKeeper.Client.Abstractions;
+using Vostok.ZooKeeper.Client.Abstractions.Model;
 
 namespace Vostok.ServiceDiscovery.Tests
 {
@@ -27,6 +31,39 @@ namespace Vostok.ServiceDiscovery.Tests
                 WaitReplicaRegistered(replica);
 
                 using (var locator = GetServiceLocator())
+                {
+                    ShouldLocateImmediately(locator, replica.Environment, replica.Application, replica.Replica);
+                }
+            }
+        }
+
+        [Test]
+        public void Should_locate_registered_ServiceBeacon_service_with_custom_path_escaper()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            ZooKeeperClient.Create("/service-discovery/v2/ZGVmYXVsdA==", CreateMode.Persistent);
+
+            using (var beacon = new ServiceBeacon(
+                ZooKeeperClient,
+                replica,
+                new ServiceBeaconSettings
+                {
+                    IterationPeriod = 60.Seconds(),
+                    MinimumTimeBetweenIterations = 100.Milliseconds(),
+                    ZooKeeperNodesPathEscaper = new CustomPathEscaper()
+                },
+                Log))
+            {
+                beacon.Start();
+                WaitNodeExists("/service-discovery/v2/ZGVmYXVsdA==/dm9zdG9r/aHR0cHM6Ly9naXRodWIuY29tL3Zvc3Rvaw==");
+
+                using (var locator = new ServiceLocator(
+                    ZooKeeperClient,
+                    new ServiceLocatorSettings
+                    {
+                        ZooKeeperNodesPathEscaper = new CustomPathEscaper()
+                    },
+                    Log))
                 {
                     ShouldLocateImmediately(locator, replica.Environment, replica.Application, replica.Replica);
                 }
@@ -741,6 +778,15 @@ namespace Vostok.ServiceDiscovery.Tests
                 ZooKeeperClient,
                 null,
                 Log);
+        }
+
+        private class CustomPathEscaper : IZooKeeperPathEscaper
+        {
+            public string Escape(string segment) =>
+                Convert.ToBase64String(Encoding.UTF8.GetBytes(segment));
+
+            public string Unescape(string segment) =>
+                Encoding.UTF8.GetString(Convert.FromBase64String(segment));
         }
     }
 }

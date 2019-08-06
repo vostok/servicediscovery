@@ -27,6 +27,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly object updateServiceTopologySync = new object();
 
         private readonly IZooKeeperClient zooKeeperClient;
+        private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
@@ -36,12 +37,14 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             string applicationName,
             string applicationNodePath,
             IZooKeeperClient zooKeeperClient,
+            ServiceDiscoveryPathHelper pathHelper,
             ILog log)
         {
             this.environmentName = environmentName;
             this.applicationName = applicationName;
             this.applicationNodePath = applicationNodePath;
             this.zooKeeperClient = zooKeeperClient;
+            this.pathHelper = pathHelper;
             this.log = log;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
@@ -89,7 +92,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     if (!applicationChildren.IsSuccessful)
                         return;
 
-                    var replicas = UrlParser.Parse(applicationChildren.ChildrenNames.Select(ServiceDiscoveryPathHelper.Unescape));
+                    var replicas = UrlParser.Parse(applicationChildren.ChildrenNames.Select(pathHelper.Unescape));
                     if (replicasContainer.Update(applicationChildren.Stat.ModifiedChildrenZxId, replicas))
                         UpdateServiceTopology();
                 }
