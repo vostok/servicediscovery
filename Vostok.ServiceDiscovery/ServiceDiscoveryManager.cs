@@ -40,14 +40,14 @@ namespace Vostok.ServiceDiscovery
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(settings.ZooKeeperNodesPrefix));
             data.EnsureSuccess();
-            return data.ChildrenNames;
+            return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
         public async Task<IReadOnlyList<string>> GetAllApplicationsAsync(string environment)
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildEnvironmentPath(environment)));
             data.EnsureSuccess();
-            return data.ChildrenNames;
+            return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
         public async Task<string> GetParentZoneAsync(string environment)
@@ -55,7 +55,7 @@ namespace Vostok.ServiceDiscovery
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment)));
             data.EnsureSuccess();
             var envData = EnvironmentNodeDataSerializer.Deserialize(data.Data);
-            return envData.ParentEnvironment;
+            return pathHelper.Unescape(envData.ParentEnvironment);
         }
 
         public async Task<bool> TryAddNode(string environment, string parent)
