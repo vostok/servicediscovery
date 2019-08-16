@@ -55,7 +55,7 @@ namespace Vostok.ServiceDiscovery
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment)));
             data.EnsureSuccess();
             var envData = EnvironmentNodeDataSerializer.Deserialize(data.Data);
-            return pathHelper.Unescape(envData.ParentEnvironment);
+            return envData.ParentEnvironment;
         }
 
         public async Task<bool> TryAddNode(string environment, string parent)
