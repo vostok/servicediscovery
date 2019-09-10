@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
-using Ploeh.AutoFixture;
 using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.ServiceLocatorStorage;
@@ -13,14 +12,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
     [TestFixture]
     internal class EnvironmentsStorage_Tests : TestsBase
     {
-        private Fixture fixture;
         private string envName;
 
         [SetUp]
         public void SetUp()
         {
-            fixture = new Fixture();
-            envName = fixture.Create<string>();
+            envName = "myCoolEnv";
         }
 
         [Test]
@@ -51,7 +48,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         public void Should_track_environment_creation_and_deletion()
         {
             var info = new EnvironmentInfo(
-                "name",
+                "default",
                 "parent",
                 new Dictionary<string, string>
                 {
