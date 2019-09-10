@@ -86,5 +86,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 .Should()
                 .BeEquivalentTo(updatedProperties);
         }
+
+        // CR(kungurtsev): tests for other methods from IServiceDiscoveryManager.
     }
 }

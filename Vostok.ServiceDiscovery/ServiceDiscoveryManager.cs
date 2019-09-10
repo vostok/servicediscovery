@@ -28,13 +28,14 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ServiceDiscoveryManagerSettings settings = null,
             [CanBeNull] ILog log = null)
         {
-            this.zooKeeperClient = zooKeeperClient;
+            this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(zooKeeperClient));
             this.settings = settings ?? new ServiceDiscoveryManagerSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceDiscoveryManager>();
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
         }
 
+        // CR(kungurtsev): NodeNotFound -> empty list.
         public async Task<IReadOnlyList<string>> GetAllEnvironmentsAsync()
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(settings.ZooKeeperNodesPrefix));
@@ -42,6 +43,7 @@ namespace Vostok.ServiceDiscovery
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
+        // CR(kungurtsev): NodeNotFound -> ?.
         public async Task<IReadOnlyList<string>> GetAllApplicationsAsync([NotNull] string environment)
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildEnvironmentPath(environment)));
@@ -49,6 +51,7 @@ namespace Vostok.ServiceDiscovery
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
+        // CR(kungurtsev): NodeNotFound -> null.
         public async Task<IEnvironmentInfo> GetEnvironmentAsync([NotNull] string environment)
         {
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment)));
@@ -57,6 +60,7 @@ namespace Vostok.ServiceDiscovery
             return envData;
         }
 
+        // CR(kungurtsev): NodeNotFound -> null.
         public async Task<IApplicationInfo> GetApplicationAsync([NotNull] string environment, [NotNull] string application)
         {
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application)));
@@ -78,6 +82,7 @@ namespace Vostok.ServiceDiscovery
         public async Task<bool> TryDeleteEnvironmentAsync([NotNull] string environment)
         {
             var path = pathHelper.BuildEnvironmentPath(environment);
+            // CR(kungurtsev): why should we check first?
             if (!(await CheckZoneExistenceAsync(path)))
                 return false;
 
@@ -89,6 +94,7 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.DeleteAsync(deleteRequest)).IsSuccessful;
         }
 
+        // CR(kungurtsev): GetEnvironmentAsync is null. Remove this.
         internal async Task<bool> CheckZoneExistenceAsync([NotNull] string path)
         {
             var result = await zooKeeperClient.ExistsAsync(path);
@@ -98,15 +104,18 @@ namespace Vostok.ServiceDiscovery
             return false;
         }
 
+        // CR(kungurtsev): add helper that modify zookeeper node bytes. Possibly as extension to vostok.zookeeper.abstractions.
         public async Task<bool> TryUpdateApplicationPropertiesAsync([NotNull] string environment, [NotNull] string application, Func<IServiceTopologyProperties, IServiceTopologyProperties> updateFunc)
         {
-            var topologyPath = pathHelper.BuildApplicationPath(environment, application);
+            var applicationPath = pathHelper.BuildApplicationPath(environment, application);
 
+            // CR(kungurtsev): move to settings.
             const int updateAttempts = 5;
 
             for (var i = 0; i < updateAttempts; i++)
             {
-                var readResult = zooKeeperClient.GetData(topologyPath);
+                var readResult = zooKeeperClient.GetData(applicationPath);
+                // CR(kungurtsev): should we break?
                 if (!readResult.IsSuccessful)
                     continue;
 
@@ -114,8 +123,9 @@ namespace Vostok.ServiceDiscovery
                 IServiceTopologyProperties properties = new ServiceTopologyProperties(topologyData.Properties);
 
                 properties = updateFunc(properties);
+                // CR(kungurtsev): extra ToDictionary.
                 var data = ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(environment, application, properties.ToDictionary(x => x.Key, y => y.Value)));
-                var request = new SetDataRequest(topologyPath, data)
+                var request = new SetDataRequest(applicationPath, data)
                 {
                     Version = readResult.Stat.Version
                 };
