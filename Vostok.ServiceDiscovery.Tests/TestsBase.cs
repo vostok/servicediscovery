@@ -86,9 +86,9 @@ namespace Vostok.ServiceDiscovery.Tests
             return exists.Exists;
         }
 
-        protected void CreateEnvironmentNode(string environment, string parent = null, Dictionary<string, string> properties = null)
+        protected void CreateEnvironmentNode(string environment, string parent = null, IReadOnlyDictionary<string, string> properties = null)
         {
-            var info = new EnvironmentInfo(parent, properties);
+            var info = new EnvironmentInfo(environment, parent, properties);
             var data = EnvironmentNodeDataSerializer.Serialize(info);
 
             var path = PathHelper.BuildEnvironmentPath(environment);
@@ -102,9 +102,9 @@ namespace Vostok.ServiceDiscovery.Tests
             delete.IsSuccessful.Should().BeTrue();
         }
 
-        protected void CreateApplicationNode(string environment, string application, Dictionary<string, string> properties = null)
+        protected void CreateApplicationNode(string environment, string application, IReadOnlyDictionary<string, string> properties = null)
         {
-            var info = new ApplicationInfo(properties);
+            var info = new ApplicationInfo(environment, application, properties);
             var data = ApplicationNodeDataSerializer.Serialize(info);
 
             var path = PathHelper.BuildApplicationPath(environment, application);

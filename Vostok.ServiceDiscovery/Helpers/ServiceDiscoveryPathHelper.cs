@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 using Vostok.ZooKeeper.Client.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Helpers
@@ -20,7 +21,7 @@ namespace Vostok.ServiceDiscovery.Helpers
                 this.prefix = $"/{prefix.Trim('/')}";
 
             pathRegex = new Regex(
-                $@"^{this.prefix}(/(?<environment>[^/]+)(/(?<application>[^/]+)(/(?<replica>[^/]+))?)?)?$",
+                $@"^{this.prefix}(/(?<{PathTokens.Environment}>[^/]+)(/(?<{PathTokens.Application}>[^/]+)(/(?<{PathTokens.Replica}>[^/]+))?)?)?$",
                 RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
         }
 
@@ -30,13 +31,13 @@ namespace Vostok.ServiceDiscovery.Helpers
         public string Unescape(string segment) =>
             pathEscaper.Unescape(segment);
 
-        public string BuildEnvironmentPath(string environment) =>
+        public string BuildEnvironmentPath([NotNull] string environment) =>
             $"{prefix}/{Escape(environment.ToLowerInvariant())}";
 
-        public string BuildApplicationPath(string environment, string application) =>
+        public string BuildApplicationPath([NotNull] string environment, [NotNull] string application) =>
             ZooKeeperPath.Combine(BuildEnvironmentPath(environment), Escape(application));
 
-        public string BuildReplicaPath(string environment, string application, string replica) =>
+        public string BuildReplicaPath([NotNull] string environment, [NotNull] string application, [NotNull] string replica) =>
             ZooKeeperPath.Combine(BuildApplicationPath(environment, application), Escape(replica));
 
         public (string environment, string application, string replica)? TryParse(string path)
@@ -46,13 +47,20 @@ namespace Vostok.ServiceDiscovery.Helpers
             if (!match.Success)
                 return null;
 
-            return (ExtractToken(match, "environment"), ExtractToken(match, "application"), ExtractToken(match, "replica"));
+            return (ExtractToken(match, PathTokens.Environment), ExtractToken(match, PathTokens.Application), ExtractToken(match, PathTokens.Replica));
         }
 
         private string ExtractToken(Match match, string key)
         {
             var token = match.Groups[key].Value;
             return token == "" ? null : Unescape(token);
+        }
+
+        private static class PathTokens
+        {
+            public const string Environment = "environment";
+            public const string Application = "application";
+            public const string Replica = "replica";
         }
     }
 }

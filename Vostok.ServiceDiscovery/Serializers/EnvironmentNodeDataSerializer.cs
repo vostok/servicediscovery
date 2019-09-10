@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Annotations;
 using Vostok.Commons.Binary;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers
@@ -10,7 +11,7 @@ namespace Vostok.ServiceDiscovery.Serializers
         private const int WithPropertiesVersion = 2;
 
         [NotNull]
-        public static byte[] Serialize([CanBeNull] EnvironmentInfo info)
+        public static byte[] Serialize([CanBeNull] IEnvironmentInfo info)
         {
             var writer = new BinaryBufferWriter(0);
             writer.Write(WithPropertiesVersion);
@@ -24,10 +25,10 @@ namespace Vostok.ServiceDiscovery.Serializers
         }
 
         [NotNull]
-        public static EnvironmentInfo Deserialize([CanBeNull] byte[] data)
+        public static EnvironmentInfo Deserialize([NotNull] string environment, [CanBeNull] byte[] data)
         {
             if (data == null || data.Length == 0)
-                return new EnvironmentInfo(null, null);
+                return new EnvironmentInfo(environment, null, null);
 
             var reader = new BinaryBufferReader(data, 0);
 
@@ -38,7 +39,7 @@ namespace Vostok.ServiceDiscovery.Serializers
                 ? DeserializeProperties(reader)
                 : null;
 
-            return new EnvironmentInfo(parentEnvironment, properties);
+            return new EnvironmentInfo(environment, parentEnvironment, properties);
         }
 
         private static Dictionary<string, string> DeserializeProperties(BinaryBufferReader reader)

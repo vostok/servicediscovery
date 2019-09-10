@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
-using Vostok.ServiceDiscovery.Extensions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
@@ -43,25 +42,32 @@ namespace Vostok.ServiceDiscovery
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
-        public async Task<IReadOnlyList<string>> GetAllApplicationsAsync(string environment)
+        public async Task<IReadOnlyList<string>> GetAllApplicationsAsync([NotNull] string environment)
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildEnvironmentPath(environment)));
             data.EnsureSuccess();
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
-        public async Task<string> GetParentZoneAsync(string environment)
+        public async Task<IEnvironmentInfo> GetEnvironmentAsync([NotNull] string environment)
         {
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment)));
             data.EnsureSuccess();
-            var envData = EnvironmentNodeDataSerializer.Deserialize(data.Data);
-            return envData.ParentEnvironment;
+            var envData = EnvironmentNodeDataSerializer.Deserialize(environment, data.Data);
+            return envData;
         }
 
-        public async Task<bool> TryAddNode(string environment, string parent)
+        public async Task<IApplicationInfo> GetApplicationAsync([NotNull] string environment, [NotNull] string application)
         {
-            var environmentInfo = new EnvironmentInfo(parent, null);
-            var createRequest = new CreateRequest(pathHelper.BuildEnvironmentPath(environment), CreateMode.Persistent)
+            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application)));
+            data.EnsureSuccess();
+            var appData = ApplicationNodeDataSerializer.Deserialize(environment, application, data.Data);
+            return appData;
+        }
+
+        public async Task<bool> TryAddEnvironmentAsync(IEnvironmentInfo environmentInfo)
+        {
+            var createRequest = new CreateRequest(pathHelper.BuildEnvironmentPath(environmentInfo.Environment), CreateMode.Persistent)
             {
                 Data = EnvironmentNodeDataSerializer.Serialize(environmentInfo)
             };
@@ -69,10 +75,10 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.CreateAsync(createRequest)).IsSuccessful;
         }
 
-        public async Task<bool> TryDeleteNode(string environment)
+        public async Task<bool> TryDeleteEnvironmentAsync([NotNull] string environment)
         {
             var path = pathHelper.BuildEnvironmentPath(environment);
-            if(!(await CheckZoneExistence(path)))
+            if (!(await CheckZoneExistenceAsync(path)))
                 return false;
 
             var deleteRequest = new DeleteRequest(path)
@@ -83,75 +89,32 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.DeleteAsync(deleteRequest)).IsSuccessful;
         }
 
-        public async Task<bool> AddToBlacklist(string environment, string application, Uri replicaUri)
-        {
-            return await UpdateTopologyData(
-                environment,
-                application,
-                properties =>
-                {
-                    var blacklist = properties.GetBlacklist();
-                    if(blacklist.Contains(replicaUri))
-                        return properties;
-
-                    var newBlackList = blacklist.Concat(new[] { replicaUri });
-                    return properties.SetBlacklist(newBlackList);
-                });
-        }
-
-        public async Task<bool> RemoveFromBlacklist(string environment, string application, Uri replicaUri)
-        {
-            return await UpdateTopologyData(
-                environment,
-                application,
-                properties =>
-                {
-                    var blacklist = properties.GetBlacklist();
-                    if(!blacklist.Contains(replicaUri))
-                        return properties;
-
-                    var newBlackList = blacklist.Where(x => x != replicaUri);
-                    return properties.SetBlacklist(newBlackList);
-                });
-        }
-
-        public async Task<bool> SetExternalUrl(string environment, string application, Uri externalUrl)
-        {
-            return await UpdateTopologyData(
-                environment,
-                application,
-                properties =>
-                {
-                    return properties.SetExternalUrl(externalUrl);
-                });
-        }
-
-        public async Task<bool> CheckZoneExistence(string path)
+        internal async Task<bool> CheckZoneExistenceAsync([NotNull] string path)
         {
             var result = await zooKeeperClient.ExistsAsync(path);
-            if(result.IsSuccessful)
+            if (result.IsSuccessful)
                 return result.Stat != null;
 
-            return result.IsSuccessful;
+            return false;
         }
 
-        private async Task<bool> UpdateTopologyData(string environment, string application, Func<IServiceTopologyProperties, IServiceTopologyProperties> updateFunc)
+        public async Task<bool> TryUpdateApplicationPropertiesAsync([NotNull] string environment, [NotNull] string application, Func<IServiceTopologyProperties, IServiceTopologyProperties> updateFunc)
         {
             var topologyPath = pathHelper.BuildApplicationPath(environment, application);
 
-            const int topologyUpdateAttempts = 5;
+            const int updateAttempts = 5;
 
-            for(var i = 0; i < topologyUpdateAttempts; i++)
+            for (var i = 0; i < updateAttempts; i++)
             {
                 var readResult = zooKeeperClient.GetData(topologyPath);
-                if(!readResult.IsSuccessful)
-                   continue;
+                if (!readResult.IsSuccessful)
+                    continue;
 
-                var topologyData = ApplicationNodeDataSerializer.Deserialize(readResult.Data);
+                var topologyData = ApplicationNodeDataSerializer.Deserialize(environment, application, readResult.Data);
                 IServiceTopologyProperties properties = new ServiceTopologyProperties(topologyData.Properties);
 
                 properties = updateFunc(properties);
-                var data = ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(properties.ToDictionary(x => x.Key, y => y.Value)));
+                var data = ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(environment, application, properties.ToDictionary(x => x.Key, y => y.Value)));
                 var request = new SetDataRequest(topologyPath, data)
                 {
                     Version = readResult.Stat.Version
@@ -159,13 +122,48 @@ namespace Vostok.ServiceDiscovery
 
                 var updateResult = await zooKeeperClient.SetDataAsync(request);
 
-                if(updateResult.Status == ZooKeeperStatus.VersionsMismatch)
+                if (updateResult.Status == ZooKeeperStatus.VersionsMismatch)
                 {
                     continue;
                 }
 
                 return updateResult.IsSuccessful;
             }
+
+            return false;
+        }
+
+        public async Task<bool> TryUpdateEnvironmentPropertiesAsync(string environment, Func<IServiceTopologyProperties, IServiceTopologyProperties> updateFunc)
+        {
+            var environmentPath = pathHelper.BuildEnvironmentPath(environment);
+
+            const int updateAttempts = 5;
+
+            for (var i = 0; i < updateAttempts; i++)
+            {
+                var readResult = zooKeeperClient.GetData(environmentPath);
+                if (!readResult.IsSuccessful)
+                    continue;
+
+                var environmentInfo = EnvironmentNodeDataSerializer.Deserialize(environment, readResult.Data);
+                IServiceTopologyProperties properties = new ServiceTopologyProperties(environmentInfo.Properties);
+                properties = updateFunc(properties);
+                var data = EnvironmentNodeDataSerializer.Serialize(new EnvironmentInfo(environment, environmentInfo.ParentEnvironment, properties.ToDictionary(x => x.Key, y => y.Value)));
+                var request = new SetDataRequest(environmentPath, data)
+                {
+                    Version = readResult.Stat.Version
+                };
+
+                var updateResult = await zooKeeperClient.SetDataAsync(request);
+
+                if (updateResult.Status == ZooKeeperStatus.VersionsMismatch)
+                {
+                    continue;
+                }
+
+                return updateResult.IsSuccessful;
+            }
+
             return false;
         }
     }

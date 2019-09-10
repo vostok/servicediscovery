@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using Ploeh.AutoFixture;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 
@@ -9,14 +10,26 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
     [TestFixture]
     internal class ApplicationNodeDataSerializer_Tests
     {
+        private Fixture fixture;
+        private string envName;
+        private string appName;
+
+        [SetUp]
+        public void SetUp()
+        {
+            fixture = new Fixture();
+            envName = fixture.Create<string>();
+            appName = fixture.Create<string>();
+        }
+
         [Test]
         public void Should_serialize_and_deserialize_properties()
         {
             foreach (var properties in TestProperties())
             {
-                var info = new ApplicationInfo(properties);
+                var info = new ApplicationInfo(envName, appName, properties);
                 var serialized = ApplicationNodeDataSerializer.Serialize(info);
-                var deserialized = ApplicationNodeDataSerializer.Deserialize(serialized);
+                var deserialized = ApplicationNodeDataSerializer.Deserialize(envName, appName, serialized);
                 deserialized.Should().BeEquivalentTo(info);
             }
         }
@@ -25,20 +38,20 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         public void Should_serialize_null()
         {
             var serialized = ApplicationNodeDataSerializer.Serialize(null);
-            var deserialized = ApplicationNodeDataSerializer.Deserialize(serialized);
-            deserialized.Should().BeEquivalentTo(new ApplicationInfo(null));
+            var deserialized = ApplicationNodeDataSerializer.Deserialize(envName, appName, serialized);
+            deserialized.Should().BeEquivalentTo(new ApplicationInfo(envName, appName, null));
         }
 
         [Test]
         public void Should_deserialize_null()
         {
-            ApplicationNodeDataSerializer.Deserialize(null).Should().BeEquivalentTo(new ApplicationInfo(null));
+            ApplicationNodeDataSerializer.Deserialize(envName, appName, null).Should().BeEquivalentTo(new ApplicationInfo(envName, appName, null));
         }
 
         [Test]
         public void Should_deserialize_empty()
         {
-            ApplicationNodeDataSerializer.Deserialize(new byte[0]).Should().BeEquivalentTo(new ApplicationInfo(null));
+            ApplicationNodeDataSerializer.Deserialize(envName, appName, new byte[0]).Should().BeEquivalentTo(new ApplicationInfo(envName, appName, null));
         }
 
         private static IEnumerable<Dictionary<string, string>> TestProperties()

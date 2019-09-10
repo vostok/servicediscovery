@@ -103,7 +103,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     if (!environmentData.IsSuccessful)
                         return;
 
-                    var info = EnvironmentNodeDataSerializer.Deserialize(environmentData.Data);
+                    var info = EnvironmentNodeDataSerializer.Deserialize(name, environmentData.Data);
                     container.Update(environmentData.Stat.ModifiedZxId, info);
                 }
             }
