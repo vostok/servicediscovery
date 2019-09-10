@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Models;
 
-namespace Vostok.ServiceDiscovery.Tests
+namespace Vostok.ServiceDiscovery.Tests.Models
 {
     [TestFixture]
     internal class ServiceTopology_Tests

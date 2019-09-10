@@ -105,7 +105,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         // CR(kungurtsev): add helper that modify zookeeper node bytes. Possibly as extension to vostok.zookeeper.abstractions.
-        public async Task<bool> TryUpdateApplicationPropertiesAsync([NotNull] string environment, [NotNull] string application, Func<IServiceTopologyProperties, IServiceTopologyProperties> updateFunc)
+        public async Task<bool> TryUpdateApplicationPropertiesAsync([NotNull] string environment, [NotNull] string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc)
         {
             var applicationPath = pathHelper.BuildApplicationPath(environment, application);
 
@@ -119,12 +119,10 @@ namespace Vostok.ServiceDiscovery
                 if (!readResult.IsSuccessful)
                     continue;
 
-                var topologyData = ApplicationNodeDataSerializer.Deserialize(environment, application, readResult.Data);
-                IServiceTopologyProperties properties = new ServiceTopologyProperties(topologyData.Properties);
+                var applicationInfo = ApplicationNodeDataSerializer.Deserialize(environment, application, readResult.Data);
+                var newPropeties = updateFunc(applicationInfo.Properties);
 
-                properties = updateFunc(properties);
-                // CR(kungurtsev): extra ToDictionary.
-                var data = ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(environment, application, properties.ToDictionary(x => x.Key, y => y.Value)));
+                var data = ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(environment, application, newPropeties));
                 var request = new SetDataRequest(applicationPath, data)
                 {
                     Version = readResult.Stat.Version
@@ -143,7 +141,7 @@ namespace Vostok.ServiceDiscovery
             return false;
         }
 
-        public async Task<bool> TryUpdateEnvironmentPropertiesAsync(string environment, Func<IServiceTopologyProperties, IServiceTopologyProperties> updateFunc)
+        public async Task<bool> TryUpdateEnvironmentPropertiesAsync(string environment, Func<IEnvironmentInfoProperties, IEnvironmentInfoProperties> updateFunc)
         {
             var environmentPath = pathHelper.BuildEnvironmentPath(environment);
 
@@ -156,9 +154,9 @@ namespace Vostok.ServiceDiscovery
                     continue;
 
                 var environmentInfo = EnvironmentNodeDataSerializer.Deserialize(environment, readResult.Data);
-                IServiceTopologyProperties properties = new ServiceTopologyProperties(environmentInfo.Properties);
-                properties = updateFunc(properties);
-                var data = EnvironmentNodeDataSerializer.Serialize(new EnvironmentInfo(environment, environmentInfo.ParentEnvironment, properties.ToDictionary(x => x.Key, y => y.Value)));
+                var newProperties = updateFunc(environmentInfo.Properties);
+
+                var data = EnvironmentNodeDataSerializer.Serialize(new EnvironmentInfo(environment, environmentInfo.ParentEnvironment, newProperties));
                 var request = new SetDataRequest(environmentPath, data)
                 {
                     Version = readResult.Stat.Version

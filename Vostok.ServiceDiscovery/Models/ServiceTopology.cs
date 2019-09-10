@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Abstractions;
 
-namespace Vostok.ServiceDiscovery
+namespace Vostok.ServiceDiscovery.Models
 {
     internal class ServiceTopology : IServiceTopology
     {

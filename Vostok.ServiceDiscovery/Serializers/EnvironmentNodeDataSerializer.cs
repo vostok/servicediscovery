@@ -16,8 +16,9 @@ namespace Vostok.ServiceDiscovery.Serializers
             var writer = new BinaryBufferWriter(0);
             writer.Write(WithPropertiesVersion);
             writer.WriteNullable(info?.ParentEnvironment, (w, i) => w.WriteWithLength(i));
+
             writer.WriteDictionary(
-                info?.Properties ?? new Dictionary<string, string>(),
+                (IReadOnlyDictionary<string, string>)info?.Properties ?? new Dictionary<string, string>(),
                 (w, k) => w.WriteWithLength(k),
                 (w, v) => w.WriteWithLength(v));
 

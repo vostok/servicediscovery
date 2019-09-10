@@ -13,16 +13,13 @@ namespace Vostok.ServiceDiscovery.Models
                 throw new ArgumentOutOfRangeException(nameof(environment), environment);
             Environment = environment;
             ParentEnvironment = parentEnvironment;
-            Properties = properties ?? new Dictionary<string, string>();
+            Properties = new EnvironmentInfoProperties(properties);
         }
 
-        [NotNull]
         public string Environment { get; }
 
-        [CanBeNull]
         public string ParentEnvironment { get; }
 
-        [NotNull]
-        public IReadOnlyDictionary<string, string> Properties { get; }
+        public IEnvironmentInfoProperties Properties { get; }
     }
 }
