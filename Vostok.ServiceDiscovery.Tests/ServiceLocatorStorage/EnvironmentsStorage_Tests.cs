@@ -51,7 +51,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         public void Should_track_environment_creation_and_deletion()
         {
             var info = new EnvironmentInfo(
-                "name",
+                "default",
                 "parent",
                 new Dictionary<string, string>
                 {
