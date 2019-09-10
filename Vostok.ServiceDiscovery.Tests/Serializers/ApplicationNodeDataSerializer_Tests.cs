@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
-using Ploeh.AutoFixture;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 
@@ -10,16 +9,14 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
     [TestFixture]
     internal class ApplicationNodeDataSerializer_Tests
     {
-        private Fixture fixture;
         private string envName;
         private string appName;
 
         [SetUp]
         public void SetUp()
         {
-            fixture = new Fixture();
-            envName = fixture.Create<string>();
-            appName = fixture.Create<string>();
+            envName = "envName";
+            appName = "appName";
         }
 
         [Test]

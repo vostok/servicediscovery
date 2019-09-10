@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
-using Ploeh.AutoFixture;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 
@@ -10,18 +9,10 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
     [TestFixture]
     internal class EnvironmentInfoExtensions_Tests
     {
-        private Fixture fixture;
-
-        [SetUp]
-        public void SetUp()
-        {
-            fixture = new Fixture();
-        }
-
         [Test]
         public void SkipIfEmpty_should_be_false()
         {
-            var someName = fixture.Create<string>();
+            var someName = "someName";
             ((EnvironmentInfo)null).SkipIfEmpty().Should().BeFalse();
             new EnvironmentInfo(someName, null, null).SkipIfEmpty().Should().BeFalse();
             new EnvironmentInfo(someName, null, new Dictionary<string, string> {{"key", "value"}}).SkipIfEmpty().Should().BeFalse();
@@ -35,7 +26,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         [Test]
         public void SkipIfEmpty_should_be_true()
         {
-            var someName = fixture.Create<string>();
+            var someName = "someName";
             new EnvironmentInfo(someName, null, new Dictionary<string, string> {{EnvironmentInfoKeys.SkipIfEmpty, "true"}}).SkipIfEmpty().Should().BeTrue();
             new EnvironmentInfo(someName, null, new Dictionary<string, string> {{EnvironmentInfoKeys.SkipIfEmpty, "True"}}).SkipIfEmpty().Should().BeTrue();
         }
