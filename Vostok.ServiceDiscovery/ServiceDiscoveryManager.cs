@@ -44,7 +44,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         // CR(kungurtsev): NodeNotFound -> ?.
-        public async Task<IReadOnlyList<string>> GetAllApplicationsAsync([NotNull] string environment)
+        public async Task<IReadOnlyList<string>> GetAllApplicationsAsync(string environment)
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildEnvironmentPath(environment))).ConfigureAwait(false);
             data.EnsureSuccess();
@@ -52,7 +52,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         // CR(kungurtsev): NodeNotFound -> null.
-        public async Task<IEnvironmentInfo> GetEnvironmentAsync([NotNull] string environment)
+        public async Task<IEnvironmentInfo> GetEnvironmentAsync(string environment)
         {
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment))).ConfigureAwait(false);
             data.EnsureSuccess();
@@ -61,7 +61,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         // CR(kungurtsev): NodeNotFound -> null.
-        public async Task<IApplicationInfo> GetApplicationAsync([NotNull] string environment, [NotNull] string application)
+        public async Task<IApplicationInfo> GetApplicationAsync(string environment, string application)
         {
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application))).ConfigureAwait(false);
             data.EnsureSuccess();
@@ -69,7 +69,7 @@ namespace Vostok.ServiceDiscovery
             return appData;
         }
 
-        public async Task<bool> TryAddEnvironmentAsync(IEnvironmentInfo environmentInfo)
+        public async Task<bool> TryCreateEnvironmentAsync(IEnvironmentInfo environmentInfo)
         {
             var createRequest = new CreateRequest(pathHelper.BuildEnvironmentPath(environmentInfo.Environment), CreateMode.Persistent)
             {
@@ -79,7 +79,7 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
         }
 
-        public async Task<bool> TryDeleteEnvironmentAsync([NotNull] string environment)
+        public async Task<bool> TryDeleteEnvironmentAsync(string environment)
         {
             var path = pathHelper.BuildEnvironmentPath(environment);
             // CR(kungurtsev): why should we check first?
@@ -105,7 +105,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         // CR(kungurtsev): add helper that modify zookeeper node bytes. Possibly as extension to vostok.zookeeper.abstractions.
-        public async Task<bool> TryUpdateApplicationPropertiesAsync([NotNull] string environment, [NotNull] string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc)
+        public async Task<bool> TryUpdateApplicationPropertiesAsync(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc)
         {
             var applicationPath = pathHelper.BuildApplicationPath(environment, application);
 
