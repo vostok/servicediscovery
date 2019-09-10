@@ -37,21 +37,21 @@ namespace Vostok.ServiceDiscovery
 
         public async Task<IReadOnlyList<string>> GetAllEnvironmentsAsync()
         {
-            var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(settings.ZooKeeperNodesPrefix));
+            var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(settings.ZooKeeperNodesPrefix)).ConfigureAwait(false);
             data.EnsureSuccess();
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
         public async Task<IReadOnlyList<string>> GetAllApplicationsAsync([NotNull] string environment)
         {
-            var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildEnvironmentPath(environment)));
+            var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildEnvironmentPath(environment))).ConfigureAwait(false);
             data.EnsureSuccess();
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
 
         public async Task<IEnvironmentInfo> GetEnvironmentAsync([NotNull] string environment)
         {
-            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment)));
+            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment))).ConfigureAwait(false);
             data.EnsureSuccess();
             var envData = EnvironmentNodeDataSerializer.Deserialize(environment, data.Data);
             return envData;
@@ -59,7 +59,7 @@ namespace Vostok.ServiceDiscovery
 
         public async Task<IApplicationInfo> GetApplicationAsync([NotNull] string environment, [NotNull] string application)
         {
-            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application)));
+            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application))).ConfigureAwait(false);
             data.EnsureSuccess();
             var appData = ApplicationNodeDataSerializer.Deserialize(environment, application, data.Data);
             return appData;
@@ -72,13 +72,13 @@ namespace Vostok.ServiceDiscovery
                 Data = EnvironmentNodeDataSerializer.Serialize(environmentInfo)
             };
 
-            return (await zooKeeperClient.CreateAsync(createRequest)).IsSuccessful;
+            return (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
         }
 
         public async Task<bool> TryDeleteEnvironmentAsync([NotNull] string environment)
         {
             var path = pathHelper.BuildEnvironmentPath(environment);
-            if (!(await CheckZoneExistenceAsync(path)))
+            if (!(await CheckZoneExistenceAsync(path).ConfigureAwait(false)))
                 return false;
 
             var deleteRequest = new DeleteRequest(path)
@@ -86,12 +86,12 @@ namespace Vostok.ServiceDiscovery
                 DeleteChildrenIfNeeded = true
             };
 
-            return (await zooKeeperClient.DeleteAsync(deleteRequest)).IsSuccessful;
+            return (await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false)).IsSuccessful;
         }
 
         internal async Task<bool> CheckZoneExistenceAsync([NotNull] string path)
         {
-            var result = await zooKeeperClient.ExistsAsync(path);
+            var result = await zooKeeperClient.ExistsAsync(path).ConfigureAwait(false);
             if (result.IsSuccessful)
                 return result.Stat != null;
 
@@ -120,7 +120,7 @@ namespace Vostok.ServiceDiscovery
                     Version = readResult.Stat.Version
                 };
 
-                var updateResult = await zooKeeperClient.SetDataAsync(request);
+                var updateResult = await zooKeeperClient.SetDataAsync(request).ConfigureAwait(false);
 
                 if (updateResult.Status == ZooKeeperStatus.VersionsMismatch)
                 {
@@ -154,7 +154,7 @@ namespace Vostok.ServiceDiscovery
                     Version = readResult.Stat.Version
                 };
 
-                var updateResult = await zooKeeperClient.SetDataAsync(request);
+                var updateResult = await zooKeeperClient.SetDataAsync(request).ConfigureAwait(false);
 
                 if (updateResult.Status == ZooKeeperStatus.VersionsMismatch)
                 {
