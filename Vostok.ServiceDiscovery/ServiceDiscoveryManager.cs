@@ -54,8 +54,7 @@ namespace Vostok.ServiceDiscovery
             data.EnsureSuccess();
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
-
-        // CR(churbanov): this method required for test, should we add it to IServiceDiscoveryManager? or find another way to test TryCreatePermanentReplica/TryDeletePermanentReplica
+        
         public async Task<IReadOnlyList<string>> GetAllReplicasAsync(string environment, string application)
         {
             var data = await zooKeeperClient.GetChildrenAsync(new GetChildrenRequest(pathHelper.BuildApplicationPath(environment, application))).ConfigureAwait(false);
@@ -66,7 +65,7 @@ namespace Vostok.ServiceDiscovery
             data.EnsureSuccess();
             return data.ChildrenNames.Select(n => pathHelper.Unescape(n)).ToList();
         }
-        
+
         public async Task<IEnvironmentInfo> GetEnvironmentAsync(string environment)
         {
             var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildEnvironmentPath(environment))).ConfigureAwait(false);
@@ -91,6 +90,18 @@ namespace Vostok.ServiceDiscovery
             return appData;
         }
 
+        public async Task<IReplicaInfo> GetReplicaAsync(string environment, string application, string replica)
+        {
+            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application))).ConfigureAwait(false);
+
+            if (data.Status == ZooKeeperStatus.NodeNotFound)
+                return null;
+
+            data.EnsureSuccess();
+            var envData = ReplicaNodeDataSerializer.Deserialize(environment, application, replica, data.Data);
+            return envData;
+        }
+
         public async Task<bool> TryCreateEnvironmentAsync(IEnvironmentInfo environmentInfo)
         {
             var createRequest = new CreateRequest(pathHelper.BuildEnvironmentPath(environmentInfo.Environment), CreateMode.Persistent)
@@ -111,8 +122,8 @@ namespace Vostok.ServiceDiscovery
             };
 
             var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
-            // CR(kungurtsev): same as IsSuccessful.
-            return deleteResult.Status == ZooKeeperStatus.NodeNotFound || deleteResult.Status == ZooKeeperStatus.Ok;
+
+            return deleteResult.IsSuccessful;
         }
 
         public async Task<bool> TryUpdateEnvironmentPropertiesAsync(string environment, Func<IEnvironmentInfoProperties, IEnvironmentInfoProperties> updateFunc)
@@ -164,15 +175,26 @@ namespace Vostok.ServiceDiscovery
         {
             var path = pathHelper.BuildReplicaPath(environment, application, replica);
 
+            var existsResult = await zooKeeperClient.ExistsAsync(new ExistsRequest(path)).ConfigureAwait(false);
+
+            if (!existsResult.IsSuccessful)
+                return false;
+
+            if (existsResult.Stat == null)
+                return true;
+
+            if (existsResult.Stat.EphemeralOwner != 0)
+                return false;
+
             var deleteRequest = new DeleteRequest(path)
             {
-                DeleteChildrenIfNeeded = true
+                DeleteChildrenIfNeeded = true,
+                Version = existsResult.Stat.Version
             };
 
             var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
 
-            // CR(kungurtsev): same as IsSuccessful.
-            return deleteResult.Status == ZooKeeperStatus.NodeNotFound || deleteResult.Status == ZooKeeperStatus.Ok;
+            return deleteResult.IsSuccessful;
         }
     }
 }

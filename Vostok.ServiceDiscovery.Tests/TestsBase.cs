@@ -118,11 +118,11 @@ namespace Vostok.ServiceDiscovery.Tests
             delete.IsSuccessful.Should().BeTrue();
         }
 
-        protected void CreateReplicaNode(ReplicaInfo replicaInfo)
+        protected void CreateReplicaNode(ReplicaInfo replicaInfo, bool persistent = true)
         {
             var data = ReplicaNodeDataSerializer.SerializeProperties(replicaInfo.Properties);
             var path = PathHelper.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
-            CreateOrUpdate(path, data);
+            CreateOrUpdate(path, data, persistent);
         }
 
         protected void DeleteReplicaNode(ReplicaInfo replicaInfo)
@@ -143,9 +143,9 @@ namespace Vostok.ServiceDiscovery.Tests
             return new ServiceBeacon(client, replica, settings, Log);
         }
 
-        private void CreateOrUpdate(string path, byte[] data)
+        private void CreateOrUpdate(string path, byte[] data, bool persistent = true)
         {
-            var create = ZooKeeperClient.Create(path, CreateMode.Persistent, data);
+            var create = ZooKeeperClient.Create(path, persistent ? CreateMode.Persistent : CreateMode.Ephemeral, data);
             (create.Status == ZooKeeperStatus.Ok || create.Status == ZooKeeperStatus.NodeAlreadyExists).Should().BeTrue();
             if (create.Status == ZooKeeperStatus.NodeAlreadyExists)
                 ZooKeeperClient.SetData(path, data).IsSuccessful.Should().BeTrue();

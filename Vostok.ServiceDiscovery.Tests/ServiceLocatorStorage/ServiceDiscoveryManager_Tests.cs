@@ -521,7 +521,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
         [Test]
         public void TryDeletePermanentReplicaAsync_should_return_true_for_non_existent_replica()
-        {   
+        {
             var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
 
             serviceDiscoveryManager.TryDeletePermanentReplicaAsync("default", "vostok", "replica1")
@@ -558,6 +558,29 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 .GetResult()
                 .Should()
                 .BeEquivalentTo("replica2", "replica3");
+        }
+
+        [Test]
+        public void TryDeletePermanentReplicaAsync_should_return_false_and_do_not_delete_ephemeral_replica()
+        {
+            var replicaToDelete = new ReplicaInfo("default", "vostok", "replica1");
+            CreateReplicaNode(replicaToDelete, false);
+            CreateReplicaNode(new ReplicaInfo("default", "vostok", "replica2"));
+            CreateReplicaNode(new ReplicaInfo("default", "vostok", "replica3"));
+
+            var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
+
+            serviceDiscoveryManager.TryDeletePermanentReplicaAsync(replicaToDelete.Environment, replicaToDelete.Application, replicaToDelete.Replica)
+                .GetAwaiter()
+                .GetResult()
+                .Should()
+                .BeFalse();
+
+            serviceDiscoveryManager.GetAllReplicasAsync("default", "vostok")
+                .GetAwaiter()
+                .GetResult()
+                .Should()
+                .BeEquivalentTo("replica1", "replica2", "replica3");
         }
     }
 }
