@@ -119,7 +119,7 @@ namespace Vostok.ServiceDiscovery
         {
             var environmentPath = pathHelper.BuildEnvironmentPath(environment);
 
-            return await zooKeeperClient.TryUpdateNodeDataAsync(
+            return await zooKeeperClient.TryUpdateDataAsync(
                     environmentPath,
                     bytes => NodeDataHelper.SetEnvironmentProperties(environment, updateFunc, bytes),
                     settings.ZooKeeperNodeUpdateAttempts)
@@ -130,7 +130,7 @@ namespace Vostok.ServiceDiscovery
         {
             var applicationPath = pathHelper.BuildApplicationPath(environment, application);
 
-            return await zooKeeperClient.TryUpdateNodeDataAsync(
+            return await zooKeeperClient.TryUpdateDataAsync(
                     applicationPath,
                     bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes),
                     settings.ZooKeeperNodeUpdateAttempts)
@@ -141,7 +141,7 @@ namespace Vostok.ServiceDiscovery
         {
             var environmentPath = pathHelper.BuildEnvironmentPath(environment);
 
-            return await zooKeeperClient.TryUpdateNodeDataAsync(
+            return await zooKeeperClient.TryUpdateDataAsync(
                     environmentPath,
                     bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes),
                     settings.ZooKeeperNodeUpdateAttempts)

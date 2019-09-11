@@ -9,10 +9,10 @@ namespace Vostok.ServiceDiscovery.Helpers
     // CR(kungurtsev): move to zookeeper abstractions.
     public static class ZooKeeperClientExtensions
     {
-        public static async Task<bool> TryUpdateNodeDataAsync(
+        public static async Task<bool> TryUpdateDataAsync(
             this IZooKeeperClient zooKeeperClient,
             string path,
-            Func<byte[], byte[]> updateBytesFunc,
+            Func<byte[], byte[]> update,
             int attempts = 5)
         {
             for (var i = 0; i < attempts; i++)
@@ -21,7 +21,7 @@ namespace Vostok.ServiceDiscovery.Helpers
                 if (!readResult.IsSuccessful)
                     return false;
 
-                var newData = updateBytesFunc(readResult.Data);
+                var newData = update(readResult.Data);
 
                 var request = new SetDataRequest(path, newData)
                 {
