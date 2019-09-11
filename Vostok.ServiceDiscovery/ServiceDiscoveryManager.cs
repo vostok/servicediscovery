@@ -111,6 +111,7 @@ namespace Vostok.ServiceDiscovery
             };
 
             var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
+            // CR(kungurtsev): same as IsSuccessful.
             return deleteResult.Status == ZooKeeperStatus.NodeNotFound || deleteResult.Status == ZooKeeperStatus.Ok;
         }
 
@@ -120,7 +121,7 @@ namespace Vostok.ServiceDiscovery
 
             return await zooKeeperClient.TryUpdateNodeDataAsync(
                     environmentPath,
-                    bytes => ByteUpdateAppliers.ApplyEnvironmentPropertiesUpdate(environment, updateFunc, bytes),
+                    bytes => NodeDataHelper.SetEnvironmentProperties(environment, updateFunc, bytes),
                     settings.ZooKeeperNodeUpdateAttempts)
                 .ConfigureAwait(false);
         }
@@ -131,7 +132,7 @@ namespace Vostok.ServiceDiscovery
 
             return await zooKeeperClient.TryUpdateNodeDataAsync(
                     applicationPath,
-                    bytes => ByteUpdateAppliers.ApplyApplicationPropertiesUpdate(environment, application, updateFunc, bytes),
+                    bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes),
                     settings.ZooKeeperNodeUpdateAttempts)
                 .ConfigureAwait(false);
         }
@@ -142,7 +143,7 @@ namespace Vostok.ServiceDiscovery
 
             return await zooKeeperClient.TryUpdateNodeDataAsync(
                     environmentPath,
-                    bytes => ByteUpdateAppliers.ApplyEnvironmentParentUpdate(environment, newParent, bytes),
+                    bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes),
                     settings.ZooKeeperNodeUpdateAttempts)
                 .ConfigureAwait(false);
         }

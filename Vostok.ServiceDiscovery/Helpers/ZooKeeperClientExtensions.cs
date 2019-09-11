@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
-using Vostok.ZooKeeper.Client.Abstractions.Model.Result;
 
 namespace Vostok.ServiceDiscovery.Helpers
 {
+    // CR(kungurtsev): move to zookeeper abstractions.
     public static class ZooKeeperClientExtensions
     {
         public static async Task<bool> TryUpdateNodeDataAsync(

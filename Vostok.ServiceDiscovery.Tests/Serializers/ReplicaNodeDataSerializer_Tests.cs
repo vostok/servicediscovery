@@ -10,9 +10,9 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
     public class ReplicaNodeDataSerializer_Tests
     {
         [Test]
-        public void Serialize_should_concat_dict_key_values()
+        public void SerializeProperties_should_concat_dict_key_values()
         {
-            var serialized = ReplicaNodeDataSerializer.Serialize(
+            var serialized = ReplicaNodeDataSerializer.SerializeProperties(
                 new Dictionary<string, string>
                 {
                     {"a", "a-value"},
@@ -25,9 +25,9 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
-        public void Serialize_should_ignore_null_and_empty_values()
+        public void SerializeProperties_should_ignore_null_and_empty_values()
         {
-            var serialized = ReplicaNodeDataSerializer.Serialize(
+            var serialized = ReplicaNodeDataSerializer.SerializeProperties(
                 new Dictionary<string, string>
                 {
                     {"a", null},
@@ -41,7 +41,7 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
-        public void Deserialize_should_deserialize_serialized()
+        public void DeserializeProperties_should_deserialize_serialized()
         {
             var dict = new Dictionary<string, string>
             {
@@ -51,14 +51,14 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                 {"with some spaces  ", "   "}
             };
 
-            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
-            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.SerializeProperties(dict);
+            var deserialized = ReplicaNodeDataSerializer.DeserializeProperties(serialized);
 
             deserialized.Should().BeEquivalentTo(dict);
         }
 
         [Test]
-        public void Deserialize_should_ignore_null_and_empty_values()
+        public void DeserializeProperties_should_ignore_null_and_empty_values()
         {
             var dict = new Dictionary<string, string>
             {
@@ -68,8 +68,8 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                 {"d", " "}
             };
 
-            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
-            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.SerializeProperties(dict);
+            var deserialized = ReplicaNodeDataSerializer.DeserializeProperties(serialized);
 
             deserialized.Should()
                 .BeEquivalentTo(
@@ -81,7 +81,7 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
-        public void Deserialize_should_replace_new_line_symbol()
+        public void DeserializeProperties_should_replace_new_line_symbol()
         {
             var dict = new Dictionary<string, string>
             {
@@ -89,8 +89,8 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                 {"b", "b\n\nb"}
             };
 
-            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
-            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.SerializeProperties(dict);
+            var deserialized = ReplicaNodeDataSerializer.DeserializeProperties(serialized);
 
             deserialized.Should()
                 .BeEquivalentTo(

@@ -5,29 +5,29 @@ using Vostok.ServiceDiscovery.Serializers;
 
 namespace Vostok.ServiceDiscovery.Helpers
 {
-    public class ByteUpdateAppliers
+    internal static class NodeDataHelper
     {
-        public static byte[] ApplyEnvironmentParentUpdate(string environment, string newParent, byte[] bytes)
+        public static byte[] SetEnvironmentParent(string environment, string newParent, byte[] bytes)
         {
             var environmentInfo = EnvironmentNodeDataSerializer.Deserialize(environment, bytes);
 
             return EnvironmentNodeDataSerializer.Serialize(new EnvironmentInfo(environment, newParent, environmentInfo.Properties));
         }
 
-        public static byte[] ApplyEnvironmentPropertiesUpdate(string environment, Func<IEnvironmentInfoProperties, IEnvironmentInfoProperties> updateFunc, byte[] bytes)
+        public static byte[] SetEnvironmentProperties(string environment, Func<IEnvironmentInfoProperties, IEnvironmentInfoProperties> update, byte[] bytes)
         {
             var environmentInfo = EnvironmentNodeDataSerializer.Deserialize(environment, bytes);
 
-            var newProperties = updateFunc(environmentInfo.Properties);
+            var newProperties = update(environmentInfo.Properties);
 
             return EnvironmentNodeDataSerializer.Serialize(new EnvironmentInfo(environment, environmentInfo.ParentEnvironment, newProperties));
         }
 
-        public static byte[] ApplyApplicationPropertiesUpdate(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc, byte[] bytes)
+        public static byte[] SetApplicationProperties(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> update, byte[] bytes)
         {
             var environmentInfo = ApplicationNodeDataSerializer.Deserialize(environment, application, bytes);
 
-            var newProperties = updateFunc(environmentInfo.Properties);
+            var newProperties = update(environmentInfo.Properties);
 
             return ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(environment, application, newProperties));
         }
