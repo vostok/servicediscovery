@@ -159,9 +159,9 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
         }
 
-        public async Task<bool> TryDeletePermanentReplicaAsync(IReplicaInfo replica)
+        public async Task<bool> TryDeletePermanentReplicaAsync(string environment, string application, string replica)
         {
-            var path = pathHelper.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+            var path = pathHelper.BuildReplicaPath(environment, application, replica);
 
             var deleteRequest = new DeleteRequest(path)
             {
@@ -170,6 +170,7 @@ namespace Vostok.ServiceDiscovery
 
             var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
 
+            // CR(kungurtsev): same as IsSuccessful.
             return deleteResult.Status == ZooKeeperStatus.NodeNotFound || deleteResult.Status == ZooKeeperStatus.Ok;
         }
     }
