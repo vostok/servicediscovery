@@ -4,7 +4,7 @@ using Vostok.ServiceDiscovery.Helpers;
 namespace Vostok.ServiceDiscovery
 {
     /// <summary>
-    /// Represents <see cref="ServiceLocator"/> settings.
+    /// Represents <see cref="ServiceDiscoveryManager"/> settings.
     /// </summary>
     [PublicAPI]
     public class ServiceDiscoveryManagerSettings
@@ -12,5 +12,7 @@ namespace Vostok.ServiceDiscovery
         public string ZooKeeperNodesPrefix { get; set; } = "/service-discovery/v2";
 
         public IZooKeeperPathEscaper ZooKeeperNodesPathEscaper { get; set; } = ZooKeeperPathEscaper.Instance;
+
+        public int ZooKeeperNodeUpdateAttempts { get; set; } = 5;
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers
 {
@@ -38,5 +40,12 @@ namespace Vostok.ServiceDiscovery.Serializers
                     StringComparer.OrdinalIgnoreCase
                 );
         }
+
+        [NotNull]
+        public static byte[] Serialize(IReplicaInfo replica) => Serialize(replica.Properties);
+
+        [NotNull]
+        public static IReplicaInfo Deserialize(string environment, string application, string replica, [CanBeNull] byte[] data) =>
+            new ReplicaInfo(environment, application, replica, Deserialize(data));
     }
 }
