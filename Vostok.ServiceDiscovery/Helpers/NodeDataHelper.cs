@@ -1,5 +1,6 @@
 ﻿using System;
 using Vostok.ServiceDiscovery.Abstractions;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 

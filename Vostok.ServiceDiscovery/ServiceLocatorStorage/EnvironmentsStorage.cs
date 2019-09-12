@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;

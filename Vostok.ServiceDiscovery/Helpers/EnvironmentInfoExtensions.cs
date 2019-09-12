@@ -1,4 +1,5 @@
-﻿using Vostok.ServiceDiscovery.Models;
+﻿using Vostok.ServiceDiscovery.Abstractions.Models;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Helpers
 {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Abstractions;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers

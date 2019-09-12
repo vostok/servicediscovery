@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.ServiceLocatorStorage;
 using Vostok.ZooKeeper.Client.Abstractions;

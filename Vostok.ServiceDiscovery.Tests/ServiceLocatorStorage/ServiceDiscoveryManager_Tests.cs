@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using NUnit.Framework;
+using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Abstractions;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 
 namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 {
@@ -339,12 +343,16 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             var initProperties = GetProperties();
             var environment = "environment";
             CreateEnvironmentNode(environment, properties: initProperties);
-            Dictionary<string, string> updatedProperties = null;
+            var updatedProperties = new Dictionary<string, string>()
+            {
+                ["updatedKey"] = "updatedValue"
+            };
 
             IEnvironmentInfoProperties UpdatePropertiesFunc(IEnvironmentInfoProperties props)
             {
-                updatedProperties = props.ToDictionary(kvp => kvp.Key, kvp => $"{kvp.Value}_updated");
-                return new EnvironmentInfoProperties(updatedProperties);
+                foreach (var property in updatedProperties)
+                    props = props.Set(property.Key, property.Value);
+                return props;
             }
 
             var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
@@ -366,7 +374,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 .GetResult()
                 .Properties
                 .Should()
-                .BeEquivalentTo(updatedProperties);
+                .BeEquivalentTo(initProperties.Concat(updatedProperties));
         }
 
         [Test]
@@ -430,10 +438,16 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         {
             const string environment = "environment";
 
+            var updatedProperties = new Dictionary<string, string>()
+            {
+                ["updatedKey"] = "updatedValue"
+            };
+
             IEnvironmentInfoProperties UpdatePropertiesFunc(IEnvironmentInfoProperties props)
             {
-                var updatedProperties = props.ToDictionary(kvp => kvp.Key, kvp => $"{kvp.Value}_updated");
-                return new EnvironmentInfoProperties(updatedProperties);
+                foreach (var property in updatedProperties)
+                    props.Set(property.Key, property.Value);
+                return props;
             }
 
             var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
@@ -456,12 +470,16 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         {
             var initProperties = GetProperties();
             CreateApplicationNode("environment", "vostok", properties: initProperties);
-            Dictionary<string, string> updatedProperties = null;
+            var updatedProperties = new Dictionary<string, string>
+            {
+                ["updatedKey"] = "updatedValue"
+            };
 
             IApplicationInfoProperties UpdatePropertiesFunc(IApplicationInfoProperties props)
             {
-                updatedProperties = props.ToDictionary(kvp => kvp.Key, kvp => $"{kvp.Value}_updated");
-                return new ApplicationInfoProperties(updatedProperties);
+                foreach (var property in updatedProperties)
+                    props = props.Set(property.Key, property.Value);
+                return props;
             }
 
             var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
@@ -478,12 +496,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 .Should()
                 .BeTrue();
 
-            serviceDiscoveryManager.GetApplicationAsync("environment", "vostok")
+            Action assert = () => serviceDiscoveryManager.GetApplicationAsync("environment", "vostok")
                 .GetAwaiter()
                 .GetResult()
                 .Properties
                 .Should()
-                .BeEquivalentTo(updatedProperties);
+                .BeEquivalentTo(initProperties.Concat(updatedProperties));
         }
 
         [Test]
@@ -492,10 +510,16 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             const string environment = "environment";
             const string application = "vostok";
 
+            var updatedProperties = new Dictionary<string, string>
+            {
+                ["updatedKey"] = "updatedValue"
+            };
+
             IApplicationInfoProperties UpdatePropertiesFunc(IApplicationInfoProperties props)
             {
-                var updatedProperties = props.ToDictionary(kvp => kvp.Key, kvp => $"{kvp.Value}_updated");
-                return new ApplicationInfoProperties(updatedProperties);
+                foreach (var property in updatedProperties)
+                    props.Set(property.Key, property.Value);
+                return props;
             }
 
             var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);

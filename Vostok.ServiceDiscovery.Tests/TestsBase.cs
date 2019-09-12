@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Console;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;

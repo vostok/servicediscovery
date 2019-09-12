@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Vostok.Commons.Environment;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 using EnvironmentInfo = Vostok.Commons.Environment.EnvironmentInfo;
 

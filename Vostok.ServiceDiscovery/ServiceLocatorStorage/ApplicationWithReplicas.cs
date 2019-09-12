@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Url;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;

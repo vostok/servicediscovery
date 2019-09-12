@@ -9,6 +9,7 @@ using FluentAssertions.Extensions;
 using NUnit.Framework;
 using Vostok.Commons.Helpers.Url;
 using Vostok.Commons.Testing;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ZooKeeper.Client.Abstractions;
