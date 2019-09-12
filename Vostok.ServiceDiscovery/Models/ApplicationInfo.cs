@@ -1,16 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Models
 {
-    internal class ApplicationInfo
+    internal class ApplicationInfo : IApplicationInfo
     {
-        public ApplicationInfo([CanBeNull] Dictionary<string, string> properties)
+        public ApplicationInfo([NotNull] string environment, [NotNull] string application, [CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
-            Properties = properties ?? new Dictionary<string, string>();
+            if (string.IsNullOrWhiteSpace(environment))
+                throw new ArgumentOutOfRangeException(nameof(environment), environment);
+            if (string.IsNullOrWhiteSpace(application))
+                throw new ArgumentOutOfRangeException(nameof(application), application);
+            Environment = environment;
+            Application = application;
+            Properties = new ApplicationInfoProperties(properties);
         }
 
-        [NotNull]
-        public Dictionary<string, string> Properties { get; }
+        public string Environment { get; }
+
+        public string Application { get; }
+
+        public IApplicationInfoProperties Properties { get; }
     }
 }

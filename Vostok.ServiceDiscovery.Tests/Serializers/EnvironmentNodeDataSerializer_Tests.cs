@@ -9,6 +9,14 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
     [TestFixture]
     internal class EnvironmentNodeDataSerializer_Tests
     {
+        private string envName;
+
+        [SetUp]
+        public void SetUp()
+        {
+            envName = "envName";
+        }
+
         [TestCase(null)]
         [TestCase("")]
         [TestCase("x")]
@@ -18,9 +26,9 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         {
             foreach (var properties in TestProperties())
             {
-                var info = new EnvironmentInfo(parent, properties);
+                var info = new EnvironmentInfo(envName, parent, properties);
                 var serialized = EnvironmentNodeDataSerializer.Serialize(info);
-                var deserialized = EnvironmentNodeDataSerializer.Deserialize(serialized);
+                var deserialized = EnvironmentNodeDataSerializer.Deserialize(envName, serialized);
                 deserialized.Should().BeEquivalentTo(info);
             }
         }
@@ -29,20 +37,20 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         public void Should_serialize_null()
         {
             var serialized = EnvironmentNodeDataSerializer.Serialize(null);
-            var deserialized = EnvironmentNodeDataSerializer.Deserialize(serialized);
-            deserialized.Should().BeEquivalentTo(new EnvironmentInfo(null, null));
+            var deserialized = EnvironmentNodeDataSerializer.Deserialize(envName, serialized);
+            deserialized.Should().BeEquivalentTo(new EnvironmentInfo(envName, null, null));
         }
 
         [Test]
         public void Should_deserialize_null()
         {
-            EnvironmentNodeDataSerializer.Deserialize(null).Should().BeEquivalentTo(new EnvironmentInfo(null, null));
+            EnvironmentNodeDataSerializer.Deserialize(envName, null).Should().BeEquivalentTo(new EnvironmentInfo(envName, null, null));
         }
 
         [Test]
         public void Should_deserialize_empty()
         {
-            EnvironmentNodeDataSerializer.Deserialize(new byte[0]).Should().BeEquivalentTo(new EnvironmentInfo(null, null));
+            EnvironmentNodeDataSerializer.Deserialize(envName, new byte[0]).Should().BeEquivalentTo(new EnvironmentInfo(envName, null, null));
         }
 
         private static IEnumerable<Dictionary<string, string>> TestProperties()

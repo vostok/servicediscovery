@@ -10,10 +10,11 @@ notests *default:
     - module vostok.servicediscovery.abstractions
 
   deps:
+    - vostok.servicediscovery.extensions@enhanced-management
     - vostok.devtools
     - vostok.logging.abstractions
     - vostok.zookeeper.client.abstractions
-    - vostok.servicediscovery.abstractions
+    - vostok.servicediscovery.abstractions@enhanced-management
     - vostok.commons.time/src
     - vostok.commons.binary/src
     - vostok.commons.threading/src

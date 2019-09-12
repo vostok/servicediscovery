@@ -2,6 +2,7 @@
 using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 
 namespace Vostok.ServiceDiscovery.Tests.Serializers
@@ -10,14 +11,20 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
     public class ReplicaNodeDataSerializer_Tests
     {
         [Test]
-        public void Serialize_should_concat_dict_key_values()
+        public void SerializeProperties_should_concat_dict_key_values()
         {
-            var serialized = ReplicaNodeDataSerializer.Serialize(
+            var replicaInfo = new ReplicaInfo(
+                "default",
+                "vostok",
+                "doesntmatter",
                 new Dictionary<string, string>
                 {
                     {"a", "a-value"},
                     {"asdf", "complex = value"}
                 });
+            var serialized = ReplicaNodeDataSerializer.Serialize(
+                replicaInfo
+            );
 
             var str = Encoding.UTF8.GetString(serialized);
             var expected = new List<string> {"a = a-value", "asdf = complex = value"};
@@ -25,9 +32,12 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
-        public void Serialize_should_ignore_null_and_empty_values()
+        public void SerializeProperties_should_ignore_null_and_empty_values()
         {
-            var serialized = ReplicaNodeDataSerializer.Serialize(
+            var replicaInfo = new ReplicaInfo(
+                "default",
+                "vostok",
+                "doesntmatter",
                 new Dictionary<string, string>
                 {
                     {"a", null},
@@ -35,13 +45,15 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                     {"c", ""}
                 });
 
+            var serialized = ReplicaNodeDataSerializer.Serialize(replicaInfo);
+
             var str = Encoding.UTF8.GetString(serialized);
             var expected = new List<string> {"b = value"};
             str.Should().Be(string.Join("\n", expected));
         }
 
         [Test]
-        public void Deserialize_should_deserialize_serialized()
+        public void DeserializeProperties_should_deserialize_serialized()
         {
             var dict = new Dictionary<string, string>
             {
@@ -51,14 +63,20 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                 {"with some spaces  ", "   "}
             };
 
-            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
-            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
+            var replicaInfo = new ReplicaInfo(
+                "default",
+                "vostok",
+                "doesntmatter",
+                dict);
 
-            deserialized.Should().BeEquivalentTo(dict);
+            var serialized = ReplicaNodeDataSerializer.Serialize(replicaInfo);
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, serialized);
+
+            deserialized.Should().BeEquivalentTo(replicaInfo);
         }
 
         [Test]
-        public void Deserialize_should_ignore_null_and_empty_values()
+        public void DeserializeProperties_should_ignore_null_and_empty_values()
         {
             var dict = new Dictionary<string, string>
             {
@@ -68,10 +86,16 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                 {"d", " "}
             };
 
-            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
-            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
+            var replicaInfo = new ReplicaInfo(
+                "default",
+                "vostok",
+                "doesntmatter",
+                dict);
 
-            deserialized.Should()
+            var serialized = ReplicaNodeDataSerializer.Serialize(replicaInfo);
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, serialized);
+
+            deserialized.Properties.Should()
                 .BeEquivalentTo(
                     new Dictionary<string, string>
                     {
@@ -81,18 +105,23 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
-        public void Deserialize_should_replace_new_line_symbol()
+        public void DeserializeProperties_should_replace_new_line_symbol()
         {
             var dict = new Dictionary<string, string>
             {
                 {"a", "a-value\n2"},
                 {"b", "b\n\nb"}
             };
+            var replicaInfo = new ReplicaInfo(
+                "default",
+                "vostok",
+                "doesntmatter",
+                dict);
 
-            var serialized = ReplicaNodeDataSerializer.Serialize(dict);
-            var deserialized = ReplicaNodeDataSerializer.Deserialize(serialized);
+            var serialized = ReplicaNodeDataSerializer.Serialize(replicaInfo);
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, serialized);
 
-            deserialized.Should()
+            deserialized.Properties.Should()
                 .BeEquivalentTo(
                     new Dictionary<string, string>
                     {

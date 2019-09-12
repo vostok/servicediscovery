@@ -79,7 +79,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     if (!applicationData.IsSuccessful)
                         return;
 
-                    var info = ApplicationNodeDataSerializer.Deserialize(applicationData.Data);
+                    var info = ApplicationNodeDataSerializer.Deserialize(environmentName, applicationName, applicationData.Data);
                     if (applicationContainer.Update(applicationData.Stat.ModifiedZxId, info))
                         UpdateServiceTopology();
                 }

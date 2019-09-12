@@ -7,9 +7,9 @@ namespace Vostok.ServiceDiscovery.Models
 {
     internal class ReplicaInfo : IReplicaInfo
     {
-        private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> properties;
 
-        public ReplicaInfo([NotNull] string environment, [NotNull] string application, [NotNull] string replica)
+        public ReplicaInfo([NotNull] string environment, [NotNull] string application, [NotNull] string replica, [CanBeNull] Dictionary<string, string> properties = null)
         {
             if (string.IsNullOrWhiteSpace(environment))
                 throw new ArgumentOutOfRangeException(nameof(environment), environment);
@@ -18,6 +18,7 @@ namespace Vostok.ServiceDiscovery.Models
             if (string.IsNullOrWhiteSpace(replica))
                 throw new ArgumentOutOfRangeException(nameof(replica), replica);
 
+            this.properties = properties ?? new Dictionary<string, string>();
             Environment = environment;
             Application = application;
             Replica = replica;

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions;
+using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers
 {
@@ -11,8 +13,10 @@ namespace Vostok.ServiceDiscovery.Serializers
         private const string KeyValueDelimiter = " = ";
         private const string LinesDelimiter = "\n";
 
+        // CR(kungurtsev): make Serialize/Deserialize private.
+
         [NotNull]
-        public static byte[] Serialize([CanBeNull] IReadOnlyDictionary<string, string> properties)
+        private static byte[] SerializeProperties([CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
             properties = properties ?? new Dictionary<string, string>();
             var content = string.Join(
@@ -24,7 +28,7 @@ namespace Vostok.ServiceDiscovery.Serializers
         }
 
         [NotNull]
-        public static Dictionary<string, string> Deserialize([CanBeNull] byte[] data)
+        private static Dictionary<string, string> DeserializeProperties([CanBeNull] byte[] data)
         {
             var content = Encoding.UTF8.GetString(data ?? new byte[0]);
             var lines = content.Split(new[] {LinesDelimiter}, StringSplitOptions.RemoveEmptyEntries);
@@ -38,5 +42,12 @@ namespace Vostok.ServiceDiscovery.Serializers
                     StringComparer.OrdinalIgnoreCase
                 );
         }
+
+        [NotNull]
+        public static byte[] Serialize(IReplicaInfo replica) => SerializeProperties(replica.Properties);
+
+        [NotNull]
+        public static IReplicaInfo Deserialize(string environment, string application, string replica, [CanBeNull] byte[] data) =>
+            new ReplicaInfo(environment, application, replica, DeserializeProperties(data));
     }
 }

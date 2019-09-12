@@ -27,7 +27,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
                     CreateEnvironmentNode("default", parent, properties);
 
-                    var expected = new EnvironmentInfo(parent, properties);
+                    var expected = new EnvironmentInfo("default", parent, properties);
                     if (times == 0)
                         ShouldReturnImmediately(storage, "default", expected);
                     else
@@ -40,6 +40,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         public void Should_track_environment_creation_and_deletion()
         {
             var info = new EnvironmentInfo(
+                "default",
                 "parent",
                 new Dictionary<string, string>
                 {
@@ -73,7 +74,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                     CreateEnvironmentNode($"environment_{i}", $"environment_{i + 1}");
 
                 for (var i = 0; i < 10; i++)
-                    ShouldReturnImmediately(storage, $"environment_{i}", new EnvironmentInfo($"environment_{i + 1}", null));
+                    ShouldReturnImmediately(storage, $"environment_{i}", new EnvironmentInfo($"environment_{i}", $"environment_{i + 1}", null));
             }
         }
 
@@ -84,14 +85,14 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             {
                 CreateEnvironmentNode("default", "parent");
 
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent", null));
 
                 Ensemble.Stop();
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent", null));
                 ShouldReturnImmediately(storage, "new", null);
 
                 Ensemble.Start();
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent", null));
                 ShouldReturnImmediately(storage, "new", null);
             }
         }
@@ -103,14 +104,14 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             {
                 CreateEnvironmentNode("default", "parent_1");
 
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent_1", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent_1", null));
 
                 storage.Dispose();
 
                 CreateEnvironmentNode("default", "parent_2");
                 storage.UpdateAll();
 
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent_1", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent_1", null));
             }
         }
 
@@ -121,12 +122,12 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             {
                 CreateEnvironmentNode("default", "parent");
 
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent", null));
 
                 ZooKeeperClient.SetData(PathHelper.BuildEnvironmentPath("default"), new byte[] {1, 2, 3});
 
                 storage.UpdateAll();
-                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("parent", null));
+                ShouldReturnImmediately(storage, "default", new EnvironmentInfo("default", "parent", null));
             }
         }
 
@@ -146,7 +147,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                     CreateEnvironmentNode("default", parent, properties);
                     storage.UpdateAll();
 
-                    var expected = new EnvironmentInfo(parent, properties);
+                    var expected = new EnvironmentInfo("default", parent, properties);
                     ShouldReturnImmediately(storage, "default", expected);
                 }
             }

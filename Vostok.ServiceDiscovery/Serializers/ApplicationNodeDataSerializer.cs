@@ -12,7 +12,7 @@ namespace Vostok.ServiceDiscovery.Serializers
         {
             var writer = new BinaryBufferWriter(0);
             writer.WriteDictionary(
-                info?.Properties ?? new Dictionary<string, string>(),
+                (IReadOnlyDictionary<string, string>)info?.Properties ?? new Dictionary<string, string>(),
                 (w, k) => w.WriteWithLength(k),
                 (w, v) => w.WriteWithLength(v));
 
@@ -20,16 +20,16 @@ namespace Vostok.ServiceDiscovery.Serializers
         }
 
         [NotNull]
-        public static ApplicationInfo Deserialize([CanBeNull] byte[] data)
+        public static ApplicationInfo Deserialize([NotNull] string environment, [NotNull] string application, [CanBeNull] byte[] data)
         {
             if (data == null || data.Length == 0)
-                return new ApplicationInfo(null);
+                return new ApplicationInfo(environment, application, null);
 
             var reader = new BinaryBufferReader(data, 0);
 
             var properties = reader.ReadDictionary(r => r.ReadString(), r => r.ReadString());
 
-            return new ApplicationInfo(properties);
+            return new ApplicationInfo(environment, application, properties);
         }
     }
 }

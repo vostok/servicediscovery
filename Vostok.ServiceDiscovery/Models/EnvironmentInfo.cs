@@ -1,20 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Models
 {
-    internal class EnvironmentInfo
+    internal class EnvironmentInfo : IEnvironmentInfo
     {
-        public EnvironmentInfo([CanBeNull] string parentEnvironment, [CanBeNull] Dictionary<string, string> properties)
+        public EnvironmentInfo([NotNull] string environment, [CanBeNull] string parentEnvironment, [CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
+            if (string.IsNullOrWhiteSpace(environment))
+                throw new ArgumentOutOfRangeException(nameof(environment), environment);
+            Environment = environment;
             ParentEnvironment = parentEnvironment;
-            Properties = properties ?? new Dictionary<string, string>();
+            Properties = new EnvironmentInfoProperties(properties);
         }
 
-        [CanBeNull]
+        public string Environment { get; }
+
         public string ParentEnvironment { get; }
 
-        [NotNull]
-        public Dictionary<string, string> Properties { get; }
+        public IEnvironmentInfoProperties Properties { get; }
     }
 }
