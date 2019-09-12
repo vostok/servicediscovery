@@ -120,7 +120,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
         protected void CreateReplicaNode(ReplicaInfo replicaInfo, bool persistent = true)
         {
-            var data = ReplicaNodeDataSerializer.SerializeProperties(replicaInfo.Properties);
+            var data = ReplicaNodeDataSerializer.Serialize(replicaInfo);
             var path = PathHelper.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
             CreateOrUpdate(path, data, persistent);
         }

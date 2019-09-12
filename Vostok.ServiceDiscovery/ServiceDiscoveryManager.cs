@@ -130,9 +130,10 @@ namespace Vostok.ServiceDiscovery
         {
             var environmentPath = pathHelper.BuildEnvironmentPath(environment);
 
-            var updateDataRequest = new UpdateDataRequest(
-                environmentPath,
-                bytes => NodeDataHelper.SetEnvironmentProperties(environment, updateFunc, bytes)) {Attempts = settings.ZooKeeperNodeUpdateAttempts };
+            var updateDataRequest = new UpdateDataRequest(environmentPath, bytes => NodeDataHelper.SetEnvironmentProperties(environment, updateFunc, bytes))
+            {
+                Attempts = settings.ZooKeeperNodeUpdateAttempts
+            };
 
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }
@@ -140,10 +141,10 @@ namespace Vostok.ServiceDiscovery
         public async Task<bool> TryUpdateApplicationPropertiesAsync(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc)
         {
             var applicationPath = pathHelper.BuildApplicationPath(environment, application);
-            var updateDataRequest = new UpdateDataRequest(
-                applicationPath,
-                bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes))
-                { Attempts = settings.ZooKeeperNodeUpdateAttempts };
+            var updateDataRequest = new UpdateDataRequest(applicationPath, bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes))
+            {
+                Attempts = settings.ZooKeeperNodeUpdateAttempts
+            };
 
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }
@@ -151,10 +152,10 @@ namespace Vostok.ServiceDiscovery
         public async Task<bool> TryUpdateEnvironmentParentAsync(string environment, string newParent)
         {
             var environmentPath = pathHelper.BuildEnvironmentPath(environment);
-            var updateDataRequest = new UpdateDataRequest(
-                environmentPath,
-                bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes))
-                { Attempts = settings.ZooKeeperNodeUpdateAttempts };
+            var updateDataRequest = new UpdateDataRequest(environmentPath, bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes))
+            {
+                Attempts = settings.ZooKeeperNodeUpdateAttempts
+            };
 
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }

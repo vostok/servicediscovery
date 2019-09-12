@@ -16,7 +16,7 @@ namespace Vostok.ServiceDiscovery.Serializers
         // CR(kungurtsev): make Serialize/Deserialize private.
 
         [NotNull]
-        public static byte[] SerializeProperties([CanBeNull] IReadOnlyDictionary<string, string> properties)
+        private static byte[] SerializeProperties([CanBeNull] IReadOnlyDictionary<string, string> properties)
         {
             properties = properties ?? new Dictionary<string, string>();
             var content = string.Join(
@@ -28,7 +28,7 @@ namespace Vostok.ServiceDiscovery.Serializers
         }
 
         [NotNull]
-        public static Dictionary<string, string> DeserializeProperties([CanBeNull] byte[] data)
+        private static Dictionary<string, string> DeserializeProperties([CanBeNull] byte[] data)
         {
             var content = Encoding.UTF8.GetString(data ?? new byte[0]);
             var lines = content.Split(new[] {LinesDelimiter}, StringSplitOptions.RemoveEmptyEntries);
