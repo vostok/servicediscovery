@@ -132,8 +132,7 @@ namespace Vostok.ServiceDiscovery
 
             var updateDataRequest = new UpdateDataRequest(
                 environmentPath,
-                bytes => NodeDataHelper.SetEnvironmentProperties(environment, updateFunc, bytes),
-                settings.ZooKeeperNodeUpdateAttempts);
+                bytes => NodeDataHelper.SetEnvironmentProperties(environment, updateFunc, bytes)) {Attempts = settings.ZooKeeperNodeUpdateAttempts };
 
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }
@@ -143,8 +142,8 @@ namespace Vostok.ServiceDiscovery
             var applicationPath = pathHelper.BuildApplicationPath(environment, application);
             var updateDataRequest = new UpdateDataRequest(
                 applicationPath,
-                bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes),
-                settings.ZooKeeperNodeUpdateAttempts);
+                bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes))
+                { Attempts = settings.ZooKeeperNodeUpdateAttempts };
 
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }
@@ -154,8 +153,8 @@ namespace Vostok.ServiceDiscovery
             var environmentPath = pathHelper.BuildEnvironmentPath(environment);
             var updateDataRequest = new UpdateDataRequest(
                 environmentPath,
-                bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes),
-                settings.ZooKeeperNodeUpdateAttempts);
+                bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes))
+                { Attempts = settings.ZooKeeperNodeUpdateAttempts };
 
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }

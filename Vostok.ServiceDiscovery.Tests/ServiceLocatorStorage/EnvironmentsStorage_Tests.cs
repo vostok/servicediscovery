@@ -12,14 +12,6 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
     [TestFixture]
     internal class EnvironmentsStorage_Tests : TestsBase
     {
-        private string envName;
-
-        [SetUp]
-        public void SetUp()
-        {
-            envName = "myCoolEnv";
-        }
-
         [Test]
         public void Should_track_environment_parent_with_properties()
         {
