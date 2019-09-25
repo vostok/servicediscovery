@@ -92,7 +92,7 @@ namespace Vostok.ServiceDiscovery
 
         public async Task<IReplicaInfo> GetReplicaAsync(string environment, string application, string replica)
         {
-            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildApplicationPath(environment, application))).ConfigureAwait(false);
+            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildReplicaPath(environment, application,replica))).ConfigureAwait(false);
 
             if (data.Status == ZooKeeperStatus.NodeNotFound)
                 return null;
