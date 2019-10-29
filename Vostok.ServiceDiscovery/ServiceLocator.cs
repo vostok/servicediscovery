@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Extensions;
@@ -132,8 +133,12 @@ namespace Vostok.ServiceDiscovery
         {
             try
             {
+                var sw = Stopwatch.StartNew();
+
                 environmentsStorage.UpdateAll();
                 applicationsStorage.UpdateAll();
+
+                log.Info("Cache update iteration completed in {Elapsed}.", sw.Elapsed);
             }
             catch (Exception exception)
             {
