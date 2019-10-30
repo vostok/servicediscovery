@@ -19,6 +19,8 @@ using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Result;
 
+// ReSharper disable AccessToModifiedClosure
+
 namespace Vostok.ServiceDiscovery.Tests
 {
     [TestFixture]
@@ -582,6 +584,31 @@ namespace Vostok.ServiceDiscovery.Tests
 
             using (GetServiceBeacon(replica))
             {
+            }
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Should_use_RegistrationAllowed(bool initialValue)
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+
+            var registrationAllowed = initialValue;
+            Func<bool> registrationAllowedProvider = () => registrationAllowed;
+
+            using (var beacon = GetServiceBeacon(replica, registrationAllowedProvider: registrationAllowedProvider))
+            {
+                ReplicaRegistered(replica).Should().BeFalse();
+
+                beacon.Start();
+
+                for (var checks = 0; checks < 5; checks++)
+                {
+                    WaitReplicaRegistered(replica, registrationAllowed);
+
+                    registrationAllowed = !registrationAllowed;
+                }
             }
         }
     }
