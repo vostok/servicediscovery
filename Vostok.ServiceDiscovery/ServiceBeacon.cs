@@ -213,7 +213,7 @@ namespace Vostok.ServiceDiscovery
 
             var newRegistrationAllowed = settings.RegistrationAllowedProvider?.Invoke() ?? true;
             if (registrationAllowed.TrySet(newRegistrationAllowed))
-                log.Info(newRegistrationAllowed ? "Registration has been allowed." : "Registration has been forbidden.");
+                log.Info(newRegistrationAllowed ? "Registration has been allowed." : "Registration has been denied.");
 
             if (!registrationAllowed)
             {
