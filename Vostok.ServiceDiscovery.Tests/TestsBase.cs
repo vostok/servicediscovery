@@ -64,7 +64,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
         protected void WaitReplicaRegistered(ReplicaInfo replica, bool expected = true)
         {
-            WaitNodeExists(PathHelper.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica));
+            WaitNodeExists(PathHelper.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica), expected);
         }
 
         protected void WaitNodeExists(string path, bool expected = true)
@@ -133,13 +133,14 @@ namespace Vostok.ServiceDiscovery.Tests
             delete.IsSuccessful.Should().BeTrue();
         }
 
-        protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null)
+        protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null)
         {
             client = client ?? ZooKeeperClient;
             var settings = new ServiceBeaconSettings
             {
                 IterationPeriod = 60.Seconds(),
-                MinimumTimeBetweenIterations = 100.Milliseconds()
+                MinimumTimeBetweenIterations = 100.Milliseconds(),
+                RegistrationAllowedProvider = registrationAllowedProvider
             };
             return new ServiceBeacon(client, replica, settings, Log);
         }

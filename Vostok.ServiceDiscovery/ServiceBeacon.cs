@@ -9,7 +9,6 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -34,6 +33,7 @@ namespace Vostok.ServiceDiscovery
         private readonly object startStopSync = new object();
         private readonly AtomicBoolean isRunning = false;
         private readonly AtomicBoolean clientDisposed = false;
+        private readonly AtomicBoolean registrationAllowed = true;
         private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
@@ -210,6 +210,16 @@ namespace Vostok.ServiceDiscovery
             var existsNode = await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
             if (!existsNode.IsSuccessful)
                 return;
+
+            if (registrationAllowed.TrySet(settings.RegistrationAllowedProvider?.Invoke() ?? true))
+                log.Info(registrationAllowed ? "Registration has been allowed." : "Registration has been denied.");
+
+            if (!registrationAllowed)
+            {
+                if (existsNode.Stat != null)
+                    await DeleteNodeAsync().ConfigureAwait(false);
+                return;
+            }
 
             if (existsNode.Stat != null)
             {

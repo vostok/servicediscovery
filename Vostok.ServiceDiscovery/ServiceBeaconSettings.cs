@@ -22,5 +22,11 @@ namespace Vostok.ServiceDiscovery
         public TimeSpan InitialRegistrationIterationPeriod { get; set; } = 1.Seconds();
 
         public TimeSpan DeleteNodeIterationPeriod { get; set; } = 1.Seconds();
+
+        /// <summary>
+        /// If <see cref="RegistrationAllowedProvider"/> has been configured and returns <c>false</c>, service beacon will be stopped, until <c>true</c> received.
+        /// </summary>
+        [CanBeNull]
+        public Func<bool> RegistrationAllowedProvider { get; set; }
     }
 }
