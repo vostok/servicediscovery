@@ -92,7 +92,7 @@ namespace Vostok.ServiceDiscovery
 
         public async Task<IReplicaInfo> GetReplicaAsync(string environment, string application, string replica)
         {
-            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildReplicaPath(environment, application,replica))).ConfigureAwait(false);
+            var data = await zooKeeperClient.GetDataAsync(new GetDataRequest(pathHelper.BuildReplicaPath(environment, application, replica))).ConfigureAwait(false);
 
             if (data.Status == ZooKeeperStatus.NodeNotFound)
                 return null;
@@ -138,10 +138,10 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }
 
-        public async Task<bool> TryUpdateApplicationPropertiesAsync(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc)
+        public async Task<bool> TryUpdateEnvironmentParentAsync(string environment, string newParent)
         {
-            var applicationPath = pathHelper.BuildApplicationPath(environment, application);
-            var updateDataRequest = new UpdateDataRequest(applicationPath, bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes))
+            var environmentPath = pathHelper.BuildEnvironmentPath(environment);
+            var updateDataRequest = new UpdateDataRequest(environmentPath, bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes))
             {
                 Attempts = settings.ZooKeeperNodeUpdateAttempts
             };
@@ -149,10 +149,37 @@ namespace Vostok.ServiceDiscovery
             return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
         }
 
-        public async Task<bool> TryUpdateEnvironmentParentAsync(string environment, string newParent)
+        public async Task<bool> TryCreateApplicationAsync(IApplicationInfo application)
         {
-            var environmentPath = pathHelper.BuildEnvironmentPath(environment);
-            var updateDataRequest = new UpdateDataRequest(environmentPath, bytes => NodeDataHelper.SetEnvironmentParent(environment, newParent, bytes))
+            var applicationPath = pathHelper.BuildApplicationPath(application.Environment, application.Application);
+            var applicationData = ApplicationNodeDataSerializer.Serialize(application);
+
+            var createRequest = new CreateRequest(applicationPath, CreateMode.Persistent)
+            {
+                Data = applicationData
+            };
+
+            return (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
+        }
+
+        public async Task<bool> TryDeleteApplicationAsync(string environment, string application)
+        {
+            var applicationPath = pathHelper.BuildApplicationPath(environment, application);
+
+            var deleteRequest = new DeleteRequest(applicationPath)
+            {
+                DeleteChildrenIfNeeded = true
+            };
+
+            var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
+
+            return deleteResult.IsSuccessful;
+        }
+
+        public async Task<bool> TryUpdateApplicationPropertiesAsync(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> updateFunc)
+        {
+            var applicationPath = pathHelper.BuildApplicationPath(environment, application);
+            var updateDataRequest = new UpdateDataRequest(applicationPath, bytes => NodeDataHelper.SetApplicationProperties(environment, application, updateFunc, bytes))
             {
                 Attempts = settings.ZooKeeperNodeUpdateAttempts
             };

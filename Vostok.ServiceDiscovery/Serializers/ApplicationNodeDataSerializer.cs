@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Annotations;
 using Vostok.Commons.Binary;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers
 {
     internal static class ApplicationNodeDataSerializer
     {
         [NotNull]
-        public static byte[] Serialize([CanBeNull] ApplicationInfo info)
+        public static byte[] Serialize([CanBeNull] IApplicationInfo info)
         {
             var writer = new BinaryBufferWriter(0);
             writer.WriteDictionary(
