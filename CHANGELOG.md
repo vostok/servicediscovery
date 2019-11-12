@@ -1,3 +1,7 @@
+## 0.1.4 (05-11-2019):
+
+Added `RegistrationAllowedProvider` to `ServiceBeacon`.
+
 ## 0.1.3 (12-09-2019):
 
 Removed models for IServiceDiscoveryManager:
