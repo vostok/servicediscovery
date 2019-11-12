@@ -142,7 +142,7 @@ namespace Vostok.ServiceDiscovery.Tests
             }
 
             // One call for environment, one for node.
-            calls.Should().BeInRange(2 * 3, 2 * 5);
+            calls.Should().BeInRange(2 * 2, 2 * 10);
         }
 
         [Test]
