@@ -30,7 +30,7 @@ namespace Vostok.ServiceDiscovery
         {
             while (state == Running)
             {
-                await onEventSignal.WaitAsync();
+                await onEventSignal.WaitAsync().ConfigureAwait(false);
                 onEventSignal.Reset();
                 HandleEvents();
             }
