@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Extensions;
@@ -27,6 +28,7 @@ namespace Vostok.ServiceDiscovery
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceLocatorSettings settings;
         private readonly ServiceDiscoveryPathHelper pathHelper;
+        private readonly NodeEventsHandler eventsHandler;
         private readonly ILog log;
         private volatile Task updateCacheTask;
 
@@ -41,8 +43,10 @@ namespace Vostok.ServiceDiscovery
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
 
-            environmentsStorage = new EnvironmentsStorage(zooKeeperClient, pathHelper, log);
-            applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, log);
+            eventsHandler = new NodeEventsHandler();
+            environmentsStorage = new EnvironmentsStorage(zooKeeperClient, pathHelper, eventsHandler, log);
+            applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, eventsHandler, log);
+
         }
 
         /// <inheritdoc />
@@ -71,6 +75,8 @@ namespace Vostok.ServiceDiscovery
                 updateCacheSignal.Set();
 
                 updateCacheTask?.GetAwaiter().GetResult();
+
+                eventsHandler.Dispose();
             }
         }
 

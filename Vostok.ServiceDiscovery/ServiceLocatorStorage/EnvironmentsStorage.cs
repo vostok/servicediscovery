@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
-using System.Threading.Tasks;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -20,14 +18,16 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             = new ConcurrentDictionary<string, Lazy<VersionedContainer<EnvironmentInfo>>>();
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
+        private readonly NodeEventsHandler eventsHandler;
         private readonly ILog log;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-        public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ILog log)
+        public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, NodeEventsHandler eventsHandler, ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
+            this.eventsHandler = eventsHandler;
             this.log = log;
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
@@ -127,7 +127,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
 
             // Note(kungurtsev): run in new thread, because we shouldn't block ZooKeeperClient.
-            Task.Run(() => Update(parsedPath.Value.environment));
+            eventsHandler.SubmitEvent(() => Update(parsedPath.Value.environment));
         }
     }
 }
