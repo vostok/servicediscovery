@@ -236,7 +236,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
         private ApplicationsStorage GetApplicationsStorage()
         {
-            return new ApplicationsStorage(ZooKeeperClient, PathHelper, eventsHandler, Log);
+            return new ApplicationsStorage(ZooKeeperClient, PathHelper, EventsHandler, Log);
         }
     }
 }
