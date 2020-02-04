@@ -1,3 +1,7 @@
+## 0.1.5 (28-01-2019):
+
+Added `TryCreateApplicationAsync` and `TryDeleteApplicationAsync` methods.
+
 ## 0.1.4 (05-11-2019):
 
 Added `RegistrationAllowedProvider` to `ServiceBeacon`.
