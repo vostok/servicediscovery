@@ -51,7 +51,7 @@ namespace Vostok.ServiceDiscovery.Helpers
                     }
                     catch (Exception e)
                     {
-                        log.Error(e);
+                        log.Error(e, "Failed to invoke action.");
                     }
                 }
             }
