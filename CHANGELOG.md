@@ -1,3 +1,7 @@
+## 0.1.6 (04-02-2020):
+
+Process all ZooKeeper events via events queue, instead of `Task.Run(() => ...)`. 
+
 ## 0.1.5 (28-01-2019):
 
 Added `TryCreateApplicationAsync` and `TryDeleteApplicationAsync` methods.
