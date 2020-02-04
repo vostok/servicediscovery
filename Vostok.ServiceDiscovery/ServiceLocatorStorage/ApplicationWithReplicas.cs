@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Url;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -29,6 +27,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
+        private readonly ActionsQueue eventsQueue;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
@@ -39,6 +38,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             string applicationNodePath,
             IZooKeeperClient zooKeeperClient,
             ServiceDiscoveryPathHelper pathHelper,
+            ActionsQueue eventsQueue,
             ILog log)
         {
             this.environmentName = environmentName;
@@ -46,6 +46,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.applicationNodePath = applicationNodePath;
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
+            this.eventsQueue = eventsQueue;
             this.log = log;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
@@ -114,7 +115,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (isDisposed)
                 return;
 
-            Task.Run(() => Update());
+            eventsQueue.Enqueue(Update);
         }
 
         private void Clear()
