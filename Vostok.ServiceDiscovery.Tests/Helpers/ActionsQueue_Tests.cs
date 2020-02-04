@@ -34,18 +34,15 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         {
             using (var queue = new ActionsQueue(log))
             {
-                var tmp = false;
-                Action act1 = () => { Thread.Sleep(defaultTimeout); };
-                Action act2 = () => { tmp = true; };
+                var tmp = 0;
+                Action act1 = () => { tmp += 1; };
+                Action act2 = () => { tmp *= 2; };
 
                 queue.Enqueue(act1);
                 queue.Enqueue(act2);
 
-                Action checkIfSecondIsNotRunning = () => tmp.Should().BeFalse();
-                checkIfSecondIsNotRunning.ShouldNotFailIn(defaultTimeout - 100.Milliseconds());
-
-                Action checkIfSecondWasRunning = () => tmp.Should().BeTrue();
-                checkIfSecondWasRunning.ShouldPassIn(defaultTimeout);
+                Action check = () => tmp.Should().Be(2);
+                check.ShouldPassIn(defaultTimeout);
             }
         }
 
@@ -57,17 +54,20 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
                 var tmp = 1;
                 queue.Enqueue(() => tmp = 2);
 
+                Action check = () => tmp.Should().Be(2);
+                check.ShouldPassIn(defaultTimeout);
+
                 Thread.Sleep(defaultTimeout);
 
                 queue.Enqueue(() => tmp = 3);
 
-                Action action = () => tmp.Should().Be(3);
-                action.ShouldPassIn(defaultTimeout);
+                check = () => tmp.Should().Be(3);
+                check.ShouldPassIn(defaultTimeout);
             }
         }
 
         [Test]
-        public void Should_not_handle_new_events_after_disposing()
+        public void Should_not_handle_new_events_after_dispose()
         {
             var queue = new ActionsQueue(log);
             queue.Dispose();
@@ -80,7 +80,7 @@ namespace Vostok.ServiceDiscovery.Tests.Helpers
         }
 
         [Test]
-        public void Should_not_handle_enqueued_actions_after_disposing()
+        public void Should_not_handle_enqueued_actions_after_dispose()
         {
             var queue = new ActionsQueue(log);
 
