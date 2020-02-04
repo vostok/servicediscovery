@@ -27,7 +27,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
-        private readonly NodeEventsHandler eventsHandler;
+        private readonly ActionsQueue eventsQueue;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
@@ -38,7 +38,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             string applicationNodePath,
             IZooKeeperClient zooKeeperClient,
             ServiceDiscoveryPathHelper pathHelper,
-            NodeEventsHandler eventsHandler,
+            ActionsQueue eventsQueue,
             ILog log)
         {
             this.environmentName = environmentName;
@@ -46,7 +46,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.applicationNodePath = applicationNodePath;
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
-            this.eventsHandler = eventsHandler;
+            this.eventsQueue = eventsQueue;
             this.log = log;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
@@ -115,7 +115,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (isDisposed)
                 return;
 
-            eventsHandler.SubmitEvent(Update);
+            eventsQueue.Enqueue(Update);
         }
 
         private void Clear()

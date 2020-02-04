@@ -18,12 +18,12 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             = new ConcurrentDictionary<string, Lazy<VersionedContainer<EnvironmentInfo>>>();
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
-        private readonly NodeEventsHandler eventsHandler;
+        private readonly ActionsQueue eventsHandler;
         private readonly ILog log;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-        public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, NodeEventsHandler eventsHandler, ILog log)
+        public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ActionsQueue eventsHandler, ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
@@ -127,7 +127,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
 
             // Note(kungurtsev): run in new thread, because we shouldn't block ZooKeeperClient.
-            eventsHandler.SubmitEvent(() => Update(parsedPath.Value.environment));
+            eventsHandler.Enqueue(() => Update(parsedPath.Value.environment));
         }
     }
 }

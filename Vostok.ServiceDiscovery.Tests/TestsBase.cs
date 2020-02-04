@@ -24,14 +24,14 @@ namespace Vostok.ServiceDiscovery.Tests
         protected static TimeSpan DefaultTimeout = 10.Seconds();
         protected readonly ILog Log = new SynchronousConsoleLog();
         protected readonly ServiceDiscoveryPathHelper PathHelper = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix, ZooKeeperPathEscaper.Instance);
-        protected NodeEventsHandler EventsHandler;
+        protected ActionsQueue EventsQueue;
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            EventsHandler = new NodeEventsHandler();
+            EventsQueue = new ActionsQueue(Log);
             Ensemble = ZooKeeperEnsemble.DeployNew(1, Log);
             ZooKeeperClient = GetZooKeeperClient();
         }
@@ -53,7 +53,7 @@ namespace Vostok.ServiceDiscovery.Tests
         public void OneTimeTearDown()
         {
             Ensemble.Dispose();
-            EventsHandler.Dispose();
+            EventsQueue.Dispose();
         }
 
         protected Task KillSession(ZooKeeperClient client) =>

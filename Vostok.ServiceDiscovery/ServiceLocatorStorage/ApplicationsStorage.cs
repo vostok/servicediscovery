@@ -14,15 +14,15 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             = new ConcurrentDictionary<(string environment, string application), Lazy<ApplicationWithReplicas>>();
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
-        private readonly NodeEventsHandler eventsHandler;
+        private readonly ActionsQueue eventsQueue;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
 
-        public ApplicationsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, NodeEventsHandler eventsHandler, ILog log)
+        public ApplicationsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ActionsQueue eventsQueue, ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
-            this.eventsHandler = eventsHandler;
+            this.eventsQueue = eventsQueue;
             this.log = log;
         }
 
@@ -34,7 +34,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             lazy = new Lazy<ApplicationWithReplicas>(
                 () =>
                 {
-                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, eventsHandler, log);
+                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, eventsQueue, log);
                     if (!isDisposed)
                         container.Update();
                     return container;
