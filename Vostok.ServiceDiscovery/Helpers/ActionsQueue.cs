@@ -6,7 +6,6 @@ using Vostok.Logging.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Helpers
 {
-    // CR(kungurtsev): maybe add some tests?
     internal class ActionsQueue : IDisposable
     {
         private const int NotStarted = 0;
