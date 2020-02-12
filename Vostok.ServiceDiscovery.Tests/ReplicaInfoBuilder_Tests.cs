@@ -16,8 +16,8 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_fill_default_settings(bool nullSetup)
         {
             var info = nullSetup
-                ? ReplicaInfoBuilder.Build(null)
-                : ReplicaInfoBuilder.Build(_ => {});
+                ? ReplicaInfoBuilder.Build(null, false)
+                : ReplicaInfoBuilder.Build(_ => {}, false);
 
             info.Environment.Should().Be("default");
             info.Application.Should().NotBeNullOrEmpty();
@@ -60,7 +60,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetUrl(url)
                     .SetCommitHash("ASDF")
                     .SetReleaseDate("released now")
-                    .SetDependencies(new List<string> {"dep-a", "dep-b"}));
+                    .SetDependencies(new List<string> {"dep-a", "dep-b"}), false);
 
             info.Environment.Should().Be("custom-environment");
             info.Application.Should().Be("Vostok.App.1");
@@ -87,7 +87,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 setup => setup
                     .SetScheme("https")
                     .SetPort(123)
-                    .SetUrlPath("vostok"));
+                    .SetUrlPath("vostok"), false);
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
@@ -104,8 +104,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_build_url_from_port()
         {
-            var info = ReplicaInfoBuilder.Build(
-                setup => setup.SetPort(123));
+            var info = ReplicaInfoBuilder.Build(setup => setup.SetPort(123), false);
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
@@ -116,8 +115,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_build_url_from_default_port()
         {
-            var info = ReplicaInfoBuilder.Build(
-                setup => setup.SetPort(80));
+            var info = ReplicaInfoBuilder.Build(setup => setup.SetPort(80), false);
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
@@ -129,8 +127,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_build_replica_from_process_info_without_port()
         {
-            var info = ReplicaInfoBuilder.Build(
-                builder => {});
+            var info = ReplicaInfoBuilder.Build(builder => {}, false);
 
             var host = EnvironmentInfo.Host;
 
@@ -146,7 +143,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 {
                     builder.SetProperty("key1", "value1");
                     builder.SetProperty("key2", "value2");
-                });
+                }, false);
 
             var properties = info.Properties;
             properties["key1"].Should().Be("value1");
@@ -161,7 +158,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 {
                     builder.SetProperty("key", "value1");
                     builder.SetProperty("key", "value2");
-                });
+                }, false);
 
             var properties = info.Properties;
             properties["key"].Should().Be("value2");
@@ -170,8 +167,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_rewrite_default_properties()
         {
-            var info = ReplicaInfoBuilder.Build(
-                builder => { builder.SetProperty(ReplicaInfoKeys.Replica, "value"); });
+            var info = ReplicaInfoBuilder.Build(builder => { builder.SetProperty(ReplicaInfoKeys.Replica, "value"); }, false);
 
             var host = EnvironmentInfo.Host;
 

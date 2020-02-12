@@ -44,7 +44,7 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ReplicaInfoSetup replicaInfoSetup = null,
             [CanBeNull] ServiceBeaconSettings settings = null,
             [CanBeNull] ILog log = null)
-            : this(zooKeeperClient, ReplicaInfoBuilder.Build(replicaInfoSetup), settings, log)
+            : this(zooKeeperClient, ReplicaInfoBuilder.Build(replicaInfoSetup, (settings ?? new ServiceBeaconSettings()).UseFQDN), settings, log)
         {
         }
 
