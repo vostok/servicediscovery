@@ -42,6 +42,9 @@ namespace Vostok.ServiceDiscovery.Helpers
 
         public (string environment, string application, string replica)? TryParse(string path)
         {
+            if (path == null)
+                return null;
+
             var match = pathRegex.Match(path);
 
             if (!match.Success)
