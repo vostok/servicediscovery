@@ -1,3 +1,7 @@
+## 0.1.7 (15-02-2020):
+
+https://github.com/vostok/servicediscovery/issues/3
+
 ## 0.1.6 (04-02-2020):
 
 Process all ZooKeeper events via events queue, instead of `Task.Run(() => ...)`. 
