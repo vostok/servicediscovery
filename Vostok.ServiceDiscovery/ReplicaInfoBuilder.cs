@@ -33,11 +33,11 @@ namespace Vostok.ServiceDiscovery
 
         private List<string> dependencies;
 
-        private ReplicaInfoBuilder()
+        private ReplicaInfoBuilder(bool useFQDN)
         {
             environment = "default";
             application = EnvironmentInfo.Application;
-            host = EnvironmentInfo.Host;
+            host = useFQDN ? EnvironmentInfo.FQDN : EnvironmentInfo.Host;
             processName = EnvironmentInfo.ProcessName;
             processId = EnvironmentInfo.ProcessId;
             baseDirectory = EnvironmentInfo.BaseDirectory;
@@ -46,17 +46,17 @@ namespace Vostok.ServiceDiscovery
             dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
         }
 
-        public static ReplicaInfo Build(ReplicaInfoSetup setup)
+        public static ReplicaInfo Build(ReplicaInfoSetup setup, bool useFQDN)
         {
-            var builder = new ReplicaInfoBuilder();
+            var builder = new ReplicaInfoBuilder(useFQDN);
             setup?.Invoke(builder);
             return builder.Build();
         }
 
         public ReplicaInfo Build()
         {
-            url = url ?? BuildUrl(scheme, port, urlPath);
-            replica = url?.ToString() ?? $"{EnvironmentInfo.Host}({EnvironmentInfo.ProcessId})";
+            url = url ?? BuildUrl();
+            replica = url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
 
             if (url != null)
             {
@@ -72,7 +72,7 @@ namespace Vostok.ServiceDiscovery
             return result;
         }
 
-        private static Uri BuildUrl(string scheme, int? port, string virtualPath)
+        private Uri BuildUrl()
         {
             if (port == null)
                 return null;
@@ -80,9 +80,9 @@ namespace Vostok.ServiceDiscovery
             return new UriBuilder
             {
                 Scheme = scheme ?? "http",
-                Host = EnvironmentInfo.Host,
+                Host = host,
                 Port = port.Value,
-                Path = virtualPath ?? ""
+                Path = urlPath ?? ""
             }.Uri;
         }
 

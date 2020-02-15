@@ -28,5 +28,7 @@ namespace Vostok.ServiceDiscovery
         /// </summary>
         [CanBeNull]
         public Func<bool> RegistrationAllowedProvider { get; set; }
+
+        public bool UseFQDN { get; set; }
     }
 }
