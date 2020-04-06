@@ -1,3 +1,7 @@
+## 0.1.8 (06-04-2020):
+
+Local hostname can be configured using 'VOSTOK_LOCAL_HOSTNAME' environment variables.
+
 ## 0.1.7 (15-02-2020):
 
 https://github.com/vostok/servicediscovery/issues/3
