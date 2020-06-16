@@ -1,3 +1,7 @@
+## 0.1.9 (16-06-2020):
+
+Use FQDN by default in ServiceBeaconSettings.
+
 ## 0.1.8 (06-04-2020):
 
 Local hostname can be configured using 'VOSTOK_LOCAL_HOSTNAME' environment variables.
