@@ -98,7 +98,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
-                var builder = ReplicaInfoBuilder.Build(null, false);
+                var builder = ReplicaInfoBuilder.Build(null, true);
                 var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix, ZooKeeperPathEscaper.Instance)
                     .BuildReplicaPath(builder.Environment, builder.Application, builder.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
