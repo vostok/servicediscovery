@@ -12,6 +12,7 @@ using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
+using Vostok.ZooKeeper.Client.Abstractions.Model.Authentication;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 
 namespace Vostok.ServiceDiscovery
@@ -77,6 +78,14 @@ namespace Vostok.ServiceDiscovery
             {
                 if (isRunning.TrySetTrue())
                 {
+                    var authInfo = settings.AuthenticationInfo;
+                    if (authInfo?.Password != null)
+                    {
+                        var login = authInfo.Login ?? AuthenticationHelper.GenerateLogin(replicaInfo.Application, replicaInfo.Environment);
+                        var zkAuthInfo = AuthenticationInfo.Digest(login, authInfo.Password);
+                        zooKeeperClient.AddAuthenticationInfo(zkAuthInfo);
+                    }
+
                     stopCancellationToken = new CancellationTokenSource();
                     nodeCreatedOnceSignal.Reset();
                     beaconTask = Task.Run(BeaconTask);

@@ -16,6 +16,7 @@ using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
+using Vostok.ZooKeeper.Client.Abstractions.Model.Authentication;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Result;
 
@@ -610,6 +611,61 @@ namespace Vostok.ServiceDiscovery.Tests
                     registrationAllowed = !registrationAllowed;
                 }
             }
+        }
+
+        [TestCase(null)]
+        [TestCase("login")]
+        public void Should_use_AuthInfo(string beaconLogin)
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+            CreateApplicationNode(replica.Environment, replica.Application);
+            var path = PathHelper.BuildApplicationPath(replica.Environment, replica.Application);
+            var login = beaconLogin ?? AuthenticationHelper.GenerateLogin(replica.Application, replica.Environment);
+            var password = "password";
+            var digest = Acl.Digest(Permissions.All, login, password);
+
+            var setAclRequest = new SetAclRequest(path, new List<Acl> {digest});
+            var setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
+            setAclResult.EnsureSuccess();
+
+            var authInfo = new ServiceBeaconAuthenticationInfo(login, password);
+
+            using (var beacon = GetServiceBeacon(replica, authInfo: authInfo))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+            }
+
+            DeleteApplicationNode(replica.Environment, replica.Application);
+        }
+
+        [TestCase("beacon", "beacon", "password0", "password1")]
+        [TestCase("beacon", "beacon1", "password", "password")]
+        public void Should_not_start_when_auth_data_is_incorrect(string beaconLogin, string aclLogin, string beaconPassword, string aclPassword)
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+            CreateApplicationNode(replica.Environment, replica.Application);
+            var path = PathHelper.BuildApplicationPath(replica.Environment, replica.Application);
+
+            var digest = Acl.Digest(Permissions.Create, aclLogin, aclPassword);
+
+            var setAclRequest = new SetAclRequest(path, new List<Acl> { digest });
+            var setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
+            setAclResult.EnsureSuccess();
+
+            var authInfo = new ServiceBeaconAuthenticationInfo(beaconLogin, beaconPassword);
+
+            using(var beacon = GetServiceBeacon(replica, authInfo: authInfo))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldNotCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeFalse();
+            }
+
+            DeleteApplicationNode(replica.Environment, replica.Application);
         }
     }
 }

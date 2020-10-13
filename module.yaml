@@ -12,7 +12,7 @@ notests *default:
   deps:
     - vostok.devtools
     - vostok.logging.abstractions
-    - vostok.zookeeper.client.abstractions
+    - vostok.zookeeper.client.abstractions@acl
     - vostok.servicediscovery.abstractions
     - vostok.commons.time/src
     - vostok.commons.binary/src
@@ -25,7 +25,7 @@ full-build > notests:
     - vostok.logging.console
     - vostok.zookeeper.testing
     - vostok.zookeeper.localensemble
-    - vostok.zookeeper.client
+    - vostok.zookeeper.client@acl
     - vostok.commons.testing
 
   build:
