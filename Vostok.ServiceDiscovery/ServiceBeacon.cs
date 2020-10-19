@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -30,6 +31,7 @@ namespace Vostok.ServiceDiscovery
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly ServiceBeaconSettings settings;
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
+        private readonly ServiceDiscoveryManager serviceDiscoveryManager;
         private readonly ILog log;
         private readonly object startStopSync = new object();
         private readonly AtomicBoolean isRunning = false;
@@ -39,7 +41,6 @@ namespace Vostok.ServiceDiscovery
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile CancellationTokenSource stopCancellationToken;
-
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
             [CanBeNull] ReplicaInfoSetup replicaInfoSetup = null,
@@ -59,7 +60,8 @@ namespace Vostok.ServiceDiscovery
             this.replicaInfo = replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
             this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
-
+            serviceDiscoveryManager = new ServiceDiscoveryManager(zooKeeperClient, new ServiceDiscoveryManagerSettings(), log);
+            
             var pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
             environmentNodePath = pathHelper.BuildEnvironmentPath(replicaInfo.Environment);
             applicationNodePath = pathHelper.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
@@ -291,6 +293,9 @@ namespace Vostok.ServiceDiscovery
             }
 
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
+
+            if (!await SetTags(replicaInfo.Tags).ConfigureAwait(false))
+                Stop(); // todo ну хз, надо обсудить это решение
         }
 
         private async Task<bool> EnvironmentExistsAsync()
@@ -314,7 +319,12 @@ namespace Vostok.ServiceDiscovery
         private async Task<bool> DeleteNodeAsync()
         {
             var deleteResult = await zooKeeperClient.DeleteAsync(replicaNodePath).ConfigureAwait(false);
-            return deleteResult.IsSuccessful;
+            if (deleteResult.IsSuccessful)
+                return false;
+            return await SetTags(Array.Empty<ITag>()).ConfigureAwait(false);
         }
+        
+        private async Task<bool> SetTags(ITag[] tags) 
+            => await serviceDiscoveryManager.SetNewReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags).ConfigureAwait(false);
     }
 }
