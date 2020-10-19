@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery
@@ -102,5 +103,12 @@ namespace Vostok.ServiceDiscovery
         /// </summary>
         [NotNull]
         IReplicaInfoBuilder SetProperty([NotNull] string key, [CanBeNull] string value);
+        
+        /// <summary>
+        /// <para></para>
+        /// </summary>
+        [NotNull]
+        // todo: сильно ли мы боимся менять интерфейс?
+        IReplicaInfoBuilder SetTags([CanBeNull] IEnumerable<ITag> tags);
     }
 }

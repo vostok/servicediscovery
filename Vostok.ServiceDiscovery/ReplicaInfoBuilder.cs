@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Vostok.Commons.Environment;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 using EnvironmentInfo = Vostok.Commons.Environment.EnvironmentInfo;
@@ -32,6 +33,7 @@ namespace Vostok.ServiceDiscovery
         private string releaseDate;
 
         private List<string> dependencies;
+        private List<ITag> tags;
 
         private ReplicaInfoBuilder(bool useFQDN)
         {
@@ -67,7 +69,7 @@ namespace Vostok.ServiceDiscovery
                 urlPath = url.AbsolutePath;
             }
 
-            var result = new ReplicaInfo(environment, application, replica);
+            var result = new ReplicaInfo(environment, application, replica, tags: tags?.ToArray());
 
             FillProperties(result);
 
@@ -191,6 +193,12 @@ namespace Vostok.ServiceDiscovery
         public IReplicaInfoBuilder SetProperty(string key, string value)
         {
             properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
+            return this;
+        }
+        
+        public IReplicaInfoBuilder SetTags(IEnumerable<ITag> tags)
+        {
+            this.tags = tags?.ToList();
             return this;
         }
 
