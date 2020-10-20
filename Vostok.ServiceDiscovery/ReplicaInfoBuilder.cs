@@ -33,7 +33,7 @@ namespace Vostok.ServiceDiscovery
         private string releaseDate;
 
         private List<string> dependencies;
-        private List<Tag> tags;
+        private TagCollection tags;
 
         private ReplicaInfoBuilder(bool useFQDN)
         {
@@ -69,7 +69,7 @@ namespace Vostok.ServiceDiscovery
                 urlPath = url.AbsolutePath;
             }
 
-            var result = new ReplicaInfo(environment, application, replica, tags: tags?.ToArray());
+            var result = new ReplicaInfo(environment, application, replica, tags: tags);
 
             FillProperties(result);
 
@@ -196,9 +196,9 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
         
-        public IReplicaInfoBuilder SetTags(IEnumerable<Tag> tags)
+        public IReplicaInfoBuilder SetTags(TagCollection tags)
         {
-            this.tags = tags?.ToList();
+            this.tags = tags ?? new TagCollection();
             return this;
         }
 
