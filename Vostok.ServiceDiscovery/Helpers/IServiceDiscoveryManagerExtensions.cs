@@ -7,7 +7,7 @@ namespace Vostok.ServiceDiscovery.Helpers
 {
     internal static class IServiceDiscoveryManagerExtensions
     {
-        public static async Task<bool> SetNewReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName, Tag[] tags)
+        public static async Task<bool> SetNewReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName, TagCollection tags)
         {
             return await serviceDiscoveryManager.TryUpdateApplicationPropertiesAsync(
                     environment,
@@ -17,16 +17,16 @@ namespace Vostok.ServiceDiscovery.Helpers
         }
         
         [NotNull]
-        private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, string replicaName, Tag[] tags)
+        private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, string replicaName, TagCollection tags)
         {
             var propertyName = GetEphemeralReplicaTagsPropertyKey(replicaName);
-            return tags.Length == 0 
+            return tags.Count == 0 
                 ? properties.Remove(propertyName) 
-                : properties.Set(propertyName, ReplicaTagsHelpers.Serialize(tags));
+                : properties.Set(propertyName, tags.ToString());
         }
 
         [NotNull]
         private static string GetEphemeralReplicaTagsPropertyKey(string replicaName)
-            => ReplicaTagsHelpers.GetReplicaTagsPropertyKey(replicaName + ":" + "ephemeral");
+            => ReplicaTagsPropertyHelpers.GetReplicaTagsPropertyKey(replicaName, "ephemeral");
     }
 }
