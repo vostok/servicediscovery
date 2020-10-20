@@ -101,7 +101,6 @@ namespace Vostok.ServiceDiscovery
         /// <para></para>
         /// </summary>
         [NotNull]
-        // todo: сильно ли мы боимся менять интерфейс?
-        IReplicaInfoBuilder SetTags([CanBeNull] IEnumerable<Tag> tags);
+        IReplicaInfoBuilder SetTags([CanBeNull] TagCollection tags);
     }
 }

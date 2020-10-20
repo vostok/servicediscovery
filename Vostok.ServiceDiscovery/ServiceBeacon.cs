@@ -47,6 +47,7 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ILog log = null)
             : this(zooKeeperClient, ReplicaInfoBuilder.Build(replicaInfoSetup, (settings ?? new ServiceBeaconSettings()).UseFQDN), settings, log)
         {
+            ReplicaInfoBuilder.Build(x => x.SetApplication("2342"), true);
         }
 
         internal ServiceBeacon(
@@ -312,10 +313,10 @@ namespace Vostok.ServiceDiscovery
             var deleteResult = await zooKeeperClient.DeleteAsync(replicaNodePath).ConfigureAwait(false);
             if (deleteResult.IsSuccessful)
                 return false;
-            return await SetTags(Array.Empty<Tag>()).ConfigureAwait(false);
+            return await SetTags(new TagCollection()).ConfigureAwait(false);
         }
         
-        private async Task<bool> SetTags(Tag[] tags) 
+        private async Task<bool> SetTags(TagCollection tags) 
             => await serviceDiscoveryManager.SetNewReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags).ConfigureAwait(false);
     }
 }
