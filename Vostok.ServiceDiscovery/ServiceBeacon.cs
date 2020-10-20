@@ -321,10 +321,10 @@ namespace Vostok.ServiceDiscovery
             var deleteResult = await zooKeeperClient.DeleteAsync(replicaNodePath).ConfigureAwait(false);
             if (deleteResult.IsSuccessful)
                 return false;
-            return await SetTags(Array.Empty<ITag>()).ConfigureAwait(false);
+            return await SetTags(Array.Empty<Tag>()).ConfigureAwait(false);
         }
         
-        private async Task<bool> SetTags(ITag[] tags) 
+        private async Task<bool> SetTags(Tag[] tags) 
             => await serviceDiscoveryManager.SetNewReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags).ConfigureAwait(false);
     }
 }

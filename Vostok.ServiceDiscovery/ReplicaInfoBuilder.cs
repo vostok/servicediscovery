@@ -33,7 +33,7 @@ namespace Vostok.ServiceDiscovery
         private string releaseDate;
 
         private List<string> dependencies;
-        private List<ITag> tags;
+        private List<Tag> tags;
 
         private ReplicaInfoBuilder(bool useFQDN)
         {
@@ -196,7 +196,7 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
         
-        public IReplicaInfoBuilder SetTags(IEnumerable<ITag> tags)
+        public IReplicaInfoBuilder SetTags(IEnumerable<Tag> tags)
         {
             this.tags = tags?.ToList();
             return this;
