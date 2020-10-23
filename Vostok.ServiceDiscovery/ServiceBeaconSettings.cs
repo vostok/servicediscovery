@@ -33,6 +33,6 @@ namespace Vostok.ServiceDiscovery
         public bool UseFQDN { get; set; } = true;
 
         [CanBeNull]
-        public ServiceBeaconAuthenticationInfo AuthenticationInfo { get; set; }
+        public Func<ServiceBeaconAuthenticationInfo> AuthenticationInfoProvider { get; set; }
     }
 }

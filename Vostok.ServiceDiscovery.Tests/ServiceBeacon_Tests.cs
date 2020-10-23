@@ -631,7 +631,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var authInfo = new ServiceBeaconAuthenticationInfo(login, password);
 
-            using (var beacon = GetServiceBeacon(replica, authInfo: authInfo))
+            using (var beacon = GetServiceBeacon(replica, authInfo: () => authInfo))
             {
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
@@ -652,17 +652,74 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var digest = Acl.Digest(AclPermissions.Create, aclLogin, aclPassword);
 
-            var setAclRequest = new SetAclRequest(path, new List<Acl> { digest });
+            var setAclRequest = new SetAclRequest(path, new List<Acl> {digest});
             var setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
             setAclResult.EnsureSuccess();
 
             var authInfo = new ServiceBeaconAuthenticationInfo(beaconLogin, beaconPassword);
 
-            using(var beacon = GetServiceBeacon(replica, authInfo: authInfo))
+            using (var beacon = GetServiceBeacon(replica, authInfo: () => authInfo))
             {
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldNotCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeFalse();
+            }
+
+            DeleteApplicationNode(replica.Environment, replica.Application);
+        }
+
+        [Test]
+        public void Should_reconnect_with_new_auth_info()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            CreateEnvironmentNode(replica.Environment);
+            CreateApplicationNode(replica.Environment, replica.Application);
+            var path = PathHelper.BuildApplicationPath(replica.Environment, replica.Application);
+            var login = "login";
+            var password = "password";
+
+            var adminDigest = Acl.Digest(AclPermissions.Admin, "admin", "admin");
+            var digest = Acl.Digest(AclPermissions.Create | AclPermissions.Delete, login, password);
+
+            var setAclRequest = new SetAclRequest(path, new List<Acl> {digest, adminDigest, Acl.ReadUnsafe});
+            var setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
+            setAclResult.EnsureSuccess();
+            ZooKeeperClient.AddAuthenticationInfo(AuthenticationInfo.Digest("admin", "admin"));
+            var authInfo = new ServiceBeaconAuthenticationInfo(login, password);
+
+            var regAllowed = true;
+
+            var settings = new ServiceBeaconSettings
+            {
+                IterationPeriod = 100.Milliseconds(),
+                MinimumTimeBetweenIterations = 100.Milliseconds(),
+                RegistrationAllowedProvider = () => regAllowed,
+                AuthenticationInfoProvider = () => authInfo
+            };
+
+            using (var beacon = new ServiceBeacon(ZooKeeperClient, replica, settings, Log))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+                ReplicaRegistered(replica).Should().BeTrue();
+                regAllowed = false;
+                Action action = () => { ReplicaRegistered(replica).Should().BeFalse(); };
+                action.ShouldPassIn(300.Milliseconds());
+
+                var newPassword = "password2";
+                var newDigest = Acl.Digest(AclPermissions.Create | AclPermissions.Delete, login, newPassword);
+
+                setAclRequest = new SetAclRequest(path, new List<Acl> { newDigest, Acl.ReadUnsafe });
+                setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
+                setAclResult.EnsureSuccess();
+                regAllowed = true;
+
+                action = () => { ReplicaRegistered(replica).Should().BeFalse(); };
+                action.ShouldNotFailIn(300.Milliseconds());
+                authInfo = new ServiceBeaconAuthenticationInfo(login, newPassword);
+
+                action = () => { ReplicaRegistered(replica).Should().BeTrue(); };
+                action.ShouldPassIn(300.Milliseconds());
             }
 
             DeleteApplicationNode(replica.Environment, replica.Application);
