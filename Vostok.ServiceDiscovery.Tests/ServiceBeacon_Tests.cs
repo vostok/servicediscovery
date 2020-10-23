@@ -623,7 +623,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var path = PathHelper.BuildApplicationPath(replica.Environment, replica.Application);
             var login = beaconLogin ?? AuthenticationHelper.GenerateLogin(replica.Application, replica.Environment);
             var password = "password";
-            var digest = Acl.Digest(Permissions.All, login, password);
+            var digest = Acl.Digest(AclPermissions.All, login, password);
 
             var setAclRequest = new SetAclRequest(path, new List<Acl> {digest});
             var setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
@@ -650,7 +650,7 @@ namespace Vostok.ServiceDiscovery.Tests
             CreateApplicationNode(replica.Environment, replica.Application);
             var path = PathHelper.BuildApplicationPath(replica.Environment, replica.Application);
 
-            var digest = Acl.Digest(Permissions.Create, aclLogin, aclPassword);
+            var digest = Acl.Digest(AclPermissions.Create, aclLogin, aclPassword);
 
             var setAclRequest = new SetAclRequest(path, new List<Acl> { digest });
             var setAclResult = ZooKeeperClient.SetAcl(setAclRequest);
