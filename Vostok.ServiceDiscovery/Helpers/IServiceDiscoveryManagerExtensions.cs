@@ -18,15 +18,12 @@ namespace Vostok.ServiceDiscovery.Helpers
         
         [NotNull]
         private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, string replicaName, TagCollection tags)
-        {
-            var propertyName = GetEphemeralReplicaTagsPropertyKey(replicaName);
-            return tags.Count == 0 
-                ? properties.Remove(propertyName) 
-                : properties.Set(propertyName, tags.ToString());
-        }
+            => tags?.Count > 0
+                ? properties.Set(GetEphemeralReplicaTagsPropertyKey(replicaName), tags.ToString())
+                : properties.Remove(GetEphemeralReplicaTagsPropertyKey(replicaName));
 
         [NotNull]
         private static string GetEphemeralReplicaTagsPropertyKey(string replicaName)
-            => TagPropertyHelpers.FormatName(replicaName, "ephemeral");
+            => new TagPropertyKey(replicaName, "ephemeral").ToString();
     }
 }
