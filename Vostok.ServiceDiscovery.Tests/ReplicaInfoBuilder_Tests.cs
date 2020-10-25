@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 using EnvironmentInfo = Vostok.Commons.Environment.EnvironmentInfo;
 
@@ -22,6 +23,7 @@ namespace Vostok.ServiceDiscovery.Tests
             info.Environment.Should().Be("default");
             info.Application.Should().NotBeNullOrEmpty();
             info.Replica.Should().NotBeNullOrEmpty();
+            info.Tags.Should().BeNull();
 
             var properties = info.Properties;
 
@@ -60,11 +62,13 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetUrl(url)
                     .SetCommitHash("ASDF")
                     .SetReleaseDate("released now")
-                    .SetDependencies(new List<string> {"dep-a", "dep-b"}), false);
+                    .SetDependencies(new List<string> {"dep-a", "dep-b"})
+                    .SetTags(new TagCollection{"tag1", {"tag2", "value"}}), false);
 
             info.Environment.Should().Be("custom-environment");
             info.Application.Should().Be("Vostok.App.1");
             info.Replica.Should().Be("https://github.com:123/vostok");
+            info.Tags.Should().BeEquivalentTo(new TagCollection{"tag1", {"tag2", "value"}});
 
             var properties = info.Properties;
 
