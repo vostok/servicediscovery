@@ -69,7 +69,10 @@ namespace Vostok.ServiceDiscovery
                 urlPath = url.AbsolutePath;
             }
 
-            var result = new ReplicaInfo(environment, application, replica, tags: tags);
+            var result = new ReplicaInfo(environment, application, replica)
+            {
+                Tags = tags
+            };
 
             FillProperties(result);
 
