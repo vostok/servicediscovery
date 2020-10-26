@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Console;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
@@ -27,6 +28,7 @@ namespace Vostok.ServiceDiscovery.Tests
         protected ActionsQueue EventsQueue;
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
+        protected IServiceDiscoveryManager ServiceDiscoveryManager;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -34,6 +36,7 @@ namespace Vostok.ServiceDiscovery.Tests
             EventsQueue = new ActionsQueue(Log);
             Ensemble = ZooKeeperEnsemble.DeployNew(1, Log);
             ZooKeeperClient = GetZooKeeperClient();
+            ServiceDiscoveryManager = new ServiceDiscoveryManager(ZooKeeperClient, new ServiceDiscoveryManagerSettings(), Log);
         }
 
         [SetUp]
@@ -88,6 +91,17 @@ namespace Vostok.ServiceDiscovery.Tests
             var path = PathHelper.BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
             var exists = ZooKeeperClient.Exists(path);
             return exists.Exists;
+        }
+
+        protected bool ApplicationHasReplicaTags(string environment, string application, string replica, TagCollection tags = null)
+        {
+            var applicationNode = ServiceDiscoveryManager.GetApplicationAsync(environment, application).GetAwaiter().GetResult();
+            if (applicationNode == null)
+                return false;
+            var applicationProperties = applicationNode.Properties;
+            var replicaTagsPropertyKey = $"Tags|{replica}|ephemeral";
+            var containsTagsKey = applicationProperties.ContainsKey(replicaTagsPropertyKey);
+            return containsTagsKey && (tags == null || applicationProperties[replicaTagsPropertyKey] == tags.ToString());
         }
 
         protected void CreateEnvironmentNode(string environment, string parent = null, IReadOnlyDictionary<string, string> properties = null)
