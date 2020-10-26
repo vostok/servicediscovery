@@ -16,7 +16,6 @@ using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
-using Vostok.ZooKeeper.Client.Abstractions.Model.Authentication;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Result;
 
