@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -37,6 +37,7 @@ namespace Vostok.ServiceDiscovery
         private readonly AtomicBoolean isRunning = false;
         private readonly AtomicBoolean clientDisposed = false;
         private readonly AtomicBoolean registrationAllowed = true;
+        private readonly AtomicBoolean tagsCreated = false;
         private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
@@ -237,6 +238,8 @@ namespace Vostok.ServiceDiscovery
             {
                 if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
+                    if (!tagsCreated)
+                        await TrySetTags(replicaInfo.Tags).ConfigureAwait(false);
                     nodeCreatedOnceSignal.Set();
                     return;
                 }
@@ -284,6 +287,7 @@ namespace Vostok.ServiceDiscovery
 
             if (create.IsSuccessful)
             {
+                await TrySetTags(replicaInfo.Tags).ConfigureAwait(false);
                 nodeCreatedOnceSignal.Set();
             }
 
@@ -292,11 +296,8 @@ namespace Vostok.ServiceDiscovery
                 log.Error("Node creation has failed.");
                 return;
             }
-
+            
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
-
-            if (!await SetTags(replicaInfo.Tags).ConfigureAwait(false))
-                Stop(); // todo ну хз, надо обсудить это решение
         }
 
         private async Task<bool> EnvironmentExistsAsync()
@@ -321,10 +322,16 @@ namespace Vostok.ServiceDiscovery
         {
             var deleteResult = await zooKeeperClient.DeleteAsync(replicaNodePath).ConfigureAwait(false);
             if (deleteResult.IsSuccessful)
-                return false;
-            return await SetTags(new TagCollection()).ConfigureAwait(false);
+                return await SetTags(new TagCollection()).ConfigureAwait(false);
+            return false;
         }
-        
+
+        private async Task TrySetTags(TagCollection tags)
+        {
+            if (await SetTags(replicaInfo.Tags).ConfigureAwait(false))
+                tagsCreated.TrySetTrue();
+        }
+
         private async Task<bool> SetTags(TagCollection tags) 
             => await serviceDiscoveryManager.SetNewReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags).ConfigureAwait(false);
     }
