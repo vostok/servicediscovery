@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using Vostok.Commons.Time;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -31,8 +30,5 @@ namespace Vostok.ServiceDiscovery
         public Func<bool> RegistrationAllowedProvider { get; set; }
 
         public bool UseFQDN { get; set; } = true;
-
-        [CanBeNull]
-        public Func<ServiceBeaconAuthenticationInfo> AuthenticationInfoProvider { get; set; }
     }
 }
