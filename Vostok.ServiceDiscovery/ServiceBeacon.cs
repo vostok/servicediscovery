@@ -9,7 +9,6 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -38,7 +37,6 @@ namespace Vostok.ServiceDiscovery
         private readonly AtomicBoolean registrationAllowed = true;
         private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private long lastConnectedTimestamp;
-        private ServiceBeaconAuthenticationInfo lastUsedAuthenticationInfo;
         private volatile Task beaconTask;
         private volatile CancellationTokenSource stopCancellationToken;
 
@@ -80,13 +78,6 @@ namespace Vostok.ServiceDiscovery
             {
                 if (isRunning.TrySetTrue())
                 {
-                    var authInfo = settings.AuthenticationInfoProvider?.Invoke();
-                    if (authInfo?.Password != null)
-                    {
-                        zooKeeperClient.AddAuthenticationInfo(BuildZkAuthInfo(authInfo));
-                        lastUsedAuthenticationInfo = authInfo;
-                    }
-
                     stopCancellationToken = new CancellationTokenSource();
                     nodeCreatedOnceSignal.Reset();
                     beaconTask = Task.Run(BeaconTask);
@@ -157,7 +148,6 @@ namespace Vostok.ServiceDiscovery
             try
             {
                 await EnsureNodeExistsAsync().ConfigureAwait(false);
-                UpdateAuthInfoIfNeeded();
             }
             catch (Exception exception)
             {
@@ -293,25 +283,6 @@ namespace Vostok.ServiceDiscovery
             }
 
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
-        }
-
-        private void UpdateAuthInfoIfNeeded()
-        {
-            var authInfo = settings.AuthenticationInfoProvider?.Invoke();
-            if (!ServiceBeaconAuthenticationInfoComparer.Instance.Equals(lastUsedAuthenticationInfo, authInfo))
-            {
-                if(authInfo != null)
-                    zooKeeperClient.AddAuthenticationInfo(BuildZkAuthInfo(authInfo));
-
-                lastUsedAuthenticationInfo = authInfo;
-            }
-        }
-
-        private AuthenticationInfo BuildZkAuthInfo(ServiceBeaconAuthenticationInfo authInfo)
-        {
-            var login = authInfo.Login ?? AuthenticationHelper.GenerateLogin(replicaInfo.Application, replicaInfo.Environment);
-            var zkAuthInfo = AuthenticationInfo.Digest(login, authInfo.Password);
-            return zkAuthInfo;
         }
 
         private async Task<bool> EnvironmentExistsAsync()
