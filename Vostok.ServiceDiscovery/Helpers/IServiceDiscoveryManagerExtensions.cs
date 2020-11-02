@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Abstractions;
@@ -15,12 +16,25 @@ namespace Vostok.ServiceDiscovery.Helpers
                     properties => properties.SetEphemeralReplicaTags(replicaName, tags))
                 .ConfigureAwait(false);
         }
-        
+
         [NotNull]
         private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, string replicaName, TagCollection tags)
-            => tags?.Count > 0
-                ? properties.Set(GetEphemeralReplicaTagsPropertyKey(replicaName), tags.ToString())
-                : properties.Remove(GetEphemeralReplicaTagsPropertyKey(replicaName));
+        {
+            var propertyKey = GetEphemeralReplicaTagsPropertyKey(replicaName);
+            if (properties.GetEphemeralReplicaTags(propertyKey).Equals(tags))
+                return properties;
+
+            return tags?.Count > 0
+                ? properties.Set(propertyKey, tags.ToString())
+                : properties.Remove(propertyKey);
+        }
+
+        [NotNull]
+        private static TagCollection GetEphemeralReplicaTags([NotNull] this IReadOnlyDictionary<string, string> properties, [NotNull] string propertyKey)
+            => properties.TryGetValue(propertyKey, out var value)
+               && TagCollection.TryParse(value, out var tagCollection)
+                ? tagCollection
+                : new TagCollection();
 
         [NotNull]
         private static string GetEphemeralReplicaTagsPropertyKey(string replicaName)

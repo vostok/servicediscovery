@@ -105,7 +105,7 @@ namespace Vostok.ServiceDiscovery
                     {
                         Task.Run(DeleteNodeTask);
                     }
-                    SetTags(new TagCollection()).GetAwaiter().GetResult();
+                    RemoveTagsIfNeed().GetAwaiter().GetResult();
                 }
             }
         }
@@ -328,6 +328,13 @@ namespace Vostok.ServiceDiscovery
         {
             if (await SetTags(replicaInfo.Tags).ConfigureAwait(false))
                 tagsCreated.TrySetTrue();
+        }
+
+        private async Task RemoveTagsIfNeed()
+        {
+            if (replicaInfo.Tags?.Count == 0)
+                return;
+            await SetTags(new TagCollection()).ConfigureAwait(false);
         }
 
         private Task<bool> SetTags(TagCollection tags) 
