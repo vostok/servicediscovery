@@ -61,7 +61,12 @@ namespace Vostok.ServiceDiscovery
             this.replicaInfo = replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
             this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
-            serviceDiscoveryManager = new ServiceDiscoveryManager(zooKeeperClient, new ServiceDiscoveryManagerSettings(), log);
+            var sdManagerSettings = new ServiceDiscoveryManagerSettings
+            {
+                ZooKeeperNodesPrefix = this.settings.ZooKeeperNodesPrefix,
+                ZooKeeperNodesPathEscaper = this.settings.ZooKeeperNodesPathEscaper
+            };
+            serviceDiscoveryManager = new ServiceDiscoveryManager(zooKeeperClient, sdManagerSettings, log);
             
             var pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
             environmentNodePath = pathHelper.BuildEnvironmentPath(replicaInfo.Environment);
@@ -332,7 +337,7 @@ namespace Vostok.ServiceDiscovery
 
         private async Task RemoveTagsIfNeed()
         {
-            if (replicaInfo.Tags?.Count == 0)
+            if (replicaInfo.Tags == null || replicaInfo.Tags.Count == 0)
                 return;
             await serviceDiscoveryManager.RemoveReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
         }
