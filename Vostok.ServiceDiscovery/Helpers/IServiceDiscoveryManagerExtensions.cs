@@ -41,6 +41,6 @@ namespace Vostok.ServiceDiscovery.Helpers
 
         [NotNull]
         private static string GetEphemeralReplicaTagsPropertyKey(string replicaName)
-            => new TagPropertyKey(replicaName, "ephemeral").ToString();
+            => new TagsPropertyKey(replicaName, "ephemeral").ToString();
     }
 }
