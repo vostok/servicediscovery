@@ -216,7 +216,7 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public void Stop_should_delete_node_and_tags_after_reconnect()
+        public void Stop_should_delete_node_and_not_delete_tags_after_reconnect()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok") {Tags = new TagCollection {"tag1", "tag2"}};
             CreateEnvironmentNode(replica.Environment);
@@ -240,9 +240,9 @@ namespace Vostok.ServiceDiscovery.Tests
                 Action action = () =>
                 {
                     ReplicaRegistered(replica).Should().BeFalse();
-                    ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
+                    ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeTrue();
                 };
-                action.ShouldPassIn(DefaultTimeout);
+                action.ShouldNotFailIn(TimeSpan.FromSeconds(5));
             }
         }
 
