@@ -334,10 +334,10 @@ namespace Vostok.ServiceDiscovery
         {
             if (replicaInfo.Tags?.Count == 0)
                 return;
-            await SetTags(new TagCollection()).ConfigureAwait(false);
+            await serviceDiscoveryManager.RemoveReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
         }
 
         private Task<bool> SetTags(TagCollection tags) 
-            => serviceDiscoveryManager.SetNewReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
+            => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
     }
 }
