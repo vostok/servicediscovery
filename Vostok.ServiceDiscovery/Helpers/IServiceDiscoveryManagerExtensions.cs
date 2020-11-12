@@ -8,7 +8,10 @@ namespace Vostok.ServiceDiscovery.Helpers
 {
     internal static class IServiceDiscoveryManagerExtensions
     {
-        public static async Task<bool> SetNewReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName, TagCollection tags)
+        public static async Task<bool> RemoveReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName)
+            => await serviceDiscoveryManager.SetReplicaTags(environment, application, replicaName, new TagCollection()).ConfigureAwait(false);
+        
+        public static async Task<bool> SetReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName, TagCollection tags)
         {
             return await serviceDiscoveryManager.TryUpdateApplicationPropertiesAsync(
                     environment,
