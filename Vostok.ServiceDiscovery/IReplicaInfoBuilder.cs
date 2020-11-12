@@ -105,7 +105,7 @@ namespace Vostok.ServiceDiscovery
         IReplicaInfoBuilder SetProperty([NotNull] string key, [CanBeNull] string value);
         
         /// <summary>
-        /// <para></para>
+        /// Sets a custom beacon <paramref name="tags"/>, which can be overwritten only by restarting the beacon.
         /// </summary>
         [NotNull]
         IReplicaInfoBuilder SetTags([CanBeNull] TagCollection tags);

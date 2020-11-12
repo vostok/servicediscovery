@@ -10,7 +10,6 @@ using Vostok.Logging.Console;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;
