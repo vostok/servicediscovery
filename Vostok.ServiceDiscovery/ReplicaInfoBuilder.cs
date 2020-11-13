@@ -45,16 +45,17 @@ namespace Vostok.ServiceDiscovery
             commitHash = AssemblyCommitHashExtractor.ExtractFromEntryAssembly();
             releaseDate = AssemblyBuildTimeExtractor.ExtractFromEntryAssembly()?.ToString("O");
             dependencies = AssemblyDependenciesExtractor.ExtractFromEntryAssembly();
+            tags = new TagCollection();
         }
 
-        public static ReplicaInfo Build(ReplicaInfoSetup setup, bool useFQDN)
+        public static ServiceBeaconInfo Build(ReplicaInfoSetup setup, bool useFQDN)
         {
             var builder = new ReplicaInfoBuilder(useFQDN);
             setup?.Invoke(builder);
             return builder.Build();
         }
 
-        public ReplicaInfo Build()
+        public ServiceBeaconInfo Build()
         {
             url = url ?? BuildUrl();
 
@@ -68,14 +69,11 @@ namespace Vostok.ServiceDiscovery
                 urlPath = url.AbsolutePath;
             }
 
-            var result = new ReplicaInfo(environment, application, replica)
-            {
-                Tags = tags
-            };
+            var replicaInfo = new ReplicaInfo(environment, application, replica);
 
-            FillProperties(result);
+            FillProperties(replicaInfo);
 
-            return result;
+            return new ServiceBeaconInfo(replicaInfo, tags);
         }
 
         private Uri BuildUrl()

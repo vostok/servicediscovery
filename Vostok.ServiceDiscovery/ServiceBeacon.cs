@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -23,6 +22,7 @@ namespace Vostok.ServiceDiscovery
     public class ServiceBeacon : IServiceBeacon, IDisposable
     {
         private readonly ReplicaInfo replicaInfo;
+        private readonly TagCollection tags;
         private readonly string environmentNodePath;
         private readonly string applicationNodePath;
         private readonly string replicaNodePath;
@@ -42,6 +42,7 @@ namespace Vostok.ServiceDiscovery
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile CancellationTokenSource stopCancellationToken;
+
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
             [CanBeNull] ReplicaInfoSetup replicaInfoSetup = null,
@@ -53,12 +54,13 @@ namespace Vostok.ServiceDiscovery
 
         internal ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
-            [NotNull] ReplicaInfo replicaInfo,
+            [NotNull] ServiceBeaconInfo serviceBeaconInfo,
             [CanBeNull] ServiceBeaconSettings settings,
             [CanBeNull] ILog log)
         {
             this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
-            this.replicaInfo = replicaInfo = replicaInfo ?? throw new ArgumentNullException(nameof(settings));
+            replicaInfo = serviceBeaconInfo.ReplicaInfo;
+            tags = serviceBeaconInfo.Tags;
             this.settings = settings ?? new ServiceBeaconSettings();
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceBeacon>();
             var sdManagerSettings = new ServiceDiscoveryManagerSettings
@@ -244,7 +246,7 @@ namespace Vostok.ServiceDiscovery
                 if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
                     if (!tagsCreated)
-                        await TrySetTags(replicaInfo.Tags).ConfigureAwait(false);
+                        await TrySetTags().ConfigureAwait(false);
                     nodeCreatedOnceSignal.Set();
                     return;
                 }
@@ -292,7 +294,7 @@ namespace Vostok.ServiceDiscovery
 
             if (create.IsSuccessful)
             {
-                await TrySetTags(replicaInfo.Tags).ConfigureAwait(false);
+                await TrySetTags().ConfigureAwait(false);
                 nodeCreatedOnceSignal.Set();
             }
 
@@ -329,20 +331,20 @@ namespace Vostok.ServiceDiscovery
             return deleteResult.IsSuccessful;
         }
 
-        private async Task TrySetTags(TagCollection tags)
+        private async Task TrySetTags()
         {
-            if (await SetTags(replicaInfo.Tags).ConfigureAwait(false))
+            if (await SetTags().ConfigureAwait(false))
                 tagsCreated.TrySetTrue();
         }
 
         private async Task RemoveTagsIfNeed()
         {
-            if (replicaInfo.Tags == null || replicaInfo.Tags.Count == 0)
+            if (tags == null || tags.Count == 0)
                 return;
             await serviceDiscoveryManager.RemoveReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
         }
 
-        private Task<bool> SetTags(TagCollection tags) 
+        private Task<bool> SetTags() 
             => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
     }
 }

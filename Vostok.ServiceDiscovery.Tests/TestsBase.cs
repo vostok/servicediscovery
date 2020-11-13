@@ -10,6 +10,7 @@ using Vostok.Logging.Console;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;
@@ -148,8 +149,11 @@ namespace Vostok.ServiceDiscovery.Tests
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
         }
-
+        
         protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
+            => GetServiceBeacon(new ServiceBeaconInfo(replica), client, registrationAllowedProvider, addDependenciesToNodeData);
+
+        protected ServiceBeacon GetServiceBeacon(ServiceBeaconInfo serviceBeaconInfo, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
         {
             client = client ?? ZooKeeperClient;
             var settings = new ServiceBeaconSettings
@@ -160,7 +164,7 @@ namespace Vostok.ServiceDiscovery.Tests
             };
             if (addDependenciesToNodeData.HasValue)
                 settings.AddDependenciesToNodeData = addDependenciesToNodeData.Value;
-            return new ServiceBeacon(client, replica, settings, Log);
+            return new ServiceBeacon(client, serviceBeaconInfo, settings, Log);
         }
 
         private void CreateOrUpdate(string path, byte[] data, bool persistent = true)
