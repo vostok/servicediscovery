@@ -32,7 +32,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(new ServiceBeaconInfo(replica)))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
 
@@ -47,11 +47,11 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Start_should_create_node_with_replica_properties_and_tags()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
             replica.SetProperty("key", "value");
-            replica.Tags = new TagCollection{"tag1", "tag2"};
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
@@ -60,7 +60,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(replica.Environment, replica.Application, replica.Replica, data).Properties;
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, replica.Tags).Should().BeTrue();
+                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
 
                 dict["key"].Should().Be("value");
             }
@@ -145,7 +145,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
 
-                var builder = ReplicaInfoBuilder.Build(null, true);
+                var builder = ReplicaInfoBuilder.Build(null, true).ReplicaInfo;
                 var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix, ZooKeeperPathEscaper.Instance)
                     .BuildReplicaPath(builder.Environment, builder.Application, builder.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
@@ -179,7 +179,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 MinimumTimeBetweenIterations = 0.Milliseconds()
             };
 
-            using (var beacon = new ServiceBeacon(client, replica, settings, Log))
+            using (var beacon = new ServiceBeacon(client, new ServiceBeaconInfo(replica), settings, Log))
             {
                 beacon.Start();
 
@@ -195,10 +195,11 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Stop_should_delete_node_and_tags()
         {
-            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok") {Tags = new TagCollection {"tag1", "tag2"}};
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
                 ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
@@ -206,7 +207,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, replica.Tags).Should().BeTrue();
+                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
 
                 beacon.Stop();
 
@@ -218,10 +219,11 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Stop_should_delete_node_and_not_delete_tags_after_reconnect()
         {
-            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok") {Tags = new TagCollection {"tag1", "tag2"}};
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
                 ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
@@ -229,7 +231,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, replica.Tags).Should().BeTrue();
+                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
 
                 Ensemble.Stop();
 
@@ -249,10 +251,11 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Dispose_should_delete_node()
         {
-            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok") {Tags = new TagCollection {"tag1", "tag2"}};
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
 
@@ -321,7 +324,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var t = Task.Run(
                 () =>
                 {
-                    using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
+                    using (var beacon = new ServiceBeacon(disposedClient, new ServiceBeaconInfo(replica), null, Log))
                     {
                         beacon.Start();
                     }
@@ -338,7 +341,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = new ServiceBeacon(disposedClient, replica, null, Log))
+            using (var beacon = new ServiceBeacon(disposedClient, new ServiceBeaconInfo(replica), null, Log))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
 
@@ -355,11 +358,12 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_create_node_immediately_after_ensemble_start()
         {
-            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok") {Tags = new TagCollection {"tag1", "tag2"}};
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
             CreateEnvironmentNode(replica.Environment);
             Ensemble.Stop();
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldNotCompleteIn(1.Seconds());
@@ -368,7 +372,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, replica.Tags).Should().BeTrue();
+                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
             }
         }
 
