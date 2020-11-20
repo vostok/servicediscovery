@@ -119,6 +119,13 @@ namespace Vostok.ServiceDiscovery
         [NotNull]
         public Task WaitForInitialRegistrationAsync() => nodeCreatedOnceSignal.WaitAsync();
 
+        /// <summary>
+        /// Waits for first registration after <see cref="Start"/> method call.
+        /// Returns true if registration completed, false if timeout reached.
+        /// </summary>
+        [NotNull]
+        public Task<bool> WaitForInitialRegistrationAsync(TimeSpan timeout) => nodeCreatedOnceSignal.WaitAsync(CancellationToken.None, timeout);
+
         private async Task BeaconTask()
         {
             var observer = new AdHocConnectionStateObserver(OnConnectionStateChanged, OnCompleted);
