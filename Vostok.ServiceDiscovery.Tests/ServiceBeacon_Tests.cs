@@ -239,12 +239,10 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 Ensemble.Start();
 
-                Action action = () =>
-                {
-                    ReplicaRegistered(replica).Should().BeFalse();
-                    ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeTrue();
-                };
+                Action action = () => ReplicaRegistered(replica).Should().BeFalse();
                 action.ShouldNotFailIn(TimeSpan.FromSeconds(5));
+
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica);
             }
         }
 
