@@ -377,22 +377,29 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public void Should_create_node_immediately_after_ensemble_restart()
+        public void Should_create_node_immediately_and_not_rewrite_tags_after_ensemble_restart()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
+            var newTags = new TagCollection{"tag2", "tag3"};
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags);
+
+                ServiceDiscoveryManager.SetReplicaTags(replica.Environment, replica.Application, replica.Replica, newTags).GetAwaiter().GetResult();
+                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, newTags).Should().BeTrue();
 
                 Ensemble.Stop();
 
                 Ensemble.Start();
 
                 WaitReplicaRegistered(replica);
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica, newTags);
             }
         }
 
