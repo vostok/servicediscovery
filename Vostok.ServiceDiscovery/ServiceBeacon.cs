@@ -245,9 +245,9 @@ namespace Vostok.ServiceDiscovery
             {
                 if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
+                    nodeCreatedOnceSignal.Set();
                     if (!tagsCreated)
                         await TrySetTags().ConfigureAwait(false);
-                    nodeCreatedOnceSignal.Set();
                     return;
                 }
 
@@ -294,8 +294,8 @@ namespace Vostok.ServiceDiscovery
 
             if (create.IsSuccessful)
             {
-                await TrySetTags().ConfigureAwait(false);
                 nodeCreatedOnceSignal.Set();
+                await TrySetTags().ConfigureAwait(false);
             }
 
             if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)

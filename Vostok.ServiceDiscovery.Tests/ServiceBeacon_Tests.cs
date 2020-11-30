@@ -60,7 +60,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
                 var data = ZooKeeperClient.GetData(path).Data;
                 var dict = ReplicaNodeDataSerializer.Deserialize(replica.Environment, replica.Application, replica.Replica, data).Properties;
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags);
 
                 dict["key"].Should().Be("value");
             }
@@ -202,17 +202,17 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
+                CheckForApplicationTagsDoesNotExists(replica.Environment, replica.Application, replica.Replica);
 
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags);
 
                 beacon.Stop();
 
                 ReplicaRegistered(replica).Should().BeFalse();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
+                CheckForApplicationTagsDoesNotExists(replica.Environment, replica.Application, replica.Replica);
             }
         }
 
@@ -226,12 +226,12 @@ namespace Vostok.ServiceDiscovery.Tests
             using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 ReplicaRegistered(replica).Should().BeFalse();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
+                CheckForApplicationTagsDoesNotExists(replica.Environment, replica.Application, replica.Replica);
 
                 beacon.Start();
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags);
 
                 Ensemble.Stop();
 
@@ -265,7 +265,7 @@ namespace Vostok.ServiceDiscovery.Tests
             }
 
             ReplicaRegistered(replica).Should().BeFalse();
-            ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica).Should().BeFalse();
+            CheckForApplicationTagsDoesNotExists(replica.Environment, replica.Application, replica.Replica);
         }
 
         [Test]
@@ -372,7 +372,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
                 ReplicaRegistered(replica).Should().BeTrue();
-                ApplicationHasReplicaTags(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags).Should().BeTrue();
+                WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica, serviceBeaconInfo.Tags);
             }
         }
 

@@ -93,6 +93,18 @@ namespace Vostok.ServiceDiscovery.Tests
             return exists.Exists;
         }
 
+        protected void WaitForApplicationTagsExists(string environment, string application, string replica, TagCollection tags = null)
+        {
+            var action = new Action(() => ApplicationHasReplicaTags(environment, application, replica, tags).Should().BeTrue());
+            action.ShouldPassIn(DefaultTimeout);
+        }
+
+        protected void CheckForApplicationTagsDoesNotExists(string environment, string application, string replica, TagCollection tags = null)
+        {
+            var action = new Action(() => ApplicationHasReplicaTags(environment, application, replica, tags).Should().BeFalse());
+            action.ShouldNotFailIn(1.Seconds());
+        }
+
         protected bool ApplicationHasReplicaTags(string environment, string application, string replica, TagCollection tags = null)
         {
             var applicationNode = ServiceDiscoveryManager.GetApplicationAsync(environment, application).GetAwaiter().GetResult();
