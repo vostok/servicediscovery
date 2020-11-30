@@ -113,6 +113,7 @@ namespace Vostok.ServiceDiscovery.Tests
             var applicationProperties = applicationNode.Properties;
             var replicaTagsPropertyKey = new TagsPropertyKey(replica, "ephemeral").ToString();
             var containsTagsKey = applicationProperties.ContainsKey(replicaTagsPropertyKey);
+            Log.Info(containsTagsKey ? $"Tags: {applicationProperties[replicaTagsPropertyKey]}" : "No Tags");
             return containsTagsKey && (tags == null || applicationProperties[replicaTagsPropertyKey] == tags.ToString());
         }
 
