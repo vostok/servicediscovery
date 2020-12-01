@@ -8,9 +8,9 @@ namespace Vostok.ServiceDiscovery.Helpers
 {
     internal static class IServiceDiscoveryManagerExtensions
     {
-        public static async Task<bool> RemoveReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName)
+        public static async Task<bool> ClearReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName)
             => await serviceDiscoveryManager.SetReplicaTags(environment, application, replicaName, new TagCollection()).ConfigureAwait(false);
-        
+
         public static async Task<bool> SetReplicaTags(this IServiceDiscoveryManager serviceDiscoveryManager, string environment, string application, string replicaName, TagCollection tags)
         {
             return await serviceDiscoveryManager.TryUpdateApplicationPropertiesAsync(
@@ -21,26 +21,23 @@ namespace Vostok.ServiceDiscovery.Helpers
         }
 
         [NotNull]
-        private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, string replicaName, TagCollection tags)
+        private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, [NotNull] string replicaName, TagCollection tags)
         {
-            var propertyKey = GetEphemeralReplicaTagsPropertyKey(replicaName);
-            if (properties.GetEphemeralReplicaTags(propertyKey).Equals(tags))
+            var propertyKey = new TagsPropertyKey(replicaName, "Ephemeral");
+            if (properties.GetReplicaKindTags(propertyKey).Equals(tags))
                 return properties;
 
             return tags?.Count > 0
-                ? properties.Set(propertyKey, tags.ToString())
-                : properties.Remove(propertyKey);
+                ? properties.Set(propertyKey.ToString(), tags.ToString())
+                : properties.Remove(propertyKey.ToString());
         }
 
         [NotNull]
-        private static TagCollection GetEphemeralReplicaTags([NotNull] this IReadOnlyDictionary<string, string> properties, [NotNull] string propertyKey)
-            => properties.TryGetValue(propertyKey, out var value)
-               && TagCollection.TryParse(value, out var tagCollection)
-                ? tagCollection
+        private static TagCollection GetReplicaKindTags([NotNull] this IReadOnlyDictionary<string, string> properties, [NotNull] TagsPropertyKey tagsPropertyKey)
+            => properties.TryGetValue(tagsPropertyKey.ToString(), out var collectionString)
+                ? TagCollection.TryParse(collectionString, out var collection)
+                    ? collection
+                    : new TagCollection()
                 : new TagCollection();
-
-        [NotNull]
-        private static string GetEphemeralReplicaTagsPropertyKey(string replicaName)
-            => new TagsPropertyKey(replicaName, "ephemeral").ToString();
     }
 }

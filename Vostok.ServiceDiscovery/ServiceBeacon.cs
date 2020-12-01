@@ -342,7 +342,7 @@ namespace Vostok.ServiceDiscovery
         {
             if (tags == null || tags.Count == 0)
                 return;
-            await serviceDiscoveryManager.RemoveReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
+            await serviceDiscoveryManager.ClearReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
         }
 
         private Task<bool> SetTags() 
