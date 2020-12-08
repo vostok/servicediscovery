@@ -3,7 +3,6 @@ using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 
 namespace Vostok.ServiceDiscovery.Tests.Serializers
@@ -128,6 +127,20 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
                     {
                         {"a", "a-value 2"},
                         {"b", "b  b"}
+                    });
+        }
+
+        [Test]
+        public void DeserializeProperties_should_work_with_legacy_delimiter()
+        {
+            var properties = ReplicaNodeDataSerializer.Deserialize("e", "a", "r", Encoding.UTF8.GetBytes("p1 = v1\r\np2 = v2\np3 = v3"));
+            properties.Properties.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"p1", "v1"},
+                        {"p2", "v2"},
+                        {"p3", "v3"}
                     });
         }
     }
