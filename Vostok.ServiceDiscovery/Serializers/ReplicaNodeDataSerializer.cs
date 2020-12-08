@@ -5,7 +5,6 @@ using System.Text;
 using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery.Serializers
 {
@@ -13,8 +12,15 @@ namespace Vostok.ServiceDiscovery.Serializers
     {
         private const string KeyValueDelimiter = " = ";
         private const string LinesDelimiter = "\n";
+        private const string AdditionalLinesDelimiter = "\r\n";
 
-        // CR(kungurtsev): make Serialize/Deserialize private.
+        [NotNull]
+        public static byte[] Serialize(IReplicaInfo replica) =>
+            SerializeProperties(replica.Properties);
+
+        [NotNull]
+        public static IReplicaInfo Deserialize(string environment, string application, string replica, [CanBeNull] byte[] data) =>
+            new ReplicaInfo(environment, application, replica, DeserializeProperties(data));
 
         [NotNull]
         private static byte[] SerializeProperties([CanBeNull] IReadOnlyDictionary<string, string> properties)
@@ -32,7 +38,7 @@ namespace Vostok.ServiceDiscovery.Serializers
         private static Dictionary<string, string> DeserializeProperties([CanBeNull] byte[] data)
         {
             var content = Encoding.UTF8.GetString(data ?? new byte[0]);
-            var lines = content.Split(new[] {LinesDelimiter}, StringSplitOptions.RemoveEmptyEntries);
+            var lines = content.Split(new[] {AdditionalLinesDelimiter, LinesDelimiter}, StringSplitOptions.RemoveEmptyEntries);
             return lines
                 .Where(line => !string.IsNullOrEmpty(line))
                 .Select(line => line.Split(new[] {KeyValueDelimiter}, 2, StringSplitOptions.RemoveEmptyEntries))
@@ -43,12 +49,5 @@ namespace Vostok.ServiceDiscovery.Serializers
                     StringComparer.OrdinalIgnoreCase
                 );
         }
-
-        [NotNull]
-        public static byte[] Serialize(IReplicaInfo replica) => SerializeProperties(replica.Properties);
-
-        [NotNull]
-        public static IReplicaInfo Deserialize(string environment, string application, string replica, [CanBeNull] byte[] data) =>
-            new ReplicaInfo(environment, application, replica, DeserializeProperties(data));
     }
 }

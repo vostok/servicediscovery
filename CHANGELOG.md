@@ -1,3 +1,7 @@
+## 0.1.10 (08-12-2020):
+
+Support `\r\n` properties delimiter.
+
 ## 0.1.9 (16-06-2020):
 
 Use FQDN by default in ServiceBeaconSettings.
