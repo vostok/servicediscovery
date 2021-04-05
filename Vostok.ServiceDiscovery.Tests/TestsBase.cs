@@ -136,7 +136,7 @@ namespace Vostok.ServiceDiscovery.Tests
             delete.IsSuccessful.Should().BeTrue();
         }
 
-        protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null)
+        protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
         {
             client = client ?? ZooKeeperClient;
             var settings = new ServiceBeaconSettings
@@ -145,6 +145,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 MinimumTimeBetweenIterations = 100.Milliseconds(),
                 RegistrationAllowedProvider = registrationAllowedProvider
             };
+            if (addDependenciesToNodeData.HasValue)
+                settings.AddDependenciesToNodeData = addDependenciesToNodeData.Value;
             return new ServiceBeacon(client, replica, settings, Log);
         }
 

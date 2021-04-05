@@ -105,6 +105,32 @@ namespace Vostok.ServiceDiscovery.Tests.Serializers
         }
 
         [Test]
+        public void SerializeProperties_should_Filter_As_Asked()
+        {
+            var dict = new Dictionary<string, string>
+            {
+                {"a", "a-value"},
+                {"b", "b-value"}
+            };
+
+            var replicaInfo = new ReplicaInfo(
+                "default",
+                "vostok",
+                "doesntmatter",
+                dict);
+
+            var serialized = ReplicaNodeDataSerializer.Serialize(replicaInfo, (key, _) => key != "b");
+            var deserialized = ReplicaNodeDataSerializer.Deserialize(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, serialized);
+
+            deserialized.Properties.Should()
+                .BeEquivalentTo(
+                    new Dictionary<string, string>
+                    {
+                        {"a", "a-value"},
+                    });
+        }
+
+        [Test]
         public void DeserializeProperties_should_replace_new_line_symbol()
         {
             var dict = new Dictionary<string, string>

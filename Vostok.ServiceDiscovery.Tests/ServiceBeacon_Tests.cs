@@ -65,6 +65,51 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        public void Start_should_create_node_with_replica_properties_and_filtered_Dependencies_by_default()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            replica.SetProperty("key", "value");
+            replica.SetProperty(ReplicaInfoKeys.Dependencies, "lalala");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+
+                var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix, ZooKeeperPathEscaper.Instance)
+                    .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+                var data = ZooKeeperClient.GetData(path).Data;
+                var dict = ReplicaNodeDataSerializer.Deserialize(replica.Environment, replica.Application, replica.Replica, data).Properties;
+
+                dict.ContainsKey(ReplicaInfoKeys.Dependencies).Should().BeFalse();
+            }
+        }
+
+        [Test]
+        public void Start_should_create_node_with_replica_properties_with_Dependencies_is_ask_in_settings()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            replica.SetProperty("key", "value");
+            replica.SetProperty(ReplicaInfoKeys.Dependencies, "lalala");
+            CreateEnvironmentNode(replica.Environment);
+
+            using (var beacon = GetServiceBeacon(replica, addDependenciesToNodeData: true))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+
+                var path = new ServiceDiscoveryPathHelper(new ServiceBeaconSettings().ZooKeeperNodesPrefix, ZooKeeperPathEscaper.Instance)
+                    .BuildReplicaPath(replica.Environment, replica.Application, replica.Replica);
+                var data = ZooKeeperClient.GetData(path).Data;
+                var dict = ReplicaNodeDataSerializer.Deserialize(replica.Environment, replica.Application, replica.Replica, data).Properties;
+
+                dict["key"].Should().Be("value");
+                dict[ReplicaInfoKeys.Dependencies].Should().Be("lalala");
+            }
+        }
+
+        [Test]
         public void Should_use_replica_builder()
         {
             var url = "https://github.com/vostok";
