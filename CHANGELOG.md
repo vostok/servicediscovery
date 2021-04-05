@@ -1,3 +1,7 @@
+## 0.1.11 (05-04-2021):
+
+ServiceBeacon no longer writes assembly commit hashes into ephemeral node data by default to ease load on ZooKeeper.
+
 ## 0.1.10 (08-12-2020):
 
 Support `\r\n` properties delimiter.
