@@ -15,15 +15,15 @@ namespace Vostok.ServiceDiscovery.Serializers
         private const string AdditionalLinesDelimiter = "\r\n";
 
         [NotNull]
-        public static byte[] Serialize(IReplicaInfo replica) =>
-            SerializeProperties(replica.Properties);
+        public static byte[] Serialize(IReplicaInfo replica, AllowToSerializeProperty propertiesFilter = null) =>
+            SerializeProperties(replica.Properties.Where(x => propertiesFilter?.Invoke(x.Key, x.Value) ?? true));
 
         [NotNull]
         public static IReplicaInfo Deserialize(string environment, string application, string replica, [CanBeNull] byte[] data) =>
             new ReplicaInfo(environment, application, replica, DeserializeProperties(data));
 
         [NotNull]
-        private static byte[] SerializeProperties([CanBeNull] IReadOnlyDictionary<string, string> properties)
+        private static byte[] SerializeProperties([CanBeNull] IEnumerable<KeyValuePair<string, string>> properties)
         {
             properties = properties ?? new Dictionary<string, string>();
             var content = string.Join(
@@ -49,5 +49,7 @@ namespace Vostok.ServiceDiscovery.Serializers
                     StringComparer.OrdinalIgnoreCase
                 );
         }
+
+        public delegate bool AllowToSerializeProperty(string key, string value);
     }
 }

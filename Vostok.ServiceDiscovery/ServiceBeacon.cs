@@ -9,6 +9,7 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -16,7 +17,7 @@ using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 
 namespace Vostok.ServiceDiscovery
 {
-    /// <inheritdoc cref="IServiceBeacon"/>
+    /// <inheritdoc cref="IServiceBeacon" />
     [PublicAPI]
     public class ServiceBeacon : IServiceBeacon, IDisposable
     {
@@ -63,7 +64,7 @@ namespace Vostok.ServiceDiscovery
             environmentNodePath = pathHelper.BuildEnvironmentPath(replicaInfo.Environment);
             applicationNodePath = pathHelper.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
             replicaNodePath = pathHelper.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
-            replicaNodeData = ReplicaNodeDataSerializer.Serialize(replicaInfo);
+            replicaNodeData = ReplicaNodeDataSerializer.Serialize(replicaInfo, FilterReplicaInfoProperties);
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
         }
@@ -106,7 +107,7 @@ namespace Vostok.ServiceDiscovery
         }
 
         /// <summary>
-        /// Calls <see cref="Stop"/> method.
+        /// Calls <see cref="Stop" /> method.
         /// </summary>
         public void Dispose()
         {
@@ -114,10 +115,18 @@ namespace Vostok.ServiceDiscovery
         }
 
         /// <summary>
-        /// Waits for first registration after <see cref="Start"/> method call.
+        /// Waits for first registration after <see cref="Start" /> method call.
         /// </summary>
         [NotNull]
         public Task WaitForInitialRegistrationAsync() => nodeCreatedOnceSignal.WaitAsync();
+
+        private bool FilterReplicaInfoProperties(string key, string value)
+        {
+            if (key == ReplicaInfoKeys.Dependencies && !settings.AddDependenciesToNodeData)
+                return false;
+
+            return true;
+        }
 
         private async Task BeaconTask()
         {
