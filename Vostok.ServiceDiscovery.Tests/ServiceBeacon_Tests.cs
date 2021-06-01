@@ -238,10 +238,9 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Stop();
 
                 Ensemble.Start();
-
-                Action action = () => ReplicaRegistered(replica).Should().BeFalse();
-                action.ShouldNotFailIn(TimeSpan.FromSeconds(5));
-
+                
+                Thread.Sleep(2.Seconds());
+                ReplicaRegistered(replica).Should().BeFalse();
                 WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica);
             }
         }
