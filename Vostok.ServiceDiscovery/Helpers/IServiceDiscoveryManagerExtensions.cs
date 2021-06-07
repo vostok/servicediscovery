@@ -23,7 +23,7 @@ namespace Vostok.ServiceDiscovery.Helpers
         [NotNull]
         private static IApplicationInfoProperties SetEphemeralReplicaTags([NotNull] this IApplicationInfoProperties properties, [NotNull] string replicaName, TagCollection tags)
         {
-            var propertyKey = new TagsPropertyKey(replicaName, "Ephemeral");
+            var propertyKey = new TagsPropertyKey(replicaName, ReplicaTagKind.Ephemeral.ToString());
             if (properties.GetReplicaKindTags(propertyKey).Equals(tags))
                 return properties;
 
