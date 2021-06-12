@@ -56,7 +56,9 @@ namespace Vostok.ServiceDiscovery
         public ReplicaInfo Build()
         {
             url = url ?? BuildUrl();
-            replica = url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
+
+            if (replica == null)
+                replica = url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
 
             if (url != null)
             {
@@ -116,9 +118,15 @@ namespace Vostok.ServiceDiscovery
                     dependencies.Select(d => d?.Replace(DependenciesDelimiter, "_")));
         }
 
-        #region FluentPublicSetters
+        #region Builder methods
 
         // ReSharper disable ParameterHidesMember
+
+        public IReplicaInfoBuilder SetReplicaId(string replica)
+        {
+            this.replica = replica;
+            return this;
+        }
 
         public IReplicaInfoBuilder SetEnvironment(string environment)
         {

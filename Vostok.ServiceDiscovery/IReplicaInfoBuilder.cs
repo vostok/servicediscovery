@@ -14,6 +14,13 @@ namespace Vostok.ServiceDiscovery
     public interface IReplicaInfoBuilder
     {
         /// <summary>
+        /// <para>Overrides the whole replica identifier used for registration.</para>
+        /// <para>Default value: assembled from url or host + PID.</para>
+        /// </summary>
+        [NotNull]
+        IReplicaInfoBuilder SetReplicaId([NotNull] string replica);
+
+        /// <summary>
         /// <para>Sets application environment.</para>
         /// <para>Default value: <c>default</c>.</para>
         /// </summary>
