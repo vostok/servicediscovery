@@ -1,3 +1,7 @@
+## 0.1.12 (12-06-2021):
+
+IReplicaInfoBuilder: allow to override replica identifier.
+
 ## 0.1.11 (05-04-2021):
 
 ServiceBeacon no longer writes assembly commit hashes into ephemeral node data by default to ease load on ZooKeeper.
