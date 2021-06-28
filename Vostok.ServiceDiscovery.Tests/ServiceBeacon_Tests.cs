@@ -239,8 +239,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
                 Ensemble.Start();
                 
-                Thread.Sleep(2.Seconds());
-                ReplicaRegistered(replica).Should().BeFalse();
+                WaitReplicaRegistered(replica, false);
                 WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica);
             }
         }
