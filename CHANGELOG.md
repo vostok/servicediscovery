@@ -1,4 +1,4 @@
-## 0.1.13 (24-06-2021):
+## 0.1.14 (28-06-2021):
 
 Add possibility to register replica tags on ServiceBeacon start.
 
