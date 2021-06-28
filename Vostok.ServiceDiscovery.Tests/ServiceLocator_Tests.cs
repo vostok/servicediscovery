@@ -24,9 +24,10 @@ namespace Vostok.ServiceDiscovery.Tests
         public void Should_locate_registered_ServiceBeacon_service()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var serviceBeaconInfo = new ServiceBeaconInfo(replica, null);
             CreateEnvironmentNode(replica.Environment);
 
-            using (var beacon = GetServiceBeacon(replica))
+            using (var beacon = GetServiceBeacon(serviceBeaconInfo))
             {
                 beacon.Start();
                 WaitReplicaRegistered(replica);
@@ -46,7 +47,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             using (var beacon = new ServiceBeacon(
                 ZooKeeperClient,
-                replica,
+                new ServiceBeaconInfo(replica),
                 new ServiceBeaconSettings
                 {
                     IterationPeriod = 60.Seconds(),

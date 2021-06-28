@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Console;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
@@ -27,6 +28,7 @@ namespace Vostok.ServiceDiscovery.Tests
         protected ActionsQueue EventsQueue;
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
+        protected IServiceDiscoveryManager ServiceDiscoveryManager;
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -34,6 +36,7 @@ namespace Vostok.ServiceDiscovery.Tests
             EventsQueue = new ActionsQueue(Log);
             Ensemble = ZooKeeperEnsemble.DeployNew(1, Log);
             ZooKeeperClient = GetZooKeeperClient();
+            ServiceDiscoveryManager = new ServiceDiscoveryManager(ZooKeeperClient, new ServiceDiscoveryManagerSettings(), Log);
         }
 
         [SetUp]
@@ -90,6 +93,30 @@ namespace Vostok.ServiceDiscovery.Tests
             return exists.Exists;
         }
 
+        protected void WaitForApplicationTagsExists(string environment, string application, string replica, TagCollection tags = null)
+        {
+            var action = new Action(() => ApplicationHasReplicaTags(environment, application, replica, tags).Should().BeTrue());
+            action.ShouldPassIn(DefaultTimeout);
+        }
+
+        protected void CheckForApplicationTagsDoesNotExists(string environment, string application, string replica, TagCollection tags = null)
+        {
+            var action = new Action(() => ApplicationHasReplicaTags(environment, application, replica, tags).Should().BeFalse());
+            action.ShouldNotFailIn(1.Seconds());
+        }
+
+        protected bool ApplicationHasReplicaTags(string environment, string application, string replica, TagCollection tags = null)
+        {
+            var applicationNode = ServiceDiscoveryManager.GetApplicationAsync(environment, application).GetAwaiter().GetResult();
+            if (applicationNode == null)
+                return false;
+            var applicationProperties = applicationNode.Properties;
+            var replicaTagsPropertyKey = new TagsPropertyKey(replica, ReplicaTagKind.Ephemeral.ToString()).ToString();
+            var containsTagsKey = applicationProperties.ContainsKey(replicaTagsPropertyKey);
+            Log.Info(containsTagsKey ? $"Tags: {applicationProperties[replicaTagsPropertyKey]}" : "No Tags");
+            return containsTagsKey && (tags == null || applicationProperties[replicaTagsPropertyKey] == tags.ToString());
+        }
+
         protected void CreateEnvironmentNode(string environment, string parent = null, IReadOnlyDictionary<string, string> properties = null)
         {
             var info = new EnvironmentInfo(environment, parent, properties);
@@ -135,8 +162,11 @@ namespace Vostok.ServiceDiscovery.Tests
             var delete = ZooKeeperClient.Delete(path);
             delete.IsSuccessful.Should().BeTrue();
         }
-
+        
         protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
+            => GetServiceBeacon(new ServiceBeaconInfo(replica), client, registrationAllowedProvider, addDependenciesToNodeData);
+
+        protected ServiceBeacon GetServiceBeacon(ServiceBeaconInfo serviceBeaconInfo, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
         {
             client = client ?? ZooKeeperClient;
             var settings = new ServiceBeaconSettings
@@ -147,7 +177,7 @@ namespace Vostok.ServiceDiscovery.Tests
             };
             if (addDependenciesToNodeData.HasValue)
                 settings.AddDependenciesToNodeData = addDependenciesToNodeData.Value;
-            return new ServiceBeacon(client, replica, settings, Log);
+            return new ServiceBeacon(client, serviceBeaconInfo, settings, Log);
         }
 
         private void CreateOrUpdate(string path, byte[] data, bool persistent = true)
