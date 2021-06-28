@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using FluentAssertions;
 using NUnit.Framework;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 using EnvironmentInfo = Vostok.Commons.Environment.EnvironmentInfo;
 
@@ -19,11 +20,12 @@ namespace Vostok.ServiceDiscovery.Tests
                 ? ReplicaInfoBuilder.Build(null, false)
                 : ReplicaInfoBuilder.Build(_ => {}, false);
 
-            info.Environment.Should().Be("default");
-            info.Application.Should().NotBeNullOrEmpty();
-            info.Replica.Should().NotBeNullOrEmpty();
+            info.ReplicaInfo.Environment.Should().Be("default");
+            info.ReplicaInfo.Application.Should().NotBeNullOrEmpty();
+            info.ReplicaInfo.Replica.Should().NotBeNullOrEmpty();
+            info.Tags.Should().BeEmpty();
 
-            var properties = info.Properties;
+            var properties = info.ReplicaInfo.Properties;
 
             properties[ReplicaInfoKeys.Environment].Should().Be("default");
             properties[ReplicaInfoKeys.Application].Should().NotBeNullOrEmpty();
@@ -60,13 +62,15 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetUrl(url)
                     .SetCommitHash("ASDF")
                     .SetReleaseDate("released now")
-                    .SetDependencies(new List<string> {"dep-a", "dep-b"}), false);
+                    .SetDependencies(new List<string> {"dep-a", "dep-b"})
+                    .SetTags(new TagCollection{"tag1", {"tag2", "value"}}), false);
 
-            info.Environment.Should().Be("custom-environment");
-            info.Application.Should().Be("Vostok.App.1");
-            info.Replica.Should().Be("https://github.com:123/vostok");
+            info.ReplicaInfo.Environment.Should().Be("custom-environment");
+            info.ReplicaInfo.Application.Should().Be("Vostok.App.1");
+            info.ReplicaInfo.Replica.Should().Be("https://github.com:123/vostok");
+            info.Tags.Should().BeEquivalentTo(new TagCollection{"tag1", {"tag2", "value"}});
 
-            var properties = info.Properties;
+            var properties = info.ReplicaInfo.Properties;
 
             properties[ReplicaInfoKeys.Environment].Should().Be("custom-environment");
             properties[ReplicaInfoKeys.Application].Should().Be("Vostok.App.1");
@@ -87,7 +91,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 setup => setup
                     .SetScheme("https")
                     .SetPort(123)
-                    .SetUrlPath("vostok"), false);
+                    .SetUrlPath("vostok"), false)
+                .ReplicaInfo;
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
@@ -104,7 +109,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_build_url_from_port()
         {
-            var info = ReplicaInfoBuilder.Build(setup => setup.SetPort(123), false);
+            var info = ReplicaInfoBuilder.Build(setup => setup.SetPort(123), false).ReplicaInfo;
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
@@ -115,7 +120,7 @@ namespace Vostok.ServiceDiscovery.Tests
         [Test]
         public void Should_build_url_from_default_port()
         {
-            var info = ReplicaInfoBuilder.Build(setup => setup.SetPort(80), false);
+            var info = ReplicaInfoBuilder.Build(setup => setup.SetPort(80), false).ReplicaInfo;
 
             var host = EnvironmentInfo.Host.ToLowerInvariant();
 
@@ -131,8 +136,8 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var host = EnvironmentInfo.Host;
 
-            info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
-            info.Properties[ReplicaInfoKeys.Replica].Should().Be($"{host}({Process.GetCurrentProcess().Id})");
+            info.ReplicaInfo.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
+            info.ReplicaInfo.Properties[ReplicaInfoKeys.Replica].Should().Be($"{host}({Process.GetCurrentProcess().Id})");
         }
 
         [Test]
@@ -145,7 +150,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     builder.SetProperty("key2", "value2");
                 }, false);
 
-            var properties = info.Properties;
+            var properties = info.ReplicaInfo.Properties;
             properties["key1"].Should().Be("value1");
             properties["key2"].Should().Be("value2");
         }
@@ -160,7 +165,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     builder.SetProperty("key", "value2");
                 }, false);
 
-            var properties = info.Properties;
+            var properties = info.ReplicaInfo.Properties;
             properties["key"].Should().Be("value2");
         }
 
@@ -171,8 +176,8 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var host = EnvironmentInfo.Host;
 
-            info.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
-            info.Properties[ReplicaInfoKeys.Replica].Should().Be("value");
+            info.ReplicaInfo.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
+            info.ReplicaInfo.Properties[ReplicaInfoKeys.Replica].Should().Be("value");
         }
     }
 }

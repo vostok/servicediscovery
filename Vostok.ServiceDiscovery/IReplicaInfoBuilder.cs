@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Models;
 
 namespace Vostok.ServiceDiscovery
@@ -102,5 +103,11 @@ namespace Vostok.ServiceDiscovery
         /// </summary>
         [NotNull]
         IReplicaInfoBuilder SetProperty([NotNull] string key, [CanBeNull] string value);
+        
+        /// <summary>
+        /// Sets a custom beacon <paramref name="tags"/>, which can be overwritten only by restarting the beacon.
+        /// </summary>
+        [NotNull]
+        IReplicaInfoBuilder SetTags([CanBeNull] TagCollection tags);
     }
 }

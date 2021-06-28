@@ -1,3 +1,7 @@
+## 0.1.13 (24-06-2021):
+
+Add possibility to register replica tags on ServiceBeacon start.
+
 ## 0.1.12 (12-06-2021):
 
 IReplicaInfoBuilder: allow to override replica identifier.
