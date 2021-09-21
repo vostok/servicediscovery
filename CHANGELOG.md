@@ -1,3 +1,7 @@
+## 0.1.15 (21-09-2021):
+
+Updated `EnvironmentInfo.Application` from `vostok.commons.environment` module.
+
 ## 0.1.14 (28-06-2021):
 
 Add possibility to register replica tags on ServiceBeacon start.
