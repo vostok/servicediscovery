@@ -8,7 +8,7 @@ namespace Vostok.ServiceDiscovery
     [PublicAPI]
     public class EnvironmentInfoSettings
     {
-        [NotNull]
+        [CanBeNull]
         public string ParentEnvironment { get; set; } = "default";
 
         [CanBeNull]
