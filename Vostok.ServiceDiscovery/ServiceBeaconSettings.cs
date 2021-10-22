@@ -31,6 +31,15 @@ namespace Vostok.ServiceDiscovery
 
         public bool UseFQDN { get; set; } = true;
 
-        public bool AddDependenciesToNodeData { get; set; } = false;
+        public bool AddDependenciesToNodeData { get; set; }
+
+        /// <summary>
+        /// If set to <c>true</c> will try to create an environment in case of absence on first attempt of registration.
+        /// Uses <see cref="DefaultEnvironmentSettings"/> as default settings for environment. 
+        /// </summary>
+        public bool CreateEnvironmentIfAbsent { get; set; }
+
+        [NotNull]
+        public EnvironmentInfoSettings DefaultEnvironmentSettings { get; set; } = new EnvironmentInfoSettings();
     }
 }
