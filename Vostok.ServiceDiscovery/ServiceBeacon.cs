@@ -319,9 +319,10 @@ namespace Vostok.ServiceDiscovery
             {
                 if (settings.CreateEnvironmentIfAbsent && !nodeCreatedOnceSignal.IsCurrentlySet())
                 {
-                    var isCreated = !await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.DefaultEnvironmentSettings.ToEnvironmentInfo(environmentNodePath)).ConfigureAwait(false);
+                    log.Info("Environment at path `{Path}` doesn't exist. Trying to create with default settings `{DefaultSettings}`.", environmentNodePath, settings.DefaultEnvironmentSettings);
+                    var isCreated = await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.DefaultEnvironmentSettings.ToEnvironmentInfo(replicaInfo.Environment)).ConfigureAwait(false);
 
-                    if (isCreated)
+                    if (!isCreated)
                     {
                         log.Warn("Node for current environment does not exist and creation attempt failed at path `{Path}`.", environmentNodePath);
                         return false;

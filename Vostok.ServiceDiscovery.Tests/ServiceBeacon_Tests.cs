@@ -676,5 +676,21 @@ namespace Vostok.ServiceDiscovery.Tests
                 }
             }
         }
+
+        [Test]
+        public async Task Should_create_environment_if_absent()
+        {
+            var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
+
+            using (var beacon = GetServiceBeacon(replica, envSettings: new EnvironmentInfoSettings {ParentEnvironment = "zapad"}))
+            {
+                beacon.Start();
+                await beacon.WaitForInitialRegistrationAsync().ConfigureAwait(false);
+                var env = await ServiceDiscoveryManager.GetEnvironmentAsync("absent").ConfigureAwait(false);
+
+                env.Should().NotBe(null);
+                env?.ParentEnvironment.Should().Be("zapad");
+            }
+        }
     }
 }
