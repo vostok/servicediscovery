@@ -163,17 +163,20 @@ namespace Vostok.ServiceDiscovery.Tests
             delete.IsSuccessful.Should().BeTrue();
         }
         
-        protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
-            => GetServiceBeacon(new ServiceBeaconInfo(replica), client, registrationAllowedProvider, addDependenciesToNodeData);
+        protected ServiceBeacon GetServiceBeacon(ReplicaInfo replica, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null, EnvironmentInfoSettings envSettings = null)
+            => GetServiceBeacon(new ServiceBeaconInfo(replica), client, registrationAllowedProvider, addDependenciesToNodeData, envSettings);
 
-        protected ServiceBeacon GetServiceBeacon(ServiceBeaconInfo serviceBeaconInfo, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null)
+        protected ServiceBeacon GetServiceBeacon(ServiceBeaconInfo serviceBeaconInfo, ZooKeeperClient client = null, Func<bool> registrationAllowedProvider = null, bool? addDependenciesToNodeData = null, EnvironmentInfoSettings envSettings = null)
         {
             client = client ?? ZooKeeperClient;
             var settings = new ServiceBeaconSettings
             {
                 IterationPeriod = 60.Seconds(),
                 MinimumTimeBetweenIterations = 100.Milliseconds(),
-                RegistrationAllowedProvider = registrationAllowedProvider
+                RegistrationAllowedProvider = registrationAllowedProvider,
+                CreateEnvironmentIfAbsent = envSettings != null,
+                // ReSharper disable once AssignNullToNotNullAttribute
+                DefaultEnvironmentSettings = envSettings
             };
             if (addDependenciesToNodeData.HasValue)
                 settings.AddDependenciesToNodeData = addDependenciesToNodeData.Value;
