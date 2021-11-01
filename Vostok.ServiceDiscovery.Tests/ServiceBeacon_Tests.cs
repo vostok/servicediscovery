@@ -682,7 +682,7 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
 
-            using (var beacon = GetServiceBeacon(replica, envSettings: new EnvironmentInfoSettings {ParentEnvironment = "zapad"}))
+            using (var beacon = GetServiceBeacon(replica, envSettings: new EnvironmentInfo("absent", "zapad", null)))
             {
                 beacon.Start();
                 await beacon.WaitForInitialRegistrationAsync().ConfigureAwait(false);
