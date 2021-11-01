@@ -40,6 +40,6 @@ namespace Vostok.ServiceDiscovery
         /// Throws exception in case provided <see cref="IEnvironmentInfo.Environment"/> and <see cref="IReplicaInfo.Environment"/> are different.
         /// </summary>
         [CanBeNull]
-        public IEnvironmentInfo DefaultEnvironmentIfAbsent { get; set; }
+        public IEnvironmentInfo CreateEnvironmentIfAbsent { get; set; }
     }
 }

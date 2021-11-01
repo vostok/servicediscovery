@@ -174,7 +174,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 IterationPeriod = 60.Seconds(),
                 MinimumTimeBetweenIterations = 100.Milliseconds(),
                 RegistrationAllowedProvider = registrationAllowedProvider,
-                DefaultEnvironmentIfAbsent = envSettings
+                CreateEnvironmentIfAbsent = envSettings
             };
             if (addDependenciesToNodeData.HasValue)
                 settings.AddDependenciesToNodeData = addDependenciesToNodeData.Value;

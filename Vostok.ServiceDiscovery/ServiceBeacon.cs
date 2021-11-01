@@ -59,8 +59,8 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ILog log)
         {
             this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(zooKeeperClient));
-            if (settings?.DefaultEnvironmentIfAbsent?.Environment != null && serviceBeaconInfo.ReplicaInfo.Environment != settings.DefaultEnvironmentIfAbsent.Environment)
-                throw new ArgumentException($"Provided {nameof(serviceBeaconInfo.ReplicaInfo.Environment)} and {settings.DefaultEnvironmentIfAbsent.Environment} should not differ.");
+            if (settings?.CreateEnvironmentIfAbsent?.Environment != null && serviceBeaconInfo.ReplicaInfo.Environment != settings.CreateEnvironmentIfAbsent.Environment)
+                throw new ArgumentException($"Provided {nameof(serviceBeaconInfo.ReplicaInfo.Environment)} and {settings.CreateEnvironmentIfAbsent.Environment} should not differ.");
 
             replicaInfo = serviceBeaconInfo.ReplicaInfo;
             tags = serviceBeaconInfo.Tags;
@@ -320,10 +320,10 @@ namespace Vostok.ServiceDiscovery
 
             if (!environmentExists.Exists)
             {
-                if (settings.DefaultEnvironmentIfAbsent != null && !nodeCreatedOnceSignal.IsCurrentlySet())
+                if (settings.CreateEnvironmentIfAbsent != null && !nodeCreatedOnceSignal.IsCurrentlySet())
                 {
-                    log.Info("Environment at path `{Path}` doesn't exist. Trying to create with default settings `{DefaultSettings}`.", environmentNodePath, settings.DefaultEnvironmentIfAbsent);
-                    var isCreated = await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.DefaultEnvironmentIfAbsent).ConfigureAwait(false);
+                    log.Info("Environment at path `{Path}` doesn't exist. Trying to create with default settings `{DefaultSettings}`.", environmentNodePath, settings.CreateEnvironmentIfAbsent);
+                    var isCreated = await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.CreateEnvironmentIfAbsent).ConfigureAwait(false);
 
                     if (!isCreated)
                     {
