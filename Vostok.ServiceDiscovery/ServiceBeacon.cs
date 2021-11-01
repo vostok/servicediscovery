@@ -58,7 +58,10 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ServiceBeaconSettings settings,
             [CanBeNull] ILog log)
         {
-            this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
+            this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(zooKeeperClient));
+            if (settings?.DefaultEnvironmentIfAbsent?.Environment != null && serviceBeaconInfo.ReplicaInfo.Environment != settings.DefaultEnvironmentIfAbsent.Environment)
+                throw new ArgumentException($"Provided {nameof(serviceBeaconInfo.ReplicaInfo.Environment)} and {settings.DefaultEnvironmentIfAbsent.Environment} should not differ.");
+
             replicaInfo = serviceBeaconInfo.ReplicaInfo;
             tags = serviceBeaconInfo.Tags;
             this.settings = settings ?? new ServiceBeaconSettings();
@@ -317,10 +320,10 @@ namespace Vostok.ServiceDiscovery
 
             if (!environmentExists.Exists)
             {
-                if (settings.CreateEnvironmentIfAbsent && !nodeCreatedOnceSignal.IsCurrentlySet())
+                if (settings.DefaultEnvironmentIfAbsent != null && !nodeCreatedOnceSignal.IsCurrentlySet())
                 {
-                    log.Info("Environment at path `{Path}` doesn't exist. Trying to create with default settings `{DefaultSettings}`.", environmentNodePath, settings.DefaultEnvironmentSettings);
-                    var isCreated = await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.DefaultEnvironmentSettings.ToEnvironmentInfo(replicaInfo.Environment)).ConfigureAwait(false);
+                    log.Info("Environment at path `{Path}` doesn't exist. Trying to create with default settings `{DefaultSettings}`.", environmentNodePath, settings.DefaultEnvironmentIfAbsent);
+                    var isCreated = await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.DefaultEnvironmentIfAbsent).ConfigureAwait(false);
 
                     if (!isCreated)
                     {

@@ -1,6 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 using Vostok.Commons.Time;
+using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 
 namespace Vostok.ServiceDiscovery
@@ -34,12 +35,11 @@ namespace Vostok.ServiceDiscovery
         public bool AddDependenciesToNodeData { get; set; }
 
         /// <summary>
-        /// If set to <c>true</c> will try to create an environment in case of absence on first attempt of registration.
-        /// Uses <see cref="DefaultEnvironmentSettings"/> as default settings for environment. 
+        /// If not <c>null</c> will try to create an environment in case of absence on first attempt of registration.
+        /// Uses <see cref="IEnvironmentInfo.Properties"/> and <see cref="IEnvironmentInfo.ParentEnvironment"/> as default parameters.
+        /// Throws exception in case provided <see cref="IEnvironmentInfo.Environment"/> and <see cref="IReplicaInfo.Environment"/> are different.
         /// </summary>
-        public bool CreateEnvironmentIfAbsent { get; set; }
-
-        [NotNull]
-        public EnvironmentInfoSettings DefaultEnvironmentSettings { get; set; } = new EnvironmentInfoSettings();
+        [CanBeNull]
+        public IEnvironmentInfo DefaultEnvironmentIfAbsent { get; set; }
     }
 }
