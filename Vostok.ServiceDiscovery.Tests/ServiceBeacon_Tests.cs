@@ -692,5 +692,14 @@ namespace Vostok.ServiceDiscovery.Tests
                 env?.ParentEnvironment.Should().Be("zapad");
             }
         }
+
+        [Test]
+        public async Task Should_throw_when_CreateIfAbsent_environment_is_different()
+        {
+            var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
+
+            Action throws = () => GetServiceBeacon(replica, envSettings: new EnvironmentInfo("different", "zapad", null));
+            throws.Should().Throw<ArgumentException>();
+        }
     }
 }
