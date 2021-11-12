@@ -34,6 +34,7 @@ jobs:
           - os: ubuntu-latest
             framework: net471
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
    
     steps:
       - name: Test
