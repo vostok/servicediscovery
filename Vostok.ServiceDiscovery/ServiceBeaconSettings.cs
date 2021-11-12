@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Vostok.Commons.Time;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Telemetry.EventSender;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -32,5 +33,8 @@ namespace Vostok.ServiceDiscovery
         public bool UseFQDN { get; set; } = true;
 
         public bool AddDependenciesToNodeData { get; set; } = false;
+
+        [NotNull]
+        public IServiceDiscoveryEventSender ServiceDiscoveryEventSender { get; set; } = new DevNullServiceDiscoveryEventSender();
     }
 }
