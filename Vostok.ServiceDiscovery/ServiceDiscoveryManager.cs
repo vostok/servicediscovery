@@ -18,8 +18,9 @@ namespace Vostok.ServiceDiscovery
     {
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryManagerSettings settings;
-        private readonly ILog log;
         private readonly ServiceDiscoveryPathHelper pathHelper;
+        private readonly ServiceDiscoveryEventSenderHelper eventSenderHelper;
+        private readonly ILog log;
 
         public ServiceDiscoveryManager(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -31,6 +32,7 @@ namespace Vostok.ServiceDiscovery
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceDiscoveryManager>();
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
+            eventSenderHelper = new ServiceDiscoveryEventSenderHelper(this.settings.ServiceDiscoveryEventSender);
         }
 
         public async Task<IReadOnlyList<string>> GetAllEnvironmentsAsync()
@@ -183,8 +185,10 @@ namespace Vostok.ServiceDiscovery
             {
                 Attempts = settings.ZooKeeperNodeUpdateAttempts
             };
-
-            return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
+            var success = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
+            if (success)
+                eventSenderHelper.TrySendFromContext(description => description.SetEnvironment(environment).SetApplication(application));
+            return success;
         }
 
         public async Task<bool> TryCreatePermanentReplicaAsync(IReplicaInfo replica)
