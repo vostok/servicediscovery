@@ -14,6 +14,9 @@ using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
+using Vostok.ServiceDiscovery.Telemetry;
+using Vostok.ServiceDiscovery.Telemetry.Event;
+using Vostok.ServiceDiscovery.Telemetry.EventSender;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -238,7 +241,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Stop();
 
                 Ensemble.Start();
-                
+
                 WaitReplicaRegistered(replica, false);
                 WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica);
             }
@@ -377,7 +380,7 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
-            var newTags = new TagCollection{"tag2", "tag3"};
+            var newTags = new TagCollection {"tag2", "tag3"};
             CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(serviceBeaconInfo))
@@ -675,6 +678,38 @@ namespace Vostok.ServiceDiscovery.Tests
                     registrationAllowed = !registrationAllowed;
                 }
             }
+        }
+
+        [Test]
+        public void Should_send_beacon_events()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var dependencies = new Dictionary<string, string> {{ServiceDiscoveryEventKeys.Dependencies, "lalala"}};
+            replica.SetProperty(ReplicaInfoKeys.Dependencies, dependencies[ServiceDiscoveryEventKeys.Dependencies]);
+
+            var receivedEvents = new List<ServiceDiscoveryEvent>();
+            var expectedEvents = new List<ServiceDiscoveryEvent>
+            {
+                new ServiceDiscoveryEvent(replica.Application, replica.Replica, replica.Environment, ServiceDiscoveryEventKind.ReplicaStart, DateTimeOffset.UtcNow, dependencies),
+                new ServiceDiscoveryEvent(replica.Application, replica.Replica, replica.Environment, ServiceDiscoveryEventKind.ReplicaStop, DateTimeOffset.UtcNow, new Dictionary<string, string>())
+            };
+            var sender = Substitute.For<IServiceDiscoveryEventSender>();
+            sender.Send(Arg.Do<ServiceDiscoveryEvent>(serviceDiscoveryEvent => receivedEvents.Add(serviceDiscoveryEvent)));
+            var settings = new ServiceBeaconSettings {ServiceDiscoveryEventSender = sender, AddDependenciesToNodeData = true};
+
+            CreateEnvironmentNode(replica.Environment);
+            using (var client = GetZooKeeperClient())
+            using (var beacon = new ServiceBeacon(client, new ServiceBeaconInfo(replica), settings, Log))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+
+                ReplicaRegistered(replica).Should().BeTrue();
+                beacon.Stop();
+                ReplicaRegistered(replica).Should().BeFalse();
+            }
+
+            receivedEvents.Should().BeEquivalentTo(expectedEvents, options => options.Excluding(serviceDiscoveryEvent => serviceDiscoveryEvent.Timestamp));
         }
     }
 }
