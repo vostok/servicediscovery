@@ -58,7 +58,10 @@ namespace Vostok.ServiceDiscovery
             [CanBeNull] ServiceBeaconSettings settings,
             [CanBeNull] ILog log)
         {
-            this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(settings));
+            this.zooKeeperClient = zooKeeperClient ?? throw new ArgumentNullException(nameof(zooKeeperClient));
+            if (settings?.CreateEnvironmentIfAbsent?.Environment != null && serviceBeaconInfo.ReplicaInfo.Environment != settings.CreateEnvironmentIfAbsent.Environment)
+                throw new ArgumentException($"Provided {nameof(serviceBeaconInfo.ReplicaInfo.Environment)} and {settings.CreateEnvironmentIfAbsent.Environment} should not differ.");
+
             replicaInfo = serviceBeaconInfo.ReplicaInfo;
             tags = serviceBeaconInfo.Tags;
             this.settings = settings ?? new ServiceBeaconSettings();
@@ -317,8 +320,22 @@ namespace Vostok.ServiceDiscovery
 
             if (!environmentExists.Exists)
             {
-                log.Warn("Node for current environment does not exist at path '{Path}'.", environmentNodePath);
-                return false;
+                if (settings.CreateEnvironmentIfAbsent != null && !nodeCreatedOnceSignal.IsCurrentlySet())
+                {
+                    log.Info("Environment at path `{Path}` doesn't exist. Trying to create with default settings `{DefaultSettings}`.", environmentNodePath, settings.CreateEnvironmentIfAbsent);
+                    var isCreated = await serviceDiscoveryManager.TryCreateEnvironmentAsync(settings.CreateEnvironmentIfAbsent).ConfigureAwait(false);
+
+                    if (!isCreated)
+                    {
+                        log.Warn("Node for current environment does not exist and creation attempt failed at path `{Path}`.", environmentNodePath);
+                        return false;
+                    }
+                }
+                else
+                {
+                    log.Warn("Node for current environment does not exist at path '{Path}'.", environmentNodePath);
+                    return false;    
+                }
             }
 
             return true;
