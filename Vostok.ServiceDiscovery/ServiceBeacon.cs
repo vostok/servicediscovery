@@ -14,6 +14,7 @@ using Vostok.ServiceDiscovery.Serializers;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
+using Vostok.ZooKeeper.Client.Abstractions.Model.Result;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -286,27 +287,43 @@ namespace Vostok.ServiceDiscovery
                 if (!await DeleteNodeAsync().ConfigureAwait(false))
                     return;
             }
-
-            var createRequest = new CreateRequest(replicaNodePath, CreateMode.Ephemeral)
-            {
-                Data = replicaNodeData
-            };
-
-            var create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
-
-            if (create.IsSuccessful)
+            
+            if (await TryCreateReplicaNode().ConfigureAwait(false))
             {
                 nodeCreatedOnceSignal.Set();
                 await TrySetTagsInNeeded().ConfigureAwait(false);
             }
 
-            if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)
-            {
-                log.Error("Node creation has failed.");
-                return;
-            }
-            
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
+        }
+
+        // NOTE (tsup): We do not use recurrent node creation because we want to avoid race with explicit environment deletion.
+        private async Task<bool> TryCreateReplicaNode()
+        {
+            var createApplicationRequest = new CreateRequest(applicationNodePath, CreateMode.Persistent)
+            {
+                CreateParentsIfNeeded = false
+            };
+            var createReplicaNodeRequest = new CreateRequest(replicaNodePath, CreateMode.Ephemeral)
+            {
+                CreateParentsIfNeeded = false,
+                Data = replicaNodeData
+            };
+
+            CreateResult create = null;
+
+            foreach (var createRequest in new [] {createApplicationRequest, createReplicaNodeRequest})
+            {
+                create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
+
+                if (!create.IsSuccessful && create.Status != ZooKeeperStatus.NodeAlreadyExists)
+                {
+                    log.Error("Node creation has failed.");
+                    return false;
+                }
+            }
+
+            return create?.IsSuccessful ?? false;
         }
 
         private async Task<bool> EnvironmentExistsAsync()
