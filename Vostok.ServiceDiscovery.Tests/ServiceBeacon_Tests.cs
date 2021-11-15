@@ -241,7 +241,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Stop();
 
                 Ensemble.Start();
-
+                
                 WaitReplicaRegistered(replica, false);
                 WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica);
             }
@@ -380,7 +380,7 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
-            var newTags = new TagCollection {"tag2", "tag3"};
+            var newTags = new TagCollection{"tag2", "tag3"};
             CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(serviceBeaconInfo))
@@ -678,6 +678,31 @@ namespace Vostok.ServiceDiscovery.Tests
                     registrationAllowed = !registrationAllowed;
                 }
             }
+        }
+
+        [Test]
+        public async Task Should_create_environment_if_absent()
+        {
+            var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
+
+            using (var beacon = GetServiceBeacon(replica, envSettings: new EnvironmentInfo("absent", "zapad", null)))
+            {
+                beacon.Start();
+                await beacon.WaitForInitialRegistrationAsync().ConfigureAwait(false);
+                var env = await ServiceDiscoveryManager.GetEnvironmentAsync("absent").ConfigureAwait(false);
+
+                env.Should().NotBe(null);
+                env?.ParentEnvironment.Should().Be("zapad");
+            }
+        }
+
+        [Test]
+        public async Task Should_throw_when_CreateIfAbsent_environment_is_different()
+        {
+            var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
+
+            Action throws = () => GetServiceBeacon(replica, envSettings: new EnvironmentInfo("different", "zapad", null));
+            throws.Should().Throw<ArgumentException>();
         }
 
         [Test]
