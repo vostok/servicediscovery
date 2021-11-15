@@ -1,3 +1,8 @@
+## 0.1.16 (12-11-2021):
+
+Fixed bug with 'resurrecting' environment on explicit environment deletion.
+Added option to create environment on beacon start if absent.
+
 ## 0.1.15 (21-09-2021):
 
 Updated `EnvironmentInfo.Application` from `vostok.commons.environment` module.
