@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Telemetry.EventSender;
+using Vostok.ServiceDiscovery.ServiceDiscoveryTelemetry;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -15,8 +15,8 @@ namespace Vostok.ServiceDiscovery
         public IZooKeeperPathEscaper ZooKeeperNodesPathEscaper { get; set; } = ZooKeeperPathEscaper.Instance;
 
         public int ZooKeeperNodeUpdateAttempts { get; set; } = 5;
-        
+
         [NotNull]
-        public IServiceDiscoveryEventSender ServiceDiscoveryEventSender { get; set; } = new DevNullServiceDiscoveryEventSender();
+        public ServiceDiscoveryManagerTelemetrySettings ManagerTelemetrySettings { get; set; } = new ServiceDiscoveryManagerTelemetrySettings();
     }
 }

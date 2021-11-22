@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using Vostok.Commons.Time;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.Telemetry.EventSender;
+using Vostok.ServiceDiscovery.ServiceDiscoveryTelemetry;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -44,6 +44,6 @@ namespace Vostok.ServiceDiscovery
         public IEnvironmentInfo CreateEnvironmentIfAbsent { get; set; }
 
         [NotNull]
-        public IServiceDiscoveryEventSender ServiceDiscoveryEventSender { get; set; } = new DevNullServiceDiscoveryEventSender();
+        public ServiceBeaconTelemetrySettings BeaconTelemetrySettings { get; set; } = new ServiceBeaconTelemetrySettings();
     }
 }
