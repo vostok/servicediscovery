@@ -280,7 +280,7 @@ namespace Vostok.ServiceDiscovery
                 if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
                     nodeCreatedOnceSignal.Set();
-                    await setTagsAction.Invoke();
+                    await setTagsAction.Invoke().ConfigureAwait(false);
                     return;
                 }
 
