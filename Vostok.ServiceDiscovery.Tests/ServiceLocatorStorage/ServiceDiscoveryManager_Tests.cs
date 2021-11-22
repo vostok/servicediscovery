@@ -6,6 +6,7 @@ using NSubstitute;
 using NUnit.Framework;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
+using Vostok.ServiceDiscovery.ServiceDiscoveryTelemetry;
 using Vostok.ServiceDiscovery.Telemetry;
 using Vostok.ServiceDiscovery.Telemetry.Event;
 using Vostok.ServiceDiscovery.Telemetry.EventSender;
@@ -558,10 +559,10 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             ServiceDiscoveryEvent received = null;
             sender.Send(Arg.Do<ServiceDiscoveryEvent>(serviceDiscoveryEvent => received = serviceDiscoveryEvent));
 
-            var setting = new ServiceDiscoveryManagerSettings {ServiceDiscoveryEventSender = sender};
+            var setting = new ServiceDiscoveryManagerSettings {ManagerTelemetrySettings = new ServiceDiscoveryManagerTelemetrySettings {ServiceDiscoveryEventSender = sender}};
             var serviceDiscoveryManager = new ServiceDiscoveryManager(client, setting, Log);
-            var expected = new ServiceDiscoveryEvent(application, replica, environment, ServiceDiscoveryEventKind.RemoveFromBlackList, DateTimeOffset.UtcNow, new Dictionary<string, string>());
-            ServiceDiscoveryEventDescriptionContext.GetOrCreate().SetEventKind(ServiceDiscoveryEventKind.RemoveFromBlackList).AddReplicas(replica);
+            var expected = new ServiceDiscoveryEvent(ServiceDiscoveryEventKind.RemoveFromBlackList, application, replica, environment, DateTimeOffset.UtcNow, new Dictionary<string, string>());
+            ServiceDiscoveryEventDescriptionContext.Create().SetEventKind(ServiceDiscoveryEventKind.RemoveFromBlackList).AddReplicas(replica);
 
             serviceDiscoveryManager.TryUpdateApplicationPropertiesAsync(environment, application, properties => properties.Set("updatedKey", "updatedValue"))
                 .GetAwaiter()
