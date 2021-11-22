@@ -7,6 +7,7 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
+using Vostok.ServiceDiscovery.Telemetry.Extensions;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -19,7 +20,6 @@ namespace Vostok.ServiceDiscovery
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryManagerSettings settings;
         private readonly ServiceDiscoveryPathHelper pathHelper;
-        private readonly ServiceDiscoveryEventSenderHelper eventSenderHelper;
         private readonly ILog log;
 
         public ServiceDiscoveryManager(
@@ -32,7 +32,6 @@ namespace Vostok.ServiceDiscovery
             this.log = (log ?? LogProvider.Get()).ForContext<ServiceDiscoveryManager>();
 
             pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
-            eventSenderHelper = new ServiceDiscoveryEventSenderHelper(this.settings.ServiceDiscoveryEventSender);
         }
 
         public async Task<IReadOnlyList<string>> GetAllEnvironmentsAsync()
@@ -187,7 +186,8 @@ namespace Vostok.ServiceDiscovery
             };
             var success = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
             if (success)
-                eventSenderHelper.TrySendFromContext(description => description.SetEnvironment(environment).SetApplication(application));
+                settings.ManagerTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(
+                    description => description.SetEnvironment(environment).SetApplication(application));
             return success;
         }
 
