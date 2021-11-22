@@ -11,8 +11,8 @@ using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
+using Vostok.ServiceDiscovery.Telemetry;
 using Vostok.ServiceDiscovery.Telemetry.Event;
-using Vostok.ServiceDiscovery.Telemetry.EventDescription;
 using Vostok.ServiceDiscovery.Telemetry.Extensions;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
@@ -38,20 +38,23 @@ namespace Vostok.ServiceDiscovery
         private readonly ServiceBeaconSettings settings;
         private readonly ServiceDiscoveryManager serviceDiscoveryManager;
 
-        private readonly ServiceDiscoveryEventSenderHelper eventSenderHelper;
-
         private readonly ILog log;
 
         private readonly object startStopSync = new object();
         private readonly AtomicBoolean isRunning = false;
         private readonly AtomicBoolean clientDisposed = false;
         private readonly AtomicBoolean registrationAllowed = true;
-        private readonly AtomicBoolean tagsCreated = false;
         private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile CancellationTokenSource stopCancellationToken;
+
+        private readonly ResetCallAction sendStartEventAction;
+        private readonly ResetCallAction sendStopEventAction;
+        private readonly ResetCallAction setTagsAction;
+
+        private readonly IDisposable eventDescriptionScope;
 
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -82,7 +85,6 @@ namespace Vostok.ServiceDiscovery
                 ZooKeeperNodesPathEscaper = this.settings.ZooKeeperNodesPathEscaper
             };
             serviceDiscoveryManager = new ServiceDiscoveryManager(zooKeeperClient, sdManagerSettings, log);
-            eventSenderHelper = new ServiceDiscoveryEventSenderHelper(this.settings.ServiceDiscoveryEventSender);
             var pathHelper = new ServiceDiscoveryPathHelper(this.settings.ZooKeeperNodesPrefix, this.settings.ZooKeeperNodesPathEscaper);
             environmentNodePath = pathHelper.BuildEnvironmentPath(replicaInfo.Environment);
             applicationNodePath = pathHelper.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
@@ -90,6 +92,17 @@ namespace Vostok.ServiceDiscovery
             replicaNodeData = ReplicaNodeDataSerializer.Serialize(replicaInfo, FilterReplicaInfoProperties);
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
+
+            sendStartEventAction = new ResetCallAction(() => this.settings.BeaconTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(
+                description => description.SetEventKind(ServiceDiscoveryEventKind.ReplicaStart).SetDependencies(replicaInfo.Properties[ReplicaInfoKeys.Dependencies])));
+            sendStopEventAction = new ResetCallAction(() => this.settings.BeaconTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(
+                description => description.SetEventKind(ServiceDiscoveryEventKind.ReplicaStop)));
+            setTagsAction = new ResetCallAction(() => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags));
+
+            eventDescriptionScope = ServiceDiscoveryEventDescriptionContext.Create()
+                .SetApplication(replicaInfo.Application)
+                .SetEnvironment(replicaInfo.Environment)
+                .AddReplicas(replicaInfo.Replica);
         }
 
         public IReplicaInfo ReplicaInfo => replicaInfo;
@@ -125,8 +138,9 @@ namespace Vostok.ServiceDiscovery
                     {
                         Task.Run(DeleteNodeTask);
                     }
+
                     RemoveTagsIfNeed().GetAwaiter().GetResult();
-                    eventSenderHelper.Send(description => SetupDescription(description).SetEventKind(ServiceDiscoveryEventKind.ReplicaStop));
+                    sendStopEventAction.Invoke().GetAwaiter().GetResult();
                 }
             }
         }
@@ -137,6 +151,7 @@ namespace Vostok.ServiceDiscovery
         public void Dispose()
         {
             Stop();
+            eventDescriptionScope?.Dispose();
         }
 
         /// <summary>
@@ -250,8 +265,13 @@ namespace Vostok.ServiceDiscovery
 
             if (!registrationAllowed)
             {
-                if (existsNode.Stat != null)
-                    await DeleteNodeAsync().ConfigureAwait(false);
+                if (existsNode.Stat != null && await DeleteNodeAsync().ConfigureAwait(false))
+                {
+                    sendStartEventAction.Reset();
+                    using (ServiceDiscoveryEventDescriptionContext.Continue().SetDescription("Registration has been denied by RegistrationAllowedProvider"))
+                        await sendStopEventAction.Reset().Invoke().ConfigureAwait(false);
+                }
+
                 return;
             }
 
@@ -260,7 +280,7 @@ namespace Vostok.ServiceDiscovery
                 if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
                     nodeCreatedOnceSignal.Set();
-                    await TrySetTagsInNeeded().ConfigureAwait(false);
+                    await setTagsAction.Invoke();
                     return;
                 }
 
@@ -297,15 +317,12 @@ namespace Vostok.ServiceDiscovery
                 if (!await DeleteNodeAsync().ConfigureAwait(false))
                     return;
             }
-            
+
             if (await TryCreateReplicaNode().ConfigureAwait(false))
             {
                 nodeCreatedOnceSignal.Set();
-                eventSenderHelper.Send(description =>
-                    SetupDescription(description)
-                        .SetEventKind(ServiceDiscoveryEventKind.ReplicaStart)
-                        .SetDependencies(replicaInfo.Properties[ReplicaInfoKeys.Dependencies]));
-                await TrySetTagsInNeeded().ConfigureAwait(false);
+                await sendStartEventAction.Invoke().ConfigureAwait(false);
+                await setTagsAction.Invoke().ConfigureAwait(false);
             }
 
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
@@ -326,7 +343,7 @@ namespace Vostok.ServiceDiscovery
 
             CreateResult create = null;
 
-            foreach (var createRequest in new [] {createApplicationRequest, createReplicaNodeRequest})
+            foreach (var createRequest in new[] {createApplicationRequest, createReplicaNodeRequest})
             {
                 create = await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false);
 
@@ -365,7 +382,7 @@ namespace Vostok.ServiceDiscovery
                 else
                 {
                     log.Warn("Node for current environment does not exist at path '{Path}'.", environmentNodePath);
-                    return false;    
+                    return false;
                 }
             }
 
@@ -378,27 +395,11 @@ namespace Vostok.ServiceDiscovery
             return deleteResult.IsSuccessful;
         }
 
-        private async Task TrySetTagsInNeeded()
-        {
-            if (tagsCreated)
-                return;
-            if (await SetTags().ConfigureAwait(false))
-                tagsCreated.TrySetTrue();
-        }
-
         private async Task RemoveTagsIfNeed()
         {
             if (tags == null || tags.Count == 0)
                 return;
             await serviceDiscoveryManager.ClearReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
-        }
-
-        private Task<bool> SetTags()
-            => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
-        
-        private ServiceDiscoveryEventDescription SetupDescription(ServiceDiscoveryEventDescription description)
-        {
-            return description.SetApplication(replicaInfo.Application).SetEnvironment(replicaInfo.Environment).AddReplicas(replicaInfo.Replica);
         }
     }
 }
