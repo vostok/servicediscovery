@@ -267,9 +267,10 @@ namespace Vostok.ServiceDiscovery
             {
                 if (existsNode.Stat != null && await DeleteNodeAsync().ConfigureAwait(false))
                 {
-                    sendStartEventAction.Reset();
                     using (ServiceDiscoveryEventDescriptionContext.Continue().SetDescription("Registration has been denied by RegistrationAllowedProvider"))
                         await sendStopEventAction.Reset().Invoke().ConfigureAwait(false);
+                    sendStartEventAction.Reset();
+                    sendStopEventAction.Reset();
                 }
 
                 return;
