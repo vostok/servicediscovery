@@ -44,16 +44,15 @@ namespace Vostok.ServiceDiscovery
         private readonly AtomicBoolean isRunning = false;
         private readonly AtomicBoolean clientDisposed = false;
         private readonly AtomicBoolean registrationAllowed = true;
+        private readonly AtomicBoolean tagsCreated = false;
         private readonly AsyncManualResetEvent nodeCreatedOnceSignal = new AsyncManualResetEvent(false);
         private readonly AsyncManualResetEvent checkNodeSignal = new AsyncManualResetEvent(true);
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile CancellationTokenSource stopCancellationToken;
 
-        private readonly ResetCallAction sendStartEventAction;
-        private readonly ResetCallAction sendStopEventAction;
-        private readonly ResetCallAction setTagsAction;
-
+        private readonly AtomicBoolean stopEventSent = false;
+        private readonly AtomicBoolean registrationAllowedChanged;
         private readonly IDisposable eventDescriptionScope;
 
         public ServiceBeacon(
@@ -93,12 +92,7 @@ namespace Vostok.ServiceDiscovery
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
 
-            sendStartEventAction = new ResetCallAction(() => this.settings.BeaconTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(
-                description => description.SetEventKind(ServiceDiscoveryEventKind.ReplicaStart).SetDependencies(replicaInfo.Properties[ReplicaInfoKeys.Dependencies])));
-            sendStopEventAction = new ResetCallAction(() => this.settings.BeaconTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(
-                description => description.SetEventKind(ServiceDiscoveryEventKind.ReplicaStop)));
-            setTagsAction = new ResetCallAction(() => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags));
-
+            registrationAllowedChanged = registrationAllowed.Value;
             eventDescriptionScope = ServiceDiscoveryEventDescriptionContext.Create()
                 .SetApplication(replicaInfo.Application)
                 .SetEnvironment(replicaInfo.Environment)
@@ -140,7 +134,7 @@ namespace Vostok.ServiceDiscovery
                     }
 
                     RemoveTagsIfNeed().GetAwaiter().GetResult();
-                    sendStopEventAction.Invoke().GetAwaiter().GetResult();
+                    SendStopEventIfNeeded();
                 }
             }
         }
@@ -266,13 +260,8 @@ namespace Vostok.ServiceDiscovery
             if (!registrationAllowed)
             {
                 if (existsNode.Stat != null && await DeleteNodeAsync().ConfigureAwait(false))
-                {
                     using (ServiceDiscoveryEventDescriptionContext.Continue().SetDescription("Registration has been denied by RegistrationAllowedProvider"))
-                        await sendStopEventAction.Reset().Invoke().ConfigureAwait(false);
-                    sendStartEventAction.Reset();
-                    sendStopEventAction.Reset();
-                }
-
+                        SendStopEventIfNeeded();
                 return;
             }
 
@@ -281,7 +270,7 @@ namespace Vostok.ServiceDiscovery
                 if (existsNode.Stat.EphemeralOwner == zooKeeperClient.SessionId)
                 {
                     nodeCreatedOnceSignal.Set();
-                    await setTagsAction.Invoke().ConfigureAwait(false);
+                    await TrySetTagsInNeeded().ConfigureAwait(false);
                     return;
                 }
 
@@ -321,9 +310,9 @@ namespace Vostok.ServiceDiscovery
 
             if (await TryCreateReplicaNode().ConfigureAwait(false))
             {
+                SendStartEventIfNeeded();
                 nodeCreatedOnceSignal.Set();
-                await sendStartEventAction.Invoke().ConfigureAwait(false);
-                await setTagsAction.Invoke().ConfigureAwait(false);
+                await TrySetTagsInNeeded().ConfigureAwait(false);
             }
 
             await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
@@ -396,11 +385,48 @@ namespace Vostok.ServiceDiscovery
             return deleteResult.IsSuccessful;
         }
 
+        private async Task TrySetTagsInNeeded()
+        {
+            if (tagsCreated)
+                return;
+            if (await SetTags().ConfigureAwait(false))
+                tagsCreated.TrySetTrue();
+        }
+
         private async Task RemoveTagsIfNeed()
         {
             if (tags == null || tags.Count == 0)
                 return;
             await serviceDiscoveryManager.ClearReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica).ConfigureAwait(false);
         }
+
+        private Task<bool> SetTags()
+            => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
+
+        #region EventSending
+
+        private void SendStartEventIfNeeded()
+        {
+            if (nodeCreatedOnceSignal.IsCurrentlySet() && !registrationAllowedChanged.TrySet(registrationAllowed))
+                return;
+
+            settings.BeaconTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(description => description
+                .SetEventKind(ServiceDiscoveryEventKind.ReplicaStart)
+                .SetDependencies(replicaInfo.Properties[ReplicaInfoKeys.Dependencies]));
+            // NOTE (shumilin): For each sending start event, we must allow sending the stop event.
+            stopEventSent.TrySetFalse();
+        }
+
+        private void SendStopEventIfNeeded()
+        {
+            if (stopEventSent)
+                return;
+
+            settings.BeaconTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(description =>
+                description.SetEventKind(ServiceDiscoveryEventKind.ReplicaStop));
+            stopEventSent.TrySetTrue();
+        }
+
+        #endregion
     }
 }
