@@ -400,6 +400,7 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
+        [Platform("Win", Reason = "Doesn't work on Unix systems because https://github.com/shayhatsor/zookeeper/issues/45 and notifications are delayed.")]
         public void Should_create_node_immediately_after_session_expire()
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
