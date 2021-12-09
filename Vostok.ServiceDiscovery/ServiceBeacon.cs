@@ -31,6 +31,7 @@ namespace Vostok.ServiceDiscovery
         private readonly string environmentNodePath;
         private readonly string applicationNodePath;
         private readonly string replicaNodePath;
+        private readonly string dependencies;
         private readonly byte[] replicaNodeData;
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly AdHocNodeWatcher nodeWatcher;
@@ -88,6 +89,7 @@ namespace Vostok.ServiceDiscovery
             environmentNodePath = pathHelper.BuildEnvironmentPath(replicaInfo.Environment);
             applicationNodePath = pathHelper.BuildApplicationPath(replicaInfo.Environment, replicaInfo.Application);
             replicaNodePath = pathHelper.BuildReplicaPath(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica);
+            dependencies = replicaInfo.Properties.TryGetValue(ReplicaInfoKeys.Dependencies, out var deps) ? deps : string.Empty;
             replicaNodeData = ReplicaNodeDataSerializer.Serialize(replicaInfo, FilterReplicaInfoProperties);
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
@@ -413,7 +415,7 @@ namespace Vostok.ServiceDiscovery
                 .SetKind(ServiceDiscoveryEventKind.ReplicaStarted)))
             {
                 if (!nodeCreatedOnceSignal.IsCurrentlySet())
-                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Start registration in service discovery").SetDependencies(replicaInfo.Properties[ReplicaInfoKeys.Dependencies]));
+                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Start registration in service discovery").SetDependencies(dependencies));
                 else if (registrationAllowedChanged)
                     settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Registration has been allowed by RegistrationAllowedProvider."));
             }
