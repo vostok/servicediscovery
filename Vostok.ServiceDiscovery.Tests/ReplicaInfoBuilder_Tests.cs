@@ -41,7 +41,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             properties[ReplicaInfoKeys.CommitHash].Should().BeNull();
             properties[ReplicaInfoKeys.ReleaseDate].Should().BeNull();
-            properties[ReplicaInfoKeys.Dependencies].Should().BeNullOrEmpty();
+            properties[ReplicaInfoKeys.Dependencies].Should().NotBeNull();
         }
 
         [Test]

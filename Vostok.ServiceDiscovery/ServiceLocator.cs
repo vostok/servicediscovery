@@ -146,7 +146,7 @@ namespace Vostok.ServiceDiscovery
                 log.Error(exception, "Failed cache update iteration.");
             }
 
-            await updateCacheSignal.WaitAsync().WaitAsync(settings.IterationPeriod).ConfigureAwait(false);
+            await updateCacheSignal.WaitAsync().TryWaitAsync(settings.IterationPeriod).ConfigureAwait(false);
             updateCacheSignal.Reset();
         }
 

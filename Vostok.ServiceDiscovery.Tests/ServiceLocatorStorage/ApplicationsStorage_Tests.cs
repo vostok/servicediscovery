@@ -195,6 +195,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         }
 
         [Test]
+        [Platform("Win", Reason = "Doesn't work on Unix systems because https://github.com/shayhatsor/zookeeper/issues/45 and notifications are delayed.")]
         public void UpdateAll_should_force_update()
         {
             CreateEnvironmentNode("default");
