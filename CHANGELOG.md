@@ -1,3 +1,7 @@
+## 0.1.18 (06-12-2021):
+
+Added `net6.0` target.
+
 ## 0.1.16 (12-11-2021):
 
 Fixed bug with 'resurrecting' environment on explicit environment deletion.

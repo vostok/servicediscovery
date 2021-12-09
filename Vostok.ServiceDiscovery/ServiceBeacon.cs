@@ -198,7 +198,7 @@ namespace Vostok.ServiceDiscovery
             var waitTimeout = nodeCreatedOnceSignal.IsCurrentlySet()
                 ? settings.IterationPeriod
                 : settings.InitialRegistrationIterationPeriod;
-            await checkNodeSignal.WaitAsync().WaitAsync(waitTimeout).ConfigureAwait(false);
+            await checkNodeSignal.WaitAsync().TryWaitAsync(waitTimeout).ConfigureAwait(false);
             checkNodeSignal.Reset();
         }
 
