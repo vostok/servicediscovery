@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Vostok.ServiceDiscovery.Helpers;
-using Vostok.ServiceDiscovery.ServiceDiscoveryTelemetry;
+using Vostok.ServiceDiscovery.Telemetry;
+using Vostok.ServiceDiscovery.Telemetry.Event;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -16,7 +17,14 @@ namespace Vostok.ServiceDiscovery
 
         public int ZooKeeperNodeUpdateAttempts { get; set; } = 5;
 
+        /// <summary>
+        /// <see cref="IServiceDiscoveryEventsContext">Context</see> for sending events at:
+        /// <list type="bullet">
+        /// <item>Add replica to black list (<see cref="ServiceDiscoveryEventKind.ReplicaAddedToBlackList"/>)</item>
+        /// <item>Remove replica from black list (<see cref="ServiceDiscoveryEventKind.ReplicaRemovedFromBlacklist"/>)</item>
+        /// </list>
+        /// </summary>
         [NotNull]
-        public ServiceDiscoveryManagerTelemetrySettings ManagerTelemetrySettings { get; set; } = new ServiceDiscoveryManagerTelemetrySettings();
+        public IServiceDiscoveryEventsContext ServiceDiscoveryEventContext { get; set; } = new DevNullServiceDiscoveryEventsContext();
     }
 }
