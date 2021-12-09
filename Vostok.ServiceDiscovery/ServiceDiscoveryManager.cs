@@ -7,7 +7,6 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
-using Vostok.ServiceDiscovery.Telemetry.Extensions;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -184,11 +183,11 @@ namespace Vostok.ServiceDiscovery
             {
                 Attempts = settings.ZooKeeperNodeUpdateAttempts
             };
-            var success = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
-            if (success)
-                settings.ManagerTelemetrySettings.ServiceDiscoveryEventSender.TrySendFromContext(
-                    description => description.SetEnvironment(environment).SetApplication(application));
-            return success;
+            var isSuccessful = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetEnvironment(environment).SetApplication(application));
+
+            return isSuccessful;
         }
 
         public async Task<bool> TryCreatePermanentReplicaAsync(IReplicaInfo replica)
