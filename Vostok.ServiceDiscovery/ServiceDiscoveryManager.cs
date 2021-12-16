@@ -199,7 +199,12 @@ namespace Vostok.ServiceDiscovery
                 Data = ReplicaNodeDataSerializer.Serialize(replica)
             };
 
-            return (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
+            var isSuccessful = (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                settings.ServiceDiscoveryEventContext.SendFromContext(builder =>
+                    builder.SetEnvironment(replica.Environment).SetApplication(replica.Application).AddReplicas(replica.Replica));
+
+            return isSuccessful;
         }
 
         public async Task<bool> TryDeletePermanentReplicaAsync(string environment, string application, string replica)
@@ -223,9 +228,12 @@ namespace Vostok.ServiceDiscovery
                 Version = existsResult.Stat.Version
             };
 
-            var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
+            var isSuccessful = (await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                settings.ServiceDiscoveryEventContext.SendFromContext(builder =>
+                    builder.SetEnvironment(environment).SetApplication(application).AddReplicas(replica));
 
-            return deleteResult.IsSuccessful;
+            return isSuccessful;
         }
     }
 }
