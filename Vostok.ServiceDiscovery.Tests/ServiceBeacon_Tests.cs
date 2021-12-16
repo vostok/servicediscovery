@@ -698,7 +698,7 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public async Task Should_throw_when_CreateIfAbsent_environment_is_different()
+        public void Should_throw_when_CreateIfAbsent_environment_is_different()
         {
             var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
 
