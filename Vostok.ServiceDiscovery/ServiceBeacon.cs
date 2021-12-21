@@ -134,7 +134,7 @@ namespace Vostok.ServiceDiscovery
                     }
 
                     RemoveTagsIfNeed().GetAwaiter().GetResult();
-                    using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Stop registration in service discovery")))
+                    using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because Service Beacon stopped.")))
                         SendStopEventIfNeeded();
                 }
             }
@@ -224,6 +224,8 @@ namespace Vostok.ServiceDiscovery
 
             if (isRunning.TrySetFalse())
             {
+                using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because Service Beacon zookeeper client disposed.")))
+                    SendStopEventIfNeeded();
                 checkNodeSignal.Set();
                 // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
             }
@@ -264,7 +266,7 @@ namespace Vostok.ServiceDiscovery
             if (!registrationAllowed)
             {
                 if (existsNode.Stat != null && await DeleteNodeAsync().ConfigureAwait(false))
-                    using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Registration has been denied by RegistrationAllowedProvider.")))
+                    using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because registration has been denied by beacon RegistrationAllowedProvider.")))
                         SendStopEventIfNeeded();
                 return;
             }
@@ -415,9 +417,9 @@ namespace Vostok.ServiceDiscovery
                 .SetKind(ServiceDiscoveryEventKind.ReplicaStarted)))
             {
                 if (!nodeCreatedOnceSignal.IsCurrentlySet())
-                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Start registration in service discovery").SetDependencies(dependencies));
+                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Replica registered via ServiceBeacon").SetDependencies(dependencies));
                 else if (registrationAllowedChanged)
-                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Registration has been allowed by RegistrationAllowedProvider."));
+                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Replica registered, because registration has been allowed by beacon RegistrationAllowedProvider."));
             }
 
             registrationAllowedChanged.TrySetFalse();
