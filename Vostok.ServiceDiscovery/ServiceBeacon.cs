@@ -224,7 +224,7 @@ namespace Vostok.ServiceDiscovery
 
             if (isRunning.TrySetFalse())
             {
-                using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because Service Beacon zookeeper client disposed.")))
+                using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because zookeeper client disposed.")))
                     SendStopEventIfNeeded();
                 checkNodeSignal.Set();
                 // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
