@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -11,9 +12,7 @@ using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
-using Vostok.ServiceDiscovery.Telemetry;
 using Vostok.ServiceDiscovery.Telemetry.Event;
-using Vostok.ServiceDiscovery.Telemetry.EventsBuilder;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -38,6 +37,7 @@ namespace Vostok.ServiceDiscovery
 
         private readonly ServiceBeaconSettings settings;
         private readonly ServiceDiscoveryManager serviceDiscoveryManager;
+        private ServiceDiscoveryEventKind? previousEventKind;
 
         private readonly ILog log;
 
@@ -51,10 +51,6 @@ namespace Vostok.ServiceDiscovery
         private long lastConnectedTimestamp;
         private volatile Task beaconTask;
         private volatile CancellationTokenSource stopCancellationToken;
-
-        private readonly AtomicBoolean stopEventSent = false;
-        private readonly AtomicBoolean registrationAllowedChanged = false;
-        private IDisposable eventEventContextToken;
 
         public ServiceBeacon(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -104,10 +100,6 @@ namespace Vostok.ServiceDiscovery
             {
                 if (isRunning.TrySetTrue())
                 {
-                    eventEventContextToken = new ServiceDiscoveryEventsContextToken(builder =>
-                        builder.SetEnvironment(replicaInfo.Environment)
-                            .SetApplication(replicaInfo.Application)
-                            .AddReplicas(replicaInfo.Replica));
                     stopCancellationToken = new CancellationTokenSource();
                     nodeCreatedOnceSignal.Reset();
                     beaconTask = Task.Run(BeaconTask);
@@ -134,8 +126,7 @@ namespace Vostok.ServiceDiscovery
                     }
 
                     RemoveTagsIfNeed().GetAwaiter().GetResult();
-                    using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because Service Beacon stopped.")))
-                        SendStopEventIfNeeded();
+                    SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "Replica unregistered, because Service Beacon stopped.");
                 }
             }
         }
@@ -146,7 +137,6 @@ namespace Vostok.ServiceDiscovery
         public void Dispose()
         {
             Stop();
-            eventEventContextToken?.Dispose();
         }
 
         /// <summary>
@@ -224,8 +214,7 @@ namespace Vostok.ServiceDiscovery
 
             if (isRunning.TrySetFalse())
             {
-                using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because zookeeper client disposed.")))
-                    SendStopEventIfNeeded();
+                SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "Replica unregistered, because zookeeper client disposed.");
                 checkNodeSignal.Set();
                 // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
             }
@@ -256,18 +245,18 @@ namespace Vostok.ServiceDiscovery
             var existsNode = await zooKeeperClient.ExistsAsync(new ExistsRequest(replicaNodePath) {Watcher = nodeWatcher}).ConfigureAwait(false);
             if (!existsNode.IsSuccessful)
                 return;
-
+            
+            var registrationAllowedChanged = false;
             if (registrationAllowed.TrySet(settings.RegistrationAllowedProvider?.Invoke() ?? true))
             {
-                registrationAllowedChanged.TrySetTrue();
+                registrationAllowedChanged = true;
                 log.Info(registrationAllowed ? "Registration has been allowed." : "Registration has been denied.");
             }
 
             if (!registrationAllowed)
             {
                 if (existsNode.Stat != null && await DeleteNodeAsync().ConfigureAwait(false))
-                    using (new ServiceDiscoveryEventsContextToken(builder => builder.SetDescription("Replica unregistered, because registration has been denied by beacon RegistrationAllowedProvider.")))
-                        SendStopEventIfNeeded();
+                    SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "Replica unregistered, because registration has been denied by beacon RegistrationAllowedProvider.");
                 return;
             }
 
@@ -316,7 +305,11 @@ namespace Vostok.ServiceDiscovery
 
             if (await TryCreateReplicaNode().ConfigureAwait(false))
             {
-                SendStartEventIfNeeded();
+                SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
+                    registrationAllowedChanged
+                        ? "Replica registered, because registration has been allowed by beacon RegistrationAllowedProvider."
+                        : "Replica registered via ServiceBeacon.",
+                    !nodeCreatedOnceSignal.IsCurrentlySet());
                 nodeCreatedOnceSignal.Set();
                 await TrySetTagsInNeeded().ConfigureAwait(false);
             }
@@ -409,33 +402,20 @@ namespace Vostok.ServiceDiscovery
         private Task<bool> SetTags()
             => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
 
-        #region EventSending
-
-        private void SendStartEventIfNeeded()
+        private void SendEvent(ServiceDiscoveryEventKind kind, string description, bool withDependency = false)
         {
-            using (new ServiceDiscoveryEventsContextToken(builder => builder.SetTimestamp(DateTimeOffset.Now)
-                .SetKind(ServiceDiscoveryEventKind.ReplicaStarted)))
-            {
-                if (!nodeCreatedOnceSignal.IsCurrentlySet())
-                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Replica registered via ServiceBeacon").SetDependencies(dependencies));
-                else if (registrationAllowedChanged)
-                    settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetDescription("Replica registered, because registration has been allowed by beacon RegistrationAllowedProvider."));
-            }
-
-            registrationAllowedChanged.TrySetFalse();
-            // NOTE (shumilin): For each sending start event, we must allow sending the stop event.
-            stopEventSent.TrySetFalse();
-        }
-
-        private void SendStopEventIfNeeded()
-        {
-            if (stopEventSent)
+            if (previousEventKind == kind)
                 return;
+            var properties = new Dictionary<string, string>
+            {
+                [ServiceDiscoveryEventWellKnownProperties.Description] = description
+            };
+            if (kind == ServiceDiscoveryEventKind.ReplicaStarted && withDependency)
+                properties[ServiceDiscoveryEventWellKnownProperties.Dependencies] = dependencies;
 
-            settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetTimestamp(DateTimeOffset.Now).SetKind(ServiceDiscoveryEventKind.ReplicaStopped));
-            stopEventSent.TrySetTrue();
+            settings.ServiceDiscoveryEventContext.Send(new ServiceDiscoveryEvent(kind, replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, DateTimeOffset.Now, properties));
+
+            previousEventKind = kind;
         }
-
-        #endregion
     }
 }
