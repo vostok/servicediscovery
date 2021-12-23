@@ -7,6 +7,7 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
+using Vostok.ServiceDiscovery.Telemetry;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -185,7 +186,7 @@ namespace Vostok.ServiceDiscovery
             };
             var isSuccessful = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
             if (isSuccessful)
-                settings.ServiceDiscoveryEventContext.SendFromContext(builder => builder.SetEnvironment(environment).SetApplication(application));
+                SendEvent(environment, application);
 
             return isSuccessful;
         }
@@ -201,8 +202,7 @@ namespace Vostok.ServiceDiscovery
 
             var isSuccessful = (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
             if (isSuccessful)
-                settings.ServiceDiscoveryEventContext.SendFromContext(builder =>
-                    builder.SetEnvironment(replica.Environment).SetApplication(replica.Application).AddReplicas(replica.Replica));
+                SendEvent(replica.Environment, replica.Application, replica.Replica);
 
             return isSuccessful;
         }
@@ -230,10 +230,15 @@ namespace Vostok.ServiceDiscovery
 
             var isSuccessful = (await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false)).IsSuccessful;
             if (isSuccessful)
-                settings.ServiceDiscoveryEventContext.SendFromContext(builder =>
-                    builder.SetEnvironment(environment).SetApplication(application).AddReplicas(replica));
+                SendEvent(environment, application, replica);
 
             return isSuccessful;
+        }
+
+        private void SendEvent(string environment, string application, params string[] replicas)
+        {
+            using (new ServiceDiscoveryEventsContextToken(builder => builder.SetEnvironment(environment).SetApplication(application).AddReplicas(replicas)))
+                settings.ServiceDiscoveryEventContext.SendFromContext();
         }
     }
 }
