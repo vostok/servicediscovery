@@ -774,12 +774,12 @@ namespace Vostok.ServiceDiscovery.Tests
                 ReplicaRegistered(replica.ReplicaInfo).Should().BeTrue();
                 registrationAllowed = false;
                 await Task.Delay(600);
+                
+                receivedEvents.Should().HaveCount(2);
+                receivedEvents.First(serviceDiscoveryEvent => serviceDiscoveryEvent.Kind == ServiceDiscoveryEventKind.ReplicaStopped)
+                    .Properties.Keys.Should()
+                    .Contain(ServiceDiscoveryEventWellKnownProperties.Description);
             }
-
-            receivedEvents.Should().HaveCount(2);
-            receivedEvents.First(serviceDiscoveryEvent => serviceDiscoveryEvent.Kind == ServiceDiscoveryEventKind.ReplicaStopped)
-                .Properties.Keys.Should()
-                .Contain(ServiceDiscoveryEventWellKnownProperties.Description);
         }
     }
 }
