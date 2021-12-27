@@ -410,7 +410,8 @@ namespace Vostok.ServiceDiscovery
             {
                 [ServiceDiscoveryEventWellKnownProperties.Description] = description
             };
-            if (kind == ServiceDiscoveryEventKind.ReplicaStarted && withDependency)
+            if (withDependency)
+
                 properties[ServiceDiscoveryEventWellKnownProperties.Dependencies] = dependencies;
 
             settings.ServiceDiscoveryEventContext.Send(new ServiceDiscoveryEvent(kind, replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, DateTimeOffset.Now, properties));
