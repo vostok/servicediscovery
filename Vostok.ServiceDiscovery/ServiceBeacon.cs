@@ -119,19 +119,12 @@ namespace Vostok.ServiceDiscovery
                     checkNodeSignal.Set();
                     beaconTask.GetAwaiter().GetResult();
                     stopCancellationToken.Dispose();
-                    RemoveTagsIfNeed().GetAwaiter().GetResult();
 
-                    DeleteResult deleteResult;
-                    if ((deleteResult = DeleteNodeAsync().GetAwaiter().GetResult()).IsSuccessful)
-                        SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
-                            deleteResult.Status == ZooKeeperStatus.Ok ? "Replica unregistered, because Service Beacon stopped." : "Beacon stop, but replica unregistered before.");
-                    else
-                        Task.Run(DeleteNodeTask)
-                            .ContinueWith(deleteTask =>
-                                SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
-                                    deleteTask.Result.Status == ZooKeeperStatus.Ok
-                                        ? "Replica unregistered, because Service Beacon stopped."
-                                        : $"Beacon stop, but replica unregistered with result {deleteTask.Result}."));
+                    var deleteResult = DeleteNodeAsync().GetAwaiter().GetResult();
+                    if (!deleteResult.IsSuccessful)
+                        Task.Run(DeleteNodeTask);
+                    SendStoppedEvent(deleteResult);
+                    RemoveTagsIfNeed().GetAwaiter().GetResult();
                 }
             }
         }
@@ -199,18 +192,15 @@ namespace Vostok.ServiceDiscovery
             checkNodeSignal.Reset();
         }
 
-        private async Task<DeleteResult> DeleteNodeTask()
+        private async Task DeleteNodeTask()
         {
             var observer = new AdHocConnectionStateObserver(null, OnCompleted);
             using (zooKeeperClient.OnConnectionStateChanged.Subscribe(observer))
             {
-                var deleteResult = await DeleteNodeAsync().ConfigureAwait(false);
-                while (!clientDisposed && !deleteResult.IsSuccessful)
+                while (!clientDisposed && !(await DeleteNodeAsync().ConfigureAwait(false)).IsSuccessful)
                 {
                     await Task.Delay(settings.DeleteNodeIterationPeriod).ConfigureAwait(false);
                 }
-
-                return deleteResult;
             }
         }
 
@@ -222,7 +212,7 @@ namespace Vostok.ServiceDiscovery
 
             if (isRunning.TrySetFalse())
             {
-                SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "Replica unregistering, because zookeeper client disposed.");
+                SendZookeeperClientDisposedEvent();
                 checkNodeSignal.Set();
                 // Note(kungurtsev): does not wait beaconTask, because it will deadlock CachingObservable.
             }
@@ -265,10 +255,7 @@ namespace Vostok.ServiceDiscovery
             {
                 var deleteResult = await DeleteNodeAsync().ConfigureAwait(false);
                 if (existsNode.Stat != null && deleteResult.IsSuccessful)
-                    SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
-                        deleteResult.Status == ZooKeeperStatus.Ok
-                            ? "Replica unregistered, because registration has been denied by RegistrationAllowedProvider."
-                            : "Registration has been denied by RegistrationAllowedProvider, but replica unregistered before.");
+                    SendRegistrationDeniedEvent(deleteResult);
                 return;
             }
 
@@ -317,9 +304,10 @@ namespace Vostok.ServiceDiscovery
 
             if (await TryCreateReplicaNode().ConfigureAwait(false))
             {
-                SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
-                    registrationAllowedChanged ? "Replica registered, because registration has been allowed by RegistrationAllowedProvider." : "Replica registered via ServiceBeacon.",
-                    !nodeCreatedOnceSignal.IsCurrentlySet());
+                if (!registrationAllowedChanged)
+                    SendStartedEvent();
+                else
+                    SendRegistrationAllowedEvent();
                 nodeCreatedOnceSignal.Set();
                 await TrySetTagsInNeeded().ConfigureAwait(false);
             }
@@ -412,6 +400,33 @@ namespace Vostok.ServiceDiscovery
         private Task<bool> SetTags()
             => serviceDiscoveryManager.SetReplicaTags(replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, tags);
 
+        #region Event sending
+
+        private void SendStartedEvent() =>
+            SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
+                "Replica registered via ServiceBeacon.",
+                !nodeCreatedOnceSignal.IsCurrentlySet());
+
+        private void SendRegistrationAllowedEvent() =>
+            SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
+                "Replica registered, because registration has been allowed by RegistrationAllowedProvider.",
+                !nodeCreatedOnceSignal.IsCurrentlySet());
+
+        private void SendRegistrationDeniedEvent(DeleteResult deleteResult) =>
+            SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
+                deleteResult.Status == ZooKeeperStatus.Ok
+                    ? "Replica unregistered, because registration has been denied by RegistrationAllowedProvider."
+                    : "Registration has been denied by RegistrationAllowedProvider, but replica unregistered before.");
+
+        private void SendZookeeperClientDisposedEvent() =>
+            SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "Replica unregistering, because zookeeper client disposed.");
+
+        private void SendStoppedEvent(DeleteResult deleteResult) =>
+            SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
+                deleteResult.Status == ZooKeeperStatus.Ok
+                    ? "Replica unregistered, because Service Beacon stopped."
+                    : $"Beacon stopped, but replica unregistered with result {deleteResult}.");
+
         private void SendEvent(ServiceDiscoveryEventKind kind, string description, bool withDependency = false)
         {
             var properties = new Dictionary<string, string>
@@ -423,5 +438,7 @@ namespace Vostok.ServiceDiscovery
 
             settings.ServiceDiscoveryEventContext.Send(new ServiceDiscoveryEvent(kind, replicaInfo.Environment, replicaInfo.Application, replicaInfo.Replica, DateTimeOffset.Now, properties));
         }
+
+        #endregion
     }
 }
