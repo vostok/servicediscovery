@@ -253,8 +253,8 @@ namespace Vostok.ServiceDiscovery
 
             if (!registrationAllowed)
             {
-                var deleteResult = await DeleteNodeAsync().ConfigureAwait(false);
-                if (existsNode.Stat != null && deleteResult.IsSuccessful)
+                DeleteResult deleteResult;
+                if (existsNode.Stat != null && (deleteResult = await DeleteNodeAsync().ConfigureAwait(false)).IsSuccessful)
                     SendRegistrationDeniedEvent(deleteResult);
                 return;
             }
@@ -404,29 +404,27 @@ namespace Vostok.ServiceDiscovery
 
         private void SendStartedEvent() =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
-                "Replica registered.",
-
+                "Beacon started, replica registered.",
                 !nodeCreatedOnceSignal.IsCurrentlySet());
 
         private void SendRegistrationAllowedEvent() =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
-                "Replica registered, because registration has been allowed by RegistrationAllowedProvider.",
+                "Registration allowed, replica registered.",
                 !nodeCreatedOnceSignal.IsCurrentlySet());
 
         private void SendRegistrationDeniedEvent(DeleteResult deleteResult) =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
                 deleteResult.Status == ZooKeeperStatus.Ok
-                    ? "Replica unregistered, because registration has been denied by RegistrationAllowedProvider."
-                    : "Registration has been denied by RegistrationAllowedProvider, but replica unregistered before.");
+                    ? "Registration denied, replica unregistered."
+                    : "Registration denied, but replica unregistered before.");
 
         private void SendZookeeperClientDisposedEvent() =>
-            SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "Replica unregistering, because zookeeper client disposed.");
+            SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "ZooKeeperClient disposed, replica unregistering.");
 
         private void SendStoppedEvent(DeleteResult deleteResult) =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
                 deleteResult.Status == ZooKeeperStatus.Ok
-                    ? "Replica unregistered."
-
+                    ? "Beacon stopped, replica unregistered."
                     : $"Beacon stopped, but replica unregistered with result {deleteResult}.");
 
         private void SendEvent(ServiceDiscoveryEventKind kind, string description, bool withDependency = false)
