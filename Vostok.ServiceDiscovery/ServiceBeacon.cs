@@ -425,7 +425,8 @@ namespace Vostok.ServiceDiscovery
         private void SendStoppedEvent(DeleteResult deleteResult) =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
                 deleteResult.Status == ZooKeeperStatus.Ok
-                    ? "Replica unregistered, because Service Beacon stopped."
+                    ? "Replica unregistered."
+
                     : $"Beacon stopped, but replica unregistered with result {deleteResult}.");
 
         private void SendEvent(ServiceDiscoveryEventKind kind, string description, bool withDependency = false)
