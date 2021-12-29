@@ -404,7 +404,8 @@ namespace Vostok.ServiceDiscovery
 
         private void SendStartedEvent() =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStarted,
-                "Replica registered via ServiceBeacon.",
+                "Replica registered.",
+
                 !nodeCreatedOnceSignal.IsCurrentlySet());
 
         private void SendRegistrationAllowedEvent() =>
