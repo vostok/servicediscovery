@@ -253,9 +253,8 @@ namespace Vostok.ServiceDiscovery
 
             if (!registrationAllowed)
             {
-                DeleteResult deleteResult;
-                if (existsNode.Stat != null && (deleteResult = await DeleteNodeAsync().ConfigureAwait(false)).IsSuccessful)
-                    SendRegistrationDeniedEvent(deleteResult);
+                if (existsNode.Stat != null)
+                    SendRegistrationDeniedEvent(await DeleteNodeAsync().ConfigureAwait(false));
                 return;
             }
 
@@ -416,7 +415,7 @@ namespace Vostok.ServiceDiscovery
             SendEvent(ServiceDiscoveryEventKind.ReplicaStopped,
                 deleteResult.Status == ZooKeeperStatus.Ok
                     ? "Registration denied, replica unregistered."
-                    : "Registration denied, but replica unregistered before.");
+                    : $"Registration denied, but replica unregistered with result {deleteResult}.");
 
         private void SendZookeeperClientDisposedEvent() =>
             SendEvent(ServiceDiscoveryEventKind.ReplicaStopped, "ZooKeeperClient disposed, replica unregistering.");
