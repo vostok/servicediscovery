@@ -1,3 +1,7 @@
+## 0.1.19 (30-12-2021):
+
+Added service discovery events sending.
+
 ## 0.1.18 (06-12-2021):
 
 Added `net6.0` target.
