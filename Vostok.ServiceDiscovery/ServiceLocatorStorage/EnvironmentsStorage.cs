@@ -37,16 +37,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (environments.TryGetValue(name, out var lazy))
                 return lazy.Value.Value;
 
-            lazy = new Lazy<VersionedContainer<EnvironmentInfo>>(
-                () =>
-                {
-                    var container = new VersionedContainer<EnvironmentInfo>();
-                    Update(name, container);
-                    return container;
-                },
-                LazyThreadSafetyMode.ExecutionAndPublication);
-
-            return environments.GetOrAdd(name, _ => lazy).Value.Value;
+            //(deniaa): Do not inline this method to avoid closures in the hot part of the Get method.
+            return CreateAndGet(name);
         }
 
         public void UpdateAll()
@@ -63,6 +55,20 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         public void Dispose()
         {
             isDisposed.TrySetTrue();
+        }
+
+        private EnvironmentInfo CreateAndGet(string name)
+        {
+            var lazy = new Lazy<VersionedContainer<EnvironmentInfo>>(
+                () =>
+                {
+                    var container = new VersionedContainer<EnvironmentInfo>();
+                    Update(name, container);
+                    return container;
+                },
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+            return environments.GetOrAdd(name, _ => lazy).Value.Value;
         }
 
         private void Update(string name)
