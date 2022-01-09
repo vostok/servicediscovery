@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
@@ -31,7 +32,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (applications.TryGetValue((environment, application), out var lazy))
                 return lazy.Value;
 
-            //(deniaa): Do not inline this method to avoid closures in the hot part of the Get method.
             return CreateAndGet(environment, application, lazy);
         }
 
@@ -57,6 +57,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
         }
 
+        //(deniaa): Do not inline this method to avoid closures in the hot part of the Get method.
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private ApplicationWithReplicas CreateAndGet(string environment, string application, Lazy<ApplicationWithReplicas> lazy)
         {
             lazy = new Lazy<ApplicationWithReplicas>(
