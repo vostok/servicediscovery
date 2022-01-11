@@ -1,4 +1,4 @@
-## 0.1.19 (30-12-2021):
+## 0.1.19 (11-01-2022):
 
 Added service discovery events sending.
 
