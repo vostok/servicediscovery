@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Vostok.Commons.Threading;
 using Vostok.Logging.Abstractions;
@@ -31,22 +32,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (applications.TryGetValue((environment, application), out var lazy))
                 return lazy.Value;
 
-            lazy = new Lazy<ApplicationWithReplicas>(
-                () =>
-                {
-                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, eventsQueue, log);
-                    if (!isDisposed)
-                        container.Update();
-                    return container;
-                },
-                LazyThreadSafetyMode.ExecutionAndPublication);
-
-            var value = applications.GetOrAdd((environment, application), _ => lazy).Value;
-
-            if (isDisposed)
-                value.Dispose();
-
-            return value;
+            return CreateAndGet(environment, application, lazy);
         }
 
         public void UpdateAll()
@@ -69,6 +55,28 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     kvp.Value.Value.Dispose();
                 }
             }
+        }
+
+        //(deniaa): Do not inline this method to avoid closures in the hot part of the Get method.
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private ApplicationWithReplicas CreateAndGet(string environment, string application, Lazy<ApplicationWithReplicas> lazy)
+        {
+            lazy = new Lazy<ApplicationWithReplicas>(
+                () =>
+                {
+                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, eventsQueue, log);
+                    if (!isDisposed)
+                        container.Update();
+                    return container;
+                },
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+            var value = applications.GetOrAdd((environment, application), _ => lazy).Value;
+
+            if (isDisposed)
+                value.Dispose();
+
+            return value;
         }
     }
 }
