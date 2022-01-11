@@ -14,6 +14,9 @@ using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
+using Vostok.ServiceDiscovery.Telemetry;
+using Vostok.ServiceDiscovery.Telemetry.Event;
+using Vostok.ServiceDiscovery.Telemetry.EventsSender;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -238,7 +241,7 @@ namespace Vostok.ServiceDiscovery.Tests
                 beacon.Stop();
 
                 Ensemble.Start();
-                
+
                 WaitReplicaRegistered(replica, false);
                 WaitForApplicationTagsExists(replica.Environment, replica.Application, replica.Replica);
             }
@@ -377,7 +380,7 @@ namespace Vostok.ServiceDiscovery.Tests
         {
             var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
             var serviceBeaconInfo = new ServiceBeaconInfo(replica, new TagCollection {"tag1", "tag2"});
-            var newTags = new TagCollection{"tag2", "tag3"};
+            var newTags = new TagCollection {"tag2", "tag3"};
             CreateEnvironmentNode(replica.Environment);
 
             using (var beacon = GetServiceBeacon(serviceBeaconInfo))
@@ -695,12 +698,88 @@ namespace Vostok.ServiceDiscovery.Tests
         }
 
         [Test]
-        public async Task Should_throw_when_CreateIfAbsent_environment_is_different()
+        public void Should_throw_when_CreateIfAbsent_environment_is_different()
         {
             var replica = new ReplicaInfo("absent", "vostok", "https://github.com/vostok");
 
             Action throws = () => GetServiceBeacon(replica, envSettings: new EnvironmentInfo("different", "zapad", null));
             throws.Should().Throw<ArgumentException>();
+        }
+
+        [Test]
+        public void Should_send_beacon_events()
+        {
+            var replica = new ReplicaInfo("default", "vostok", "https://github.com/vostok");
+            var baseProps = new Dictionary<string, string> {{ServiceDiscoveryEventWellKnownProperties.Description, "description"}};
+            var dependenciesProps = new Dictionary<string, string>(baseProps) {{ServiceDiscoveryEventWellKnownProperties.Dependencies, "lalala"}};
+            replica.SetProperty(ReplicaInfoKeys.Dependencies, dependenciesProps[ServiceDiscoveryEventWellKnownProperties.Dependencies]);
+
+            var receivedEvents = new List<ServiceDiscoveryEvent>();
+            var expectedEvents = new List<ServiceDiscoveryEvent>
+            {
+                new ServiceDiscoveryEvent(ServiceDiscoveryEventKind.ReplicaStarted, replica.Environment, replica.Application, replica.Replica, DateTimeOffset.Now, dependenciesProps),
+                new ServiceDiscoveryEvent(ServiceDiscoveryEventKind.ReplicaStopped, replica.Environment, replica.Application, replica.Replica, DateTimeOffset.Now, baseProps)
+            };
+            var sender = Substitute.For<IServiceDiscoveryEventsSender>();
+            sender.Send(Arg.Do<ServiceDiscoveryEvent>(serviceDiscoveryEvent => receivedEvents.Add(serviceDiscoveryEvent)));
+            var settings = new ServiceBeaconSettings
+            {
+                ServiceDiscoveryEventContext = new ServiceDiscoveryEventsContext(new ServiceDiscoveryEventsContextConfig(sender)),
+                AddDependenciesToNodeData = true
+            };
+
+            CreateEnvironmentNode(replica.Environment);
+            using (var client = GetZooKeeperClient())
+            using (var beacon = new ServiceBeacon(client, new ServiceBeaconInfo(replica), settings, Log))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+
+                ReplicaRegistered(replica).Should().BeTrue();
+                beacon.Stop();
+                ReplicaRegistered(replica).Should().BeFalse();
+            }
+
+            receivedEvents.Should()
+                .BeEquivalentTo(expectedEvents,
+                    options => options.Excluding(@event => @event.Timestamp)
+                        .Using<Dictionary<string, string>>(context => context.Subject.Should().ContainKeys(context.Expectation.Keys))
+                        .WhenTypeIs<Dictionary<string, string>>());
+        }
+
+        [Test]
+        public async Task Should_send_stop_beacon_event_with_description_if_registration_not_allowed()
+        {
+            var replica =
+                ReplicaInfoBuilder.Build(builder => builder.SetEnvironment("default").SetApplication("vostok").SetUrl(new Uri("https://github.com/vostok")), true);
+            var registrationAllowed = true;
+            Func<bool> registrationAllowedProvider = () => registrationAllowed;
+
+            var receivedEvents = new List<ServiceDiscoveryEvent>();
+            var sender = Substitute.For<IServiceDiscoveryEventsSender>();
+            sender.Send(Arg.Do<ServiceDiscoveryEvent>(serviceDiscoveryEvent => receivedEvents.Add(serviceDiscoveryEvent)));
+            var settings = new ServiceBeaconSettings
+            {
+                ServiceDiscoveryEventContext = new ServiceDiscoveryEventsContext(new ServiceDiscoveryEventsContextConfig(sender)),
+                RegistrationAllowedProvider = registrationAllowedProvider
+            };
+
+            CreateEnvironmentNode(replica.ReplicaInfo.Environment);
+            using (var client = GetZooKeeperClient())
+            using (var beacon = new ServiceBeacon(client, replica, settings, Log))
+            {
+                beacon.Start();
+                beacon.WaitForInitialRegistrationAsync().ShouldCompleteIn(DefaultTimeout);
+
+                ReplicaRegistered(replica.ReplicaInfo).Should().BeTrue();
+                registrationAllowed = false;
+                await Task.Delay(600);
+                
+                receivedEvents.Should().HaveCount(2);
+                receivedEvents.First(serviceDiscoveryEvent => serviceDiscoveryEvent.Kind == ServiceDiscoveryEventKind.ReplicaStopped)
+                    .Properties.Keys.Should()
+                    .Contain(ServiceDiscoveryEventWellKnownProperties.Description);
+            }
         }
     }
 }

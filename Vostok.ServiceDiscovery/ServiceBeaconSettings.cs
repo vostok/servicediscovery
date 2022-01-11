@@ -3,6 +3,8 @@ using JetBrains.Annotations;
 using Vostok.Commons.Time;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
+using Vostok.ServiceDiscovery.Telemetry;
+using Vostok.ServiceDiscovery.Telemetry.Event;
 
 namespace Vostok.ServiceDiscovery
 {
@@ -41,5 +43,16 @@ namespace Vostok.ServiceDiscovery
         /// </summary>
         [CanBeNull]
         public IEnvironmentInfo CreateEnvironmentIfAbsent { get; set; }
+
+        /// <summary>
+        /// <see cref="IServiceDiscoveryEventsContext">Context</see> for sending beacon events at:
+        /// <list type="bullet">
+        /// <item>Beacon start (<see cref="ServiceDiscoveryEventKind.ReplicaStarted"/>)</item>
+        /// <item>Beacon stop (<see cref="ServiceDiscoveryEventKind.ReplicaStopped"/>)</item>
+        /// <item>Events corresponding to the change <see cref="RegistrationAllowedProvider"/></item>
+        /// </list>
+        /// </summary>
+        [NotNull]
+        public IServiceDiscoveryEventsContext ServiceDiscoveryEventContext { get; set; } = new DevNullServiceDiscoveryEventsContext();
     }
 }

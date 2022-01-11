@@ -20,6 +20,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.servicediscovery.abstractions\Vostok.ServiceDiscovery.Abstractions\bin\Release\$(ReferencesFramework)\Vostok.ServiceDiscovery.Abstractions.dll</HintPath>
     </Reference>
+    <Reference Include="Vostok.ServiceDiscovery.Telemetry">
+      <HintPath>..\..\vostok.servicediscovery.telemetry\Vostok.ServiceDiscovery.Telemetry\bin\Release\$(ReferencesFramework)\Vostok.ServiceDiscovery.Telemetry.dll</HintPath>
+    </Reference>
     <Reference Include="Vostok.ZooKeeper.Client">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\vostok.zookeeper.client\Vostok.ZooKeeper.Client\bin\Release\$(ReferencesFramework)\Vostok.ZooKeeper.Client.dll</HintPath>

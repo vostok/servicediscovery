@@ -7,6 +7,7 @@ using Vostok.Logging.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Serializers;
+using Vostok.ServiceDiscovery.Telemetry;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
@@ -18,8 +19,8 @@ namespace Vostok.ServiceDiscovery
     {
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryManagerSettings settings;
-        private readonly ILog log;
         private readonly ServiceDiscoveryPathHelper pathHelper;
+        private readonly ILog log;
 
         public ServiceDiscoveryManager(
             [NotNull] IZooKeeperClient zooKeeperClient,
@@ -183,8 +184,11 @@ namespace Vostok.ServiceDiscovery
             {
                 Attempts = settings.ZooKeeperNodeUpdateAttempts
             };
+            var isSuccessful = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                SendEvent(environment, application);
 
-            return (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
+            return isSuccessful;
         }
 
         public async Task<bool> TryCreatePermanentReplicaAsync(IReplicaInfo replica)
@@ -196,7 +200,11 @@ namespace Vostok.ServiceDiscovery
                 Data = ReplicaNodeDataSerializer.Serialize(replica)
             };
 
-            return (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
+            var isSuccessful = (await zooKeeperClient.CreateAsync(createRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                SendEvent(replica.Environment, replica.Application, replica.Replica);
+
+            return isSuccessful;
         }
 
         public async Task<bool> TryDeletePermanentReplicaAsync(string environment, string application, string replica)
@@ -220,9 +228,17 @@ namespace Vostok.ServiceDiscovery
                 Version = existsResult.Stat.Version
             };
 
-            var deleteResult = await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false);
+            var isSuccessful = (await zooKeeperClient.DeleteAsync(deleteRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                SendEvent(environment, application, replica);
 
-            return deleteResult.IsSuccessful;
+            return isSuccessful;
+        }
+
+        private void SendEvent(string environment, string application, params string[] replicas)
+        {
+            using (new ServiceDiscoveryEventsContextToken(builder => builder.SetEnvironment(environment).SetApplication(application).AddReplicas(replicas)))
+                settings.ServiceDiscoveryEventContext.SendFromContext();
         }
     }
 }

@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
-using FluentAssertions.Extensions;
+using NSubstitute;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
+using Vostok.ServiceDiscovery.Telemetry;
+using Vostok.ServiceDiscovery.Telemetry.Event;
+using Vostok.ServiceDiscovery.Telemetry.EventsSender;
 
 namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 {
@@ -541,6 +542,35 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 .GetResult()
                 .Should()
                 .BeNull();
+        }
+
+        [Test]
+        public void TryUpdateApplicationPropertiesAsync_should_send_events_from_context_description()
+        {
+            const string environment = "environment";
+            const string application = "vostok";
+            const string replica = "https://github.com/vostok";
+            var client = GetZooKeeperClient();
+            var initProperties = GetProperties();
+            CreateApplicationNode(environment, application, initProperties);
+
+            var sender = Substitute.For<IServiceDiscoveryEventsSender>();
+            ServiceDiscoveryEvent received = null;
+            sender.Send(Arg.Do<ServiceDiscoveryEvent>(serviceDiscoveryEvent => received = serviceDiscoveryEvent));
+
+            var setting = new ServiceDiscoveryManagerSettings {ServiceDiscoveryEventContext = new ServiceDiscoveryEventsContext(new ServiceDiscoveryEventsContextConfig(sender))};
+            var serviceDiscoveryManager = new ServiceDiscoveryManager(client, setting, Log);
+            var expected = new ServiceDiscoveryEvent(ServiceDiscoveryEventKind.ReplicaRemovedFromBlacklist, environment, application, replica, DateTimeOffset.UtcNow, new Dictionary<string, string>());
+            new ServiceDiscoveryEventsContextToken(builder => builder.SetKind(ServiceDiscoveryEventKind.ReplicaRemovedFromBlacklist).AddReplicas(replica));
+
+            serviceDiscoveryManager.TryUpdateApplicationPropertiesAsync(environment, application, properties => properties.Set("updatedKey", "updatedValue"))
+                .GetAwaiter()
+                .GetResult()
+                .Should()
+                .BeTrue();
+            received.Should().BeEquivalentTo(expected, options => options.Excluding(serviceDiscoveryEvent => serviceDiscoveryEvent.Timestamp));
+
+            client.Dispose();
         }
 
         [Test]
