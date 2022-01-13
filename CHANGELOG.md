@@ -1,3 +1,7 @@
+## 0.1.20 (13-01-2022):
+
+Reduced memory traffic and added several optimizations to the ServiceLocator.Locate method.
+
 ## 0.1.19 (11-01-2022):
 
 Added service discovery events sending.
