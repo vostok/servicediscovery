@@ -1,0 +1,102 @@
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Application = "Service" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.BaseDirectory = "Directory" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.CommitHash = "Commit hash" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Dependencies = "Dependencies" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Environment = "Zone" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Host = "Host" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Port = "Port" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.ProcessId = "Process id" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.ProcessName = "Process name" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.ReleaseDate = "Release date" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Replica = "Instance name" -> string
+const Vostok.ServiceDiscovery.Models.ReplicaInfoKeys.Url = "Url" -> string
+Vostok.ServiceDiscovery.Helpers.IZooKeeperPathEscaper
+Vostok.ServiceDiscovery.Helpers.IZooKeeperPathEscaper.Escape(string segment) -> string
+Vostok.ServiceDiscovery.Helpers.IZooKeeperPathEscaper.Unescape(string segment) -> string
+Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetApplication(string application) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetCommitHash(string commitHash) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetDependencies(System.Collections.Generic.IEnumerable<string> dependencies) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetEnvironment(string environment) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetPort(int? port) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetProcessName(string processName) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetProperty(string key, string value) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetReleaseDate(string releaseDate) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetReplicaId(string replica) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetScheme(string scheme) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetTags(Vostok.ServiceDiscovery.Abstractions.Models.TagCollection tags) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetUrl(System.Uri url) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetUrlPath(string path) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
+Vostok.ServiceDiscovery.Models.ReplicaInfoKeys
+Vostok.ServiceDiscovery.ReplicaInfoSetup
+Vostok.ServiceDiscovery.ServiceBeacon
+Vostok.ServiceDiscovery.ServiceBeacon.Dispose() -> void
+Vostok.ServiceDiscovery.ServiceBeacon.ReplicaInfo.get -> Vostok.ServiceDiscovery.Abstractions.IReplicaInfo
+Vostok.ServiceDiscovery.ServiceBeacon.ServiceBeacon(Vostok.ZooKeeper.Client.Abstractions.IZooKeeperClient zooKeeperClient, Vostok.ServiceDiscovery.ReplicaInfoSetup replicaInfoSetup = null, Vostok.ServiceDiscovery.ServiceBeaconSettings settings = null, Vostok.Logging.Abstractions.ILog log = null) -> void
+Vostok.ServiceDiscovery.ServiceBeacon.Start() -> void
+Vostok.ServiceDiscovery.ServiceBeacon.Stop() -> void
+Vostok.ServiceDiscovery.ServiceBeacon.WaitForInitialRegistrationAsync() -> System.Threading.Tasks.Task
+Vostok.ServiceDiscovery.ServiceBeaconSettings
+Vostok.ServiceDiscovery.ServiceBeaconSettings.AddDependenciesToNodeData.get -> bool
+Vostok.ServiceDiscovery.ServiceBeaconSettings.AddDependenciesToNodeData.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.CreateEnvironmentIfAbsent.get -> Vostok.ServiceDiscovery.Abstractions.IEnvironmentInfo
+Vostok.ServiceDiscovery.ServiceBeaconSettings.CreateEnvironmentIfAbsent.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.DeleteNodeIterationPeriod.get -> System.TimeSpan
+Vostok.ServiceDiscovery.ServiceBeaconSettings.DeleteNodeIterationPeriod.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.InitialRegistrationIterationPeriod.get -> System.TimeSpan
+Vostok.ServiceDiscovery.ServiceBeaconSettings.InitialRegistrationIterationPeriod.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.IterationPeriod.get -> System.TimeSpan
+Vostok.ServiceDiscovery.ServiceBeaconSettings.IterationPeriod.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.MinimumTimeBetweenIterations.get -> System.TimeSpan
+Vostok.ServiceDiscovery.ServiceBeaconSettings.MinimumTimeBetweenIterations.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.RegistrationAllowedProvider.get -> System.Func<bool>
+Vostok.ServiceDiscovery.ServiceBeaconSettings.RegistrationAllowedProvider.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ServiceBeaconSettings() -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ServiceDiscoveryEventContext.get -> Vostok.ServiceDiscovery.Telemetry.IServiceDiscoveryEventsContext
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ServiceDiscoveryEventContext.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.UseFQDN.get -> bool
+Vostok.ServiceDiscovery.ServiceBeaconSettings.UseFQDN.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ZooKeeperNodesPathEscaper.get -> Vostok.ServiceDiscovery.Helpers.IZooKeeperPathEscaper
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ZooKeeperNodesPathEscaper.set -> void
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ZooKeeperNodesPrefix.get -> string
+Vostok.ServiceDiscovery.ServiceBeaconSettings.ZooKeeperNodesPrefix.set -> void
+Vostok.ServiceDiscovery.ServiceDiscoveryManager
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.GetAllApplicationsAsync(string environment) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<string>>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.GetAllEnvironmentsAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<string>>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.GetAllReplicasAsync(string environment, string application) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<string>>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.GetApplicationAsync(string environment, string application) -> System.Threading.Tasks.Task<Vostok.ServiceDiscovery.Abstractions.IApplicationInfo>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.GetEnvironmentAsync(string environment) -> System.Threading.Tasks.Task<Vostok.ServiceDiscovery.Abstractions.IEnvironmentInfo>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.GetReplicaAsync(string environment, string application, string replica) -> System.Threading.Tasks.Task<Vostok.ServiceDiscovery.Abstractions.IReplicaInfo>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.ServiceDiscoveryManager(Vostok.ZooKeeper.Client.Abstractions.IZooKeeperClient zooKeeperClient, Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings settings = null, Vostok.Logging.Abstractions.ILog log = null) -> void
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryCreateApplicationAsync(Vostok.ServiceDiscovery.Abstractions.IApplicationInfo application) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryCreateEnvironmentAsync(Vostok.ServiceDiscovery.Abstractions.IEnvironmentInfo environmentInfo) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryCreatePermanentReplicaAsync(Vostok.ServiceDiscovery.Abstractions.IReplicaInfo replica) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryDeleteApplicationAsync(string environment, string application) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryDeleteEnvironmentAsync(string environment) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryDeletePermanentReplicaAsync(string environment, string application, string replica) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryUpdateApplicationPropertiesAsync(string environment, string application, System.Func<Vostok.ServiceDiscovery.Abstractions.IApplicationInfoProperties, Vostok.ServiceDiscovery.Abstractions.IApplicationInfoProperties> updateFunc) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryUpdateEnvironmentParentAsync(string environment, string newParent) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TryUpdateEnvironmentPropertiesAsync(string environment, System.Func<Vostok.ServiceDiscovery.Abstractions.IEnvironmentInfoProperties, Vostok.ServiceDiscovery.Abstractions.IEnvironmentInfoProperties> updateFunc) -> System.Threading.Tasks.Task<bool>
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ServiceDiscoveryEventContext.get -> Vostok.ServiceDiscovery.Telemetry.IServiceDiscoveryEventsContext
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ServiceDiscoveryEventContext.set -> void
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ServiceDiscoveryManagerSettings() -> void
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ZooKeeperNodesPathEscaper.get -> Vostok.ServiceDiscovery.Helpers.IZooKeeperPathEscaper
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ZooKeeperNodesPathEscaper.set -> void
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ZooKeeperNodesPrefix.get -> string
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ZooKeeperNodesPrefix.set -> void
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ZooKeeperNodeUpdateAttempts.get -> int
+Vostok.ServiceDiscovery.ServiceDiscoveryManagerSettings.ZooKeeperNodeUpdateAttempts.set -> void
+Vostok.ServiceDiscovery.ServiceLocator
+Vostok.ServiceDiscovery.ServiceLocator.Dispose() -> void
+Vostok.ServiceDiscovery.ServiceLocator.Locate(string environment, string application) -> Vostok.ServiceDiscovery.Abstractions.IServiceTopology
+Vostok.ServiceDiscovery.ServiceLocator.ServiceLocator(Vostok.ZooKeeper.Client.Abstractions.IZooKeeperClient zooKeeperClient, Vostok.ServiceDiscovery.ServiceLocatorSettings settings = null, Vostok.Logging.Abstractions.ILog log = null) -> void
+Vostok.ServiceDiscovery.ServiceLocatorSettings
+Vostok.ServiceDiscovery.ServiceLocatorSettings.IterationPeriod.get -> System.TimeSpan
+Vostok.ServiceDiscovery.ServiceLocatorSettings.IterationPeriod.set -> void
+Vostok.ServiceDiscovery.ServiceLocatorSettings.MaximumEnvironmentsDepth -> int
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ServiceLocatorSettings() -> void
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPathEscaper.get -> Vostok.ServiceDiscovery.Helpers.IZooKeeperPathEscaper
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPathEscaper.set -> void
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPrefix.get -> string
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPrefix.set -> void
