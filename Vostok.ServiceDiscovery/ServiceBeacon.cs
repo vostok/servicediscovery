@@ -101,7 +101,8 @@ namespace Vostok.ServiceDiscovery
                 {
                     stopCancellationToken = new CancellationTokenSource();
                     nodeCreatedOnceSignal.Reset();
-                    beaconTask = Task.Run(BeaconTask);
+                    using (ExecutionContext.SuppressFlow())
+                        beaconTask = Task.Run(BeaconTask);
                 }
             }
         }

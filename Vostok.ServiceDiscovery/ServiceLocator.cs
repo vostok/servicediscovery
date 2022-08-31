@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Vostok.Commons.Helpers.Extensions;
@@ -118,7 +118,8 @@ namespace Vostok.ServiceDiscovery
 
             if (state.TryIncreaseTo(Running))
             {
-                updateCacheTask = Task.Run(UpdateCacheTask);
+                using (ExecutionContext.SuppressFlow())
+                    updateCacheTask = Task.Run(UpdateCacheTask);
             }
         }
 
