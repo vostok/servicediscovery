@@ -1,3 +1,7 @@
+## 0.1.21 (31-08-2022):
+
+Added missing `ExecutionContext.SuppressFlow` for long-running tasks.
+
 ## 0.1.20 (13-01-2022):
 
 Reduced memory traffic and added several optimizations to the ServiceLocator.Locate method.
