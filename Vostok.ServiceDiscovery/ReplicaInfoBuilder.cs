@@ -34,11 +34,13 @@ namespace Vostok.ServiceDiscovery
         private List<string> dependencies;
         private TagCollection tags;
 
+        private Func<bool, string> hostNameProvider;
+
         private ReplicaInfoBuilder(bool useFQDN)
         {
             environment = "default";
             application = EnvironmentInfo.Application;
-            host = useFQDN ? EnvironmentInfo.FQDN : EnvironmentInfo.Host;
+            host = useFQDN ? hostNameProvider?.Invoke(useFQDN) ?? EnvironmentInfo.FQDN : EnvironmentInfo.Host;
             processName = EnvironmentInfo.ProcessName;
             processId = EnvironmentInfo.ProcessId;
             baseDirectory = EnvironmentInfo.BaseDirectory;
@@ -57,7 +59,7 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceBeaconInfo Build()
         {
-            url = url ?? BuildUrl();
+            url ??= BuildUrl();
 
             if (replica == null)
                 replica = url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
@@ -166,6 +168,12 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
 
+        public IReplicaInfoBuilder SetupHostnameProvider(Func<bool, string> hostNameProvider)
+        {
+            this.hostNameProvider = hostNameProvider;
+            return this;
+        }
+
         public IReplicaInfoBuilder SetCommitHash(string commitHash)
         {
             this.commitHash = commitHash;
@@ -195,7 +203,7 @@ namespace Vostok.ServiceDiscovery
             properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
             return this;
         }
-        
+
         public IReplicaInfoBuilder SetTags(TagCollection tags)
         {
             this.tags = tags ?? new TagCollection();

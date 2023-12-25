@@ -1,0 +1,1 @@
+Vostok.ServiceDiscovery.IReplicaInfoBuilder.SetupHostnameProvider(System.Func<bool, string> hostNameProvider) -> Vostok.ServiceDiscovery.IReplicaInfoBuilder
