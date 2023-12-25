@@ -11,12 +11,12 @@ namespace Vostok.ServiceDiscovery
     internal class ReplicaInfoBuilder : IReplicaInfoBuilder
     {
         private const string DependenciesDelimiter = ";";
-        private readonly string host;
         private readonly int? processId;
         private readonly string baseDirectory;
 
         private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
 
+        private string host;
         private string processName;
 
         private string environment;
@@ -34,13 +34,15 @@ namespace Vostok.ServiceDiscovery
         private List<string> dependencies;
         private TagCollection tags;
 
+        private bool useFQDN;
         private Func<bool, string> hostNameProvider;
 
         private ReplicaInfoBuilder(bool useFQDN)
         {
             environment = "default";
             application = EnvironmentInfo.Application;
-            host = useFQDN ? hostNameProvider?.Invoke(useFQDN) ?? EnvironmentInfo.FQDN : EnvironmentInfo.Host;
+            this.useFQDN = useFQDN;
+            host = useFQDN ? EnvironmentInfo.FQDN : EnvironmentInfo.Host;
             processName = EnvironmentInfo.ProcessName;
             processId = EnvironmentInfo.ProcessId;
             baseDirectory = EnvironmentInfo.BaseDirectory;
@@ -59,10 +61,13 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceBeaconInfo Build()
         {
+            if (hostNameProvider != null)
+            {
+                host = hostNameProvider(useFQDN);
+            }
+            
             url ??= BuildUrl();
-
-            if (replica == null)
-                replica = url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
+            replica ??= url.ToString();
 
             if (url != null)
             {
