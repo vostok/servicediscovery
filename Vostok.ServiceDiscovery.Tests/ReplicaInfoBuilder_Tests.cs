@@ -63,7 +63,8 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetCommitHash("ASDF")
                     .SetReleaseDate("released now")
                     .SetDependencies(new List<string> {"dep-a", "dep-b"})
-                    .SetTags(new TagCollection{"tag1", {"tag2", "value"}}), false);
+                    .SetTags(new TagCollection{"tag1", {"tag2", "value"}})
+                    .SetHostnameProvider(useFqdn => "newHostName"), false);
 
             info.ReplicaInfo.Environment.Should().Be("custom-environment");
             info.ReplicaInfo.Application.Should().Be("Vostok.App.1");
@@ -82,6 +83,8 @@ namespace Vostok.ServiceDiscovery.Tests
             properties[ReplicaInfoKeys.CommitHash].Should().Be("ASDF");
             properties[ReplicaInfoKeys.ReleaseDate].Should().Be("released now");
             properties[ReplicaInfoKeys.Dependencies].Should().Be("dep-a;dep-b");
+
+            properties[ReplicaInfoKeys.Host].Should().Be("newHostName");
         }
 
         [Test]
