@@ -74,7 +74,7 @@ namespace Vostok.ServiceDiscovery
         /// <para>Default value: <c>null</c></para>
         /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
         /// </summary>
-        IReplicaInfoBuilder SetupHostnameProvider([CanBeNull] Func<bool, string> hostNameProvider);
+        IReplicaInfoBuilder SetHostnameProvider([CanBeNull] Func<bool, string> hostNameProvider);
 
         /// <summary>
         /// <para>Sets build commit hash.</para>

@@ -173,7 +173,7 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
 
-        public IReplicaInfoBuilder SetupHostnameProvider(Func<bool, string> hostNameProvider)
+        public IReplicaInfoBuilder SetHostnameProvider(Func<bool, string> hostNameProvider)
         {
             this.hostNameProvider = hostNameProvider;
             return this;
