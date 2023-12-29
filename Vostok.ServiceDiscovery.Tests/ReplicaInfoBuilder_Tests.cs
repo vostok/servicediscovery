@@ -64,7 +64,7 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetReleaseDate("released now")
                     .SetDependencies(new List<string> {"dep-a", "dep-b"})
                     .SetTags(new TagCollection {"tag1", {"tag2", "value"}})
-                    .SetVpnHostnameProvider(() => "newHostname"),
+                    .SetHostnameProvider(() => "newHostname"),
                 false);
 
             info.ReplicaInfo.Environment.Should().Be("custom-environment");
@@ -88,21 +88,19 @@ namespace Vostok.ServiceDiscovery.Tests
             properties[ReplicaInfoKeys.Host].Should().Be("newHostname");
         }
 
-        [TestCase(null)]
-        [TestCase("newhostname")]
-        [TestCase("")]
-        public void Should_build_url_from_parts(string hostname)
+        [Test]
+        public void Should_build_url_from_parts()
         {
             var info = ReplicaInfoBuilder.Build(
                     setup => setup
                         .SetScheme("https")
                         .SetPort(123)
                         .SetUrlPath("vostok")
-                        .SetVpnHostnameProvider(() => hostname),
+                        .SetHostnameProvider(() => "testhost"),
                     false)
                 .ReplicaInfo;
 
-            var host = string.IsNullOrEmpty(hostname) ? EnvironmentInfo.Host.ToLowerInvariant() : hostname;
+            var host = "testhost";
 
             info.Replica.Should().Be($"https://{host}:123/vostok");
 
@@ -204,25 +202,37 @@ namespace Vostok.ServiceDiscovery.Tests
             var info = ReplicaInfoBuilder.Build(
                 setup => setup
                     .SetUrl(url)
-                    .SetVpnHostnameProvider(() => "newHostname"),
+                    .SetHostnameProvider(() => "newHostname"),
                 false
             );
             
             info.ReplicaInfo.Replica.Should().Be("https://github.com:123/vostok");
         }
         
-        [Test]
-        public void Should_configure_hostname_when_uri_not_set()
+        [TestCase(null)]
+        [TestCase("newHostname")]
+        [TestCase("")]
+        public void Should_correctly_build_url_with_hostname_provider(string hostname)
         {
             var info = ReplicaInfoBuilder.Build(
-                setup => setup
-                    .SetUrl(null)
-                    .SetPort(123)
-                    .SetVpnHostnameProvider(() => "newhostname"),
-                false
-            );
-            
-            info.ReplicaInfo.Replica.Should().Be("http://newhostname:123/");
+                    setup => setup
+                        .SetScheme("https")
+                        .SetPort(123)
+                        .SetHostnameProvider(() => hostname),
+                    false)
+                .ReplicaInfo;
+
+            var expectedHostname = string.IsNullOrEmpty(hostname) ? EnvironmentInfo.Host : hostname;
+            var host = expectedHostname.ToLowerInvariant();
+
+            info.Replica.Should().Be($"https://{host}:123/");
+
+            var properties = info.Properties;
+
+            properties[ReplicaInfoKeys.Replica].Should().Be($"https://{host}:123/");
+
+            properties[ReplicaInfoKeys.Url].Should().BeEquivalentTo($"https://{host}:123/");
+            properties[ReplicaInfoKeys.Host].Should().Be(expectedHostname);
         }
     }
 }
