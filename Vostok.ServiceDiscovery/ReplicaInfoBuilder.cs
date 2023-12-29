@@ -34,14 +34,12 @@ namespace Vostok.ServiceDiscovery
         private List<string> dependencies;
         private TagCollection tags;
 
-        private bool useFQDN;
-        private Func<bool, string> hostNameProvider;
+        private Func<string> vpnHostnameProvider;
 
         private ReplicaInfoBuilder(bool useFQDN)
         {
             environment = "default";
             application = EnvironmentInfo.Application;
-            this.useFQDN = useFQDN;
             host = useFQDN ? EnvironmentInfo.FQDN : EnvironmentInfo.Host;
             processName = EnvironmentInfo.ProcessName;
             processId = EnvironmentInfo.ProcessId;
@@ -61,11 +59,12 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceBeaconInfo Build()
         {
-            if (hostNameProvider != null)
+            var vpnHostname = vpnHostnameProvider.Invoke();
+            if (!string.IsNullOrEmpty(vpnHostname))
             {
-                host = hostNameProvider(useFQDN);
+                host = vpnHostname;
             }
-            
+
             url ??= BuildUrl();
             replica ??= url.ToString();
 
@@ -173,9 +172,9 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
 
-        public IReplicaInfoBuilder SetHostnameProvider(Func<bool, string> hostNameProvider)
+        public IReplicaInfoBuilder SetVpnHostnameProvider(Func<string> vpnHostnameProvider)
         {
-            this.hostNameProvider = hostNameProvider;
+            this.vpnHostnameProvider = vpnHostnameProvider;
             return this;
         }
 
