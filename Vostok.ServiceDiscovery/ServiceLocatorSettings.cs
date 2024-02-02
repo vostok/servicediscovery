@@ -18,5 +18,7 @@ namespace Vostok.ServiceDiscovery
         public IZooKeeperPathEscaper ZooKeeperNodesPathEscaper { get; set; } = ZooKeeperPathEscaper.Instance;
 
         public TimeSpan IterationPeriod { get; set; } = 5.Seconds();
+
+        public bool ObserveNonExistentApplications { get; set; } = true;
     }
 }

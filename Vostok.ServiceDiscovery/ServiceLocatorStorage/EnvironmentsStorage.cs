@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Vostok.Commons.Threading;
@@ -20,17 +21,26 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsHandler;
+        private readonly bool observeNonExistentApplication;
         private readonly ILog log;
         private readonly AdHocNodeWatcher nodeWatcher;
+        private readonly AdHocNodeWatcher existsWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-        public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ActionsQueue eventsHandler, ILog log)
+        public EnvironmentsStorage(
+            IZooKeeperClient zooKeeperClient,
+            ServiceDiscoveryPathHelper pathHelper,
+            ActionsQueue eventsHandler,
+            bool observeNonExistentApplication,
+            ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsHandler = eventsHandler;
+            this.observeNonExistentApplication = observeNonExistentApplication;
             this.log = log;
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
+            existsWatcher = this.observeNonExistentApplication ? nodeWatcher : null;
         }
 
         public EnvironmentInfo Get(string name)
@@ -92,13 +102,18 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             try
             {
                 var environmentPath = pathHelper.BuildEnvironmentPath(name);
-
-                var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = nodeWatcher});
+                var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = existsWatcher});
                 if (!environmentExists.IsSuccessful)
                     return;
 
                 if (environmentExists.Stat == null)
                 {
+                    if (!observeNonExistentApplication)
+                    {
+                        environments.TryRemove(name, out _);
+                        return;
+                    }
+
                     container.Clear();
                 }
                 else
