@@ -28,7 +28,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsQueue;
+        private readonly bool observeNonExistentApplication;
         private readonly AdHocNodeWatcher nodeWatcher;
+        private readonly AdHocNodeWatcher existsWatcher;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
 
@@ -39,6 +41,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             IZooKeeperClient zooKeeperClient,
             ServiceDiscoveryPathHelper pathHelper,
             ActionsQueue eventsQueue,
+            bool observeNonExistentApplication,
             ILog log)
         {
             this.environmentName = environmentName;
@@ -47,21 +50,25 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsQueue = eventsQueue;
+            this.observeNonExistentApplication = observeNonExistentApplication;
             this.log = log;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
+            existsWatcher = this.observeNonExistentApplication ? nodeWatcher : null;
             applicationContainer = new VersionedContainer<ApplicationInfo>();
             replicasContainer = new VersionedContainer<Uri[]>();
         }
 
-        public void Update()
+        public void Update(out bool appExists)
         {
+            appExists = true;
+            
             if (isDisposed)
                 return;
 
             try
             {
-                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = nodeWatcher});
+                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = existsWatcher});
                 if (!applicationExists.IsSuccessful)
                 {
                     return;
@@ -69,6 +76,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (applicationExists.Stat == null)
                 {
+                    appExists = false;
                     Clear();
                     return;
                 }
@@ -115,7 +123,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (isDisposed)
                 return;
 
-            eventsQueue.Enqueue(Update);
+            eventsQueue.Enqueue(() => Update(out _));
         }
 
         private void Clear()

@@ -100,3 +100,5 @@ Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPathEscaper.get -> 
 Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPathEscaper.set -> void
 Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPrefix.get -> string
 Vostok.ServiceDiscovery.ServiceLocatorSettings.ZooKeeperNodesPrefix.set -> void
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ObserveNonExistentApplications.get -> bool
+Vostok.ServiceDiscovery.ServiceLocatorSettings.ObserveNonExistentApplications.set -> void

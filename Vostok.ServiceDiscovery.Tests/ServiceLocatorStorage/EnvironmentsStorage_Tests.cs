@@ -168,7 +168,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
         private EnvironmentsStorage GetEnvironmentsStorage()
         {
-            return new EnvironmentsStorage(ZooKeeperClient, PathHelper, EventsQueue, Log);
+            return new EnvironmentsStorage(ZooKeeperClient, PathHelper, EventsQueue, true, Log);
         }
     }
 }
