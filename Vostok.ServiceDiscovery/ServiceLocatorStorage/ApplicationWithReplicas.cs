@@ -32,6 +32,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
 
+        public AtomicBoolean IsDeleted { get; }
+        
         public ApplicationWithReplicas(
             string environmentName,
             string applicationName,
@@ -49,6 +51,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.eventsQueue = eventsQueue;
             this.log = log;
 
+            IsDeleted = new AtomicBoolean(false);
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
             applicationContainer = new VersionedContainer<ApplicationInfo>();
             replicasContainer = new VersionedContainer<Uri[]>();
@@ -61,7 +64,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
             try
             {
-                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = nodeWatcher});
+                var watcher = IsDeleted ? null : nodeWatcher;
+                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = watcher});
                 if (!applicationExists.IsSuccessful)
                 {
                     return;
@@ -75,7 +79,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (applicationContainer.NeedUpdate(applicationExists.Stat.ModifiedZxId))
                 {
-                    var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationNodePath) {Watcher = nodeWatcher});
+                    var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationNodePath) {Watcher = watcher});
                     if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
                         Clear();
                     if (!applicationData.IsSuccessful)
@@ -88,7 +92,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (replicasContainer.NeedUpdate(applicationExists.Stat.ModifiedChildrenZxId))
                 {
-                    var applicationChildren = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationNodePath) {Watcher = nodeWatcher});
+                    var applicationChildren = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationNodePath) {Watcher = watcher});
                     if (applicationChildren.Status == ZooKeeperStatus.NodeNotFound)
                         Clear();
                     if (!applicationChildren.IsSuccessful)
@@ -105,6 +109,14 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
         }
 
+        private void Update(NodeChangedEventType type)
+        {
+            if (type == NodeChangedEventType.Deleted)
+                IsDeleted.TrySetTrue();
+            
+            Update();
+        }
+        
         public void Dispose()
         {
             isDisposed.TrySetTrue();
@@ -115,7 +127,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (isDisposed)
                 return;
 
-            eventsQueue.Enqueue(Update);
+            eventsQueue.Enqueue(() => Update(type));
         }
 
         private void Clear()

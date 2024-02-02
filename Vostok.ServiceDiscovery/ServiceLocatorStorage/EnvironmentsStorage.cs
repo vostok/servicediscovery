@@ -15,8 +15,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 {
     internal class EnvironmentsStorage : IDisposable
     {
-        private readonly ConcurrentDictionary<string, Lazy<VersionedContainer<EnvironmentInfo>>> environments
-            = new ConcurrentDictionary<string, Lazy<VersionedContainer<EnvironmentInfo>>>();
+        private readonly ConcurrentDictionary<string, Lazy<EnvironmentContainerWrapper>> environments
+            = new ConcurrentDictionary<string, Lazy<EnvironmentContainerWrapper>>();
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsHandler;
@@ -36,7 +36,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         public EnvironmentInfo Get(string name)
         {
             if (environments.TryGetValue(name, out var lazy))
-                return lazy.Value.Value;
+                return lazy.Value.Container.Value;
 
             return CreateAndGet(name);
         }
@@ -61,59 +61,70 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         [MethodImpl(MethodImplOptions.NoInlining)]
         private EnvironmentInfo CreateAndGet(string name)
         {
-            var lazy = new Lazy<VersionedContainer<EnvironmentInfo>>(
+            var lazy = new Lazy<EnvironmentContainerWrapper>(
                 () =>
                 {
                     var container = new VersionedContainer<EnvironmentInfo>();
-                    Update(name, container);
-                    return container;
+                    var wrapper = new EnvironmentContainerWrapper(container);
+                    Update(name, wrapper);
+                    return wrapper;
                 },
                 LazyThreadSafetyMode.ExecutionAndPublication);
 
-            return environments.GetOrAdd(name, _ => lazy).Value.Value;
+            return environments.GetOrAdd(name, _ => lazy).Value.Container.Value;
         }
 
-        private void Update(string name)
+        private void Update(string name, bool isDeleted)
         {
             if (!environments.TryGetValue(name, out var container))
             {
                 log.Warn("Failed to update '{Environment}' environment: it does not exist in local cache.", name);
                 return;
             }
+            if(isDeleted)
+                container.Value.MarkAsDeleted();
 
             Update(name, container.Value);
+
+            if (isDeleted)
+                environments.TryRemove(name, out _);
         }
 
-        private void Update(string name, VersionedContainer<EnvironmentInfo> container)
+        private void Update(string name, EnvironmentContainerWrapper container)
         {
             if (isDisposed)
                 return;
-
+            
             try
             {
                 var environmentPath = pathHelper.BuildEnvironmentPath(name);
 
-                var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = nodeWatcher});
+                var watcher = container.NodeIsDeleted ? null : nodeWatcher;
+                var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = watcher});
                 if (!environmentExists.IsSuccessful)
                     return;
 
                 if (environmentExists.Stat == null)
                 {
-                    container.Clear();
+                    container.Container.Clear();
                 }
                 else
                 {
-                    if (!container.NeedUpdate(environmentExists.Stat.ModifiedZxId))
+                    if (!container.Container.NeedUpdate(environmentExists.Stat.ModifiedZxId))
                         return;
 
-                    var environmentData = zooKeeperClient.GetData(new GetDataRequest(environmentPath) {Watcher = nodeWatcher});
+                    var environmentData = zooKeeperClient.GetData(new GetDataRequest(environmentPath) {Watcher = watcher});
                     if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
-                        container.Clear();
+                    {
+                        container.Container.Clear();
+                        return;
+                    }
                     if (!environmentData.IsSuccessful)
                         return;
 
                     var info = EnvironmentNodeDataSerializer.Deserialize(name, environmentData.Data);
-                    container.Update(environmentData.Stat.ModifiedZxId, info);
+                    container.Container.Update(environmentData.Stat.ModifiedZxId, info);
+
                 }
             }
             catch (Exception error)
@@ -135,7 +146,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             }
 
             // Note(kungurtsev): run in new thread, because we shouldn't block ZooKeeperClient.
-            eventsHandler.Enqueue(() => Update(parsedPath.Value.environment));
+            eventsHandler.Enqueue(() => Update(parsedPath.Value.environment, type == NodeChangedEventType.Deleted));
         }
     }
 }

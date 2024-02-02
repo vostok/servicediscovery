@@ -42,6 +42,12 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 if (isDisposed)
                     return;
 
+                if (kvp.Value.Value.IsDeleted)
+                {
+                    applications.TryRemove(kvp.Key, out _);
+                    continue;
+                }
+                
                 kvp.Value.Value.Update();
             }
         }
