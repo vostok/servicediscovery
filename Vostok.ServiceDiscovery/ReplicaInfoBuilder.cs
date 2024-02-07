@@ -11,12 +11,12 @@ namespace Vostok.ServiceDiscovery
     internal class ReplicaInfoBuilder : IReplicaInfoBuilder
     {
         private const string DependenciesDelimiter = ";";
-        private readonly string host;
         private readonly int? processId;
         private readonly string baseDirectory;
 
         private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
 
+        private string host;
         private string processName;
 
         private string environment;
@@ -33,6 +33,8 @@ namespace Vostok.ServiceDiscovery
 
         private List<string> dependencies;
         private TagCollection tags;
+
+        private Func<string> hostnameProvider;
 
         private ReplicaInfoBuilder(bool useFQDN)
         {
@@ -57,10 +59,14 @@ namespace Vostok.ServiceDiscovery
 
         public ServiceBeaconInfo Build()
         {
-            url = url ?? BuildUrl();
+            var vpnHostname = hostnameProvider?.Invoke();
+            if (!string.IsNullOrEmpty(vpnHostname))
+            {
+                host = vpnHostname;
+            }
 
-            if (replica == null)
-                replica = url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
+            url ??= BuildUrl();
+            replica ??= url?.ToString() ?? $"{host}({EnvironmentInfo.ProcessId})";
 
             if (url != null)
             {
@@ -166,6 +172,12 @@ namespace Vostok.ServiceDiscovery
             return this;
         }
 
+        public IReplicaInfoBuilder SetHostnameProvider(Func<string> vpnHostnameProvider)
+        {
+            this.hostnameProvider = vpnHostnameProvider;
+            return this;
+        }
+
         public IReplicaInfoBuilder SetCommitHash(string commitHash)
         {
             this.commitHash = commitHash;
@@ -195,7 +207,7 @@ namespace Vostok.ServiceDiscovery
             properties[key ?? throw new ArgumentNullException(nameof(key))] = value;
             return this;
         }
-        
+
         public IReplicaInfoBuilder SetTags(TagCollection tags)
         {
             this.tags = tags ?? new TagCollection();
