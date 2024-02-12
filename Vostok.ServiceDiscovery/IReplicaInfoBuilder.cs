@@ -70,6 +70,13 @@ namespace Vostok.ServiceDiscovery
         IReplicaInfoBuilder SetUrlPath([CanBeNull] string path);
 
         /// <summary>
+        /// <para>Sets configuration for HostnameProvider.</para>
+        /// <para>Default value: <c>null</c></para>
+        /// <para>Should not be called in conjunction with <see cref="SetUrl"/>.</para>
+        /// </summary>
+        IReplicaInfoBuilder SetHostnameProvider([CanBeNull] Func<string> vpnHostnameProvider);
+
+        /// <summary>
         /// <para>Sets build commit hash.</para>
         /// <para>By default, it will be parsed from <c>AssemblyTitle</c> attribute of entry assembly.</para>
         /// </summary>
@@ -103,7 +110,7 @@ namespace Vostok.ServiceDiscovery
         /// </summary>
         [NotNull]
         IReplicaInfoBuilder SetProperty([NotNull] string key, [CanBeNull] string value);
-        
+
         /// <summary>
         /// Sets a custom beacon <paramref name="tags"/>, which can be overwritten only by restarting the beacon.
         /// </summary>
