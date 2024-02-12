@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Vostok.Commons.Threading;
@@ -21,26 +20,28 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsHandler;
-        private readonly bool observeNonExistentApplication;
+        private readonly bool observeNonExistentEnvironments;
         private readonly ILog log;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly AdHocNodeWatcher existsWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
+        public int EnvironmentsInStorage => environments.Count;
+
         public EnvironmentsStorage(
             IZooKeeperClient zooKeeperClient,
             ServiceDiscoveryPathHelper pathHelper,
             ActionsQueue eventsHandler,
-            bool observeNonExistentApplication,
+            bool observeNonExistentEnvironments,
             ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsHandler = eventsHandler;
-            this.observeNonExistentApplication = observeNonExistentApplication;
+            this.observeNonExistentEnvironments = observeNonExistentEnvironments;
             this.log = log;
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
-            existsWatcher = this.observeNonExistentApplication ? nodeWatcher : null;
+            existsWatcher = this.observeNonExistentEnvironments ? nodeWatcher : null;
         }
 
         public EnvironmentInfo Get(string name)
@@ -108,7 +109,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (environmentExists.Stat == null)
                 {
-                    if (!observeNonExistentApplication)
+                    if (!observeNonExistentEnvironments)
                     {
                         environments.TryRemove(name, out _);
                         return;

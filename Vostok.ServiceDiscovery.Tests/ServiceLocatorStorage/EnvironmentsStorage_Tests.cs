@@ -155,6 +155,45 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             }
         }
 
+        [Test]
+        public void Should_not_delete_environment_from_cache_if_node_was_deleted_when_observation_of_deleted_apps_is_enabled()
+        {
+            using (var storage = GetEnvironmentsStorage(observeNonExistentEnvironment: true))
+            {
+                CreateEnvironmentNode("default", "parent");
+
+                var expectedInfo = new EnvironmentInfo("default", "parent", null);
+                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+
+                DeleteEnvironmentNode("default");
+                storage.UpdateAll();
+                storage.EnvironmentsInStorage.Should().Be(1);
+                storage.Get("default").Should().BeNull();
+                
+                CreateEnvironmentNode("default", "parent");
+                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+            }
+        }
+        
+        [Test]
+        public void Should_delete_environment_from_cache_if_node_was_deleted_when_observation_of_deleted_apps_is_disabled()
+        {
+            using (var storage = GetEnvironmentsStorage(observeNonExistentEnvironment: false))
+            {
+                CreateEnvironmentNode("default", "parent");
+
+                var expectedInfo = new EnvironmentInfo("default", "parent", null);
+                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+
+                DeleteEnvironmentNode("default");
+                storage.UpdateAll();
+                storage.EnvironmentsInStorage.Should().Be(0);
+
+                CreateEnvironmentNode("default", "parent");
+                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+            }
+        }
+
         private static void ShouldReturn(EnvironmentsStorage storage, string name, EnvironmentInfo info)
         {
             Action assertion = () => { ShouldReturnImmediately(storage, name, info); };
@@ -166,9 +205,9 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             storage.Get(name).Should().BeEquivalentTo(info);
         }
 
-        private EnvironmentsStorage GetEnvironmentsStorage()
+        private EnvironmentsStorage GetEnvironmentsStorage(bool observeNonExistentEnvironment = true)
         {
-            return new EnvironmentsStorage(ZooKeeperClient, PathHelper, EventsQueue, true, Log);
+            return new EnvironmentsStorage(ZooKeeperClient, PathHelper, EventsQueue, observeNonExistentEnvironment, Log);
         }
     }
 }
