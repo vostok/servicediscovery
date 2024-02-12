@@ -254,7 +254,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateEnvironmentNode("environment1");
             CreateApplicationNode("environment1", "application1", new Dictionary<string, string> {{"key", "1/1"}});
 
-            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
+            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: true))
             {
                 var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
                 ShouldReturnImmediately(
@@ -276,25 +276,34 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         [Test]
         public void Should_not_delete_application_from_cache_when_observation_of_deleted_apps_is_disabled_and_client_disconnected()
         {
-            CreateEnvironmentNode("environment1");
-            CreateApplicationNode("environment1", "application1", new Dictionary<string, string> {{"key", "1/1"}});
+            var environment = "environment1";
+            var app = "application1";
+            CreateEnvironmentNode(environment);
+            CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
 
             using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
             {
                 var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
                 ShouldReturnImmediately(
                     storage,
-                    "environment1",
-                    "application1",
+                    environment,
+                    app,
                     expectedTopology);
 
+                envStorage.Get(environment).Should().BeEquivalentTo(new EnvironmentInfo(environment, null, null));
+                
                 Ensemble.Stop();
 
                 envStorage.UpdateAll();
-                envStorage.Contains("environment1").Should().BeTrue();
+                envStorage.Contains(environment).Should().BeTrue();
                 storage.UpdateAll();
 
-                storage.Contains("environment1", "application1").Should().BeTrue();
+                storage.Contains(environment, app).Should().BeTrue();
+                ShouldReturnImmediately(
+                    storage,
+                    environment,
+                    app,
+                    expectedTopology);
             }
         }
 
