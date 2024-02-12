@@ -45,7 +45,7 @@ namespace Vostok.ServiceDiscovery
 
             eventsQueue = new ActionsQueue(this.log);
             environmentsStorage = new EnvironmentsStorage(zooKeeperClient, pathHelper, eventsQueue, this.settings.ObserveNonExistentApplications, log);
-            applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, eventsQueue, this.settings.ObserveNonExistentApplications, log);
+            applicationsStorage = new ApplicationsStorage(zooKeeperClient, pathHelper, eventsQueue, this.settings.ObserveNonExistentApplications, environmentsStorage, log);
         }
 
         /// <inheritdoc />

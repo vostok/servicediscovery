@@ -26,7 +26,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly AdHocNodeWatcher existsWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-        public int EnvironmentsInStorage => environments.Count;
 
         public EnvironmentsStorage(
             IZooKeeperClient zooKeeperClient,
@@ -43,6 +42,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
             existsWatcher = this.observeNonExistentEnvironments ? nodeWatcher : null;
         }
+
+        public bool Contains(string environment) => environments.ContainsKey(environment);
 
         public EnvironmentInfo Get(string name)
         {
