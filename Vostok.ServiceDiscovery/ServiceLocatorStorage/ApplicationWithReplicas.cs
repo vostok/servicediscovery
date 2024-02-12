@@ -28,7 +28,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsQueue;
-        private readonly bool observeNonExistentApplication;
         private readonly AdHocNodeWatcher nodeWatcher;
         private readonly AdHocNodeWatcher existsWatcher;
         private readonly ILog log;
@@ -50,11 +49,10 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsQueue = eventsQueue;
-            this.observeNonExistentApplication = observeNonExistentApplication;
             this.log = log;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
-            existsWatcher = this.observeNonExistentApplication ? nodeWatcher : null;
+            existsWatcher = observeNonExistentApplication ? nodeWatcher : null;
             applicationContainer = new VersionedContainer<ApplicationInfo>();
             replicasContainer = new VersionedContainer<Uri[]>();
         }

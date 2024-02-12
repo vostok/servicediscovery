@@ -4,7 +4,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.ServiceLocatorStorage;
 using Vostok.ZooKeeper.Client.Abstractions;
 
@@ -167,14 +166,32 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
                 DeleteEnvironmentNode("default");
                 storage.UpdateAll();
-                storage.EnvironmentsInStorage.Should().Be(1);
+                storage.Contains("default").Should().BeTrue();
                 storage.Get("default").Should().BeNull();
-                
+
                 CreateEnvironmentNode("default", "parent");
-                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+                ShouldReturn(storage, "default", expectedInfo);
             }
         }
-        
+
+        [Test]
+        public void Should_not_delete_environment_from_cache_when_observation_of_deleted_apps_is_disabled_and_client_disconnected()
+        {
+            using (var storage = GetEnvironmentsStorage(observeNonExistentEnvironment: true))
+            {
+                CreateEnvironmentNode("default", "parent");
+
+                var expectedInfo = new EnvironmentInfo("default", "parent", null);
+                ShouldReturn(storage, "default", expectedInfo);
+
+                Ensemble.Stop();
+
+                storage.UpdateAll();
+                storage.Contains("default").Should().BeTrue();
+                ShouldReturn(storage, "default", expectedInfo);
+            }
+        }
+
         [Test]
         public void Should_delete_environment_from_cache_if_node_was_deleted_when_observation_of_deleted_apps_is_disabled()
         {
@@ -187,7 +204,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 
                 DeleteEnvironmentNode("default");
                 storage.UpdateAll();
-                storage.EnvironmentsInStorage.Should().Be(0);
+                storage.Contains("default").Should().BeFalse();
 
                 CreateEnvironmentNode("default", "parent");
                 storage.Get("default").Should().BeEquivalentTo(expectedInfo);

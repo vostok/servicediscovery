@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Vostok.Commons.Threading;
@@ -18,6 +17,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsQueue;
         private readonly bool observeNonExistentApplications;
+        private readonly EnvironmentsStorage environmentsStorage;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
 
@@ -26,15 +26,19 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             ServiceDiscoveryPathHelper pathHelper,
             ActionsQueue eventsQueue,
             bool observeNonExistentApplications,
+            EnvironmentsStorage environmentsStorage,
             ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsQueue = eventsQueue;
             this.observeNonExistentApplications = observeNonExistentApplications;
+            this.environmentsStorage = environmentsStorage;
             this.log = log;
         }
 
+        public bool Contains(string environment, string application) => applications.ContainsKey((environment, application));
+        
         public ApplicationWithReplicas Get(string environment, string application)
         {
             if (applications.TryGetValue((environment, application), out var lazy))
@@ -51,7 +55,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     return;
 
                 kvp.Value.Value.Update(out var appExists);
-                if (!appExists && !observeNonExistentApplications)
+                if (!appExists && !observeNonExistentApplications && !environmentsStorage.Contains(kvp.Key.environment))
                     applications.TryRemove(kvp.Key, out _);
             }
         }
