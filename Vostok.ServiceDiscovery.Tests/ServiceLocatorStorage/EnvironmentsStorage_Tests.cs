@@ -191,6 +191,8 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 ShouldReturn(storage, "default", expectedInfo);
                 
                 Ensemble.Start();
+                storage.UpdateAll();
+                ShouldReturn(storage, "default", expectedInfo);
             }
         }
 
