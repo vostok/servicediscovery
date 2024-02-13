@@ -63,12 +63,14 @@ namespace Vostok.ServiceDiscovery.Tests
                     .SetCommitHash("ASDF")
                     .SetReleaseDate("released now")
                     .SetDependencies(new List<string> {"dep-a", "dep-b"})
-                    .SetTags(new TagCollection{"tag1", {"tag2", "value"}}), false);
+                    .SetTags(new TagCollection {"tag1", {"tag2", "value"}})
+                    .SetHostnameProvider(() => "newHostname"),
+                false);
 
             info.ReplicaInfo.Environment.Should().Be("custom-environment");
             info.ReplicaInfo.Application.Should().Be("Vostok.App.1");
             info.ReplicaInfo.Replica.Should().Be("https://github.com:123/vostok");
-            info.Tags.Should().BeEquivalentTo(new TagCollection{"tag1", {"tag2", "value"}});
+            info.Tags.Should().BeEquivalentTo(new TagCollection {"tag1", {"tag2", "value"}});
 
             var properties = info.ReplicaInfo.Properties;
 
@@ -82,19 +84,23 @@ namespace Vostok.ServiceDiscovery.Tests
             properties[ReplicaInfoKeys.CommitHash].Should().Be("ASDF");
             properties[ReplicaInfoKeys.ReleaseDate].Should().Be("released now");
             properties[ReplicaInfoKeys.Dependencies].Should().Be("dep-a;dep-b");
+
+            properties[ReplicaInfoKeys.Host].Should().Be("newHostname");
         }
 
         [Test]
         public void Should_build_url_from_parts()
         {
             var info = ReplicaInfoBuilder.Build(
-                setup => setup
-                    .SetScheme("https")
-                    .SetPort(123)
-                    .SetUrlPath("vostok"), false)
+                    setup => setup
+                        .SetScheme("https")
+                        .SetPort(123)
+                        .SetUrlPath("vostok")
+                        .SetHostnameProvider(() => "testhost"),
+                    false)
                 .ReplicaInfo;
 
-            var host = EnvironmentInfo.Host.ToLowerInvariant();
+            var host = "testhost";
 
             info.Replica.Should().Be($"https://{host}:123/vostok");
 
@@ -148,7 +154,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 {
                     builder.SetProperty("key1", "value1");
                     builder.SetProperty("key2", "value2");
-                }, false);
+                },
+                false);
 
             var properties = info.ReplicaInfo.Properties;
             properties["key1"].Should().Be("value1");
@@ -163,7 +170,8 @@ namespace Vostok.ServiceDiscovery.Tests
                 {
                     builder.SetProperty("key", "value1");
                     builder.SetProperty("key", "value2");
-                }, false);
+                },
+                false);
 
             var properties = info.ReplicaInfo.Properties;
             properties["key"].Should().Be("value2");
@@ -178,6 +186,53 @@ namespace Vostok.ServiceDiscovery.Tests
 
             info.ReplicaInfo.Replica.Should().Be($"{host}({Process.GetCurrentProcess().Id})");
             info.ReplicaInfo.Properties[ReplicaInfoKeys.Replica].Should().Be("value");
+        }
+
+        [Test]
+        public void Should_not_configure_hostname_when_uri_set()
+        {
+            var url = new UriBuilder
+            {
+                Scheme = "https",
+                Host = "github.com",
+                Port = 123,
+                Path = "vostok"
+            }.Uri;
+
+            var info = ReplicaInfoBuilder.Build(
+                setup => setup
+                    .SetUrl(url)
+                    .SetHostnameProvider(() => "newHostname"),
+                false
+            );
+            
+            info.ReplicaInfo.Replica.Should().Be("https://github.com:123/vostok");
+        }
+        
+        [TestCase(null)]
+        [TestCase("newHostname")]
+        [TestCase("")]
+        public void Should_correctly_build_url_with_hostname_provider(string hostname)
+        {
+            var info = ReplicaInfoBuilder.Build(
+                    setup => setup
+                        .SetScheme("https")
+                        .SetPort(123)
+                        .SetHostnameProvider(() => hostname),
+                    false)
+                .ReplicaInfo;
+
+            var expectedHostname = string.IsNullOrEmpty(hostname) ? EnvironmentInfo.Host : hostname;
+            var host = expectedHostname.ToLowerInvariant();
+
+            info.Replica.Should().Be($"https://{host}:123/");
+
+            var properties = info.Properties;
+
+            properties[ReplicaInfoKeys.Replica].Should().Be($"https://{host}:123/");
+
+            properties[ReplicaInfoKeys.Url].Should().BeEquivalentTo($"https://{host}:123/");
+            properties[ReplicaInfoKeys.Host].Should().Be(expectedHostname);
         }
     }
 }
