@@ -29,7 +29,6 @@ namespace Vostok.ServiceDiscovery.Tests
         protected ZooKeeperEnsemble Ensemble;
         protected ZooKeeperClient ZooKeeperClient;
         protected IServiceDiscoveryManager ServiceDiscoveryManager;
-        private static readonly TimeSpan DefaultZkClientTimeout = 8.Seconds();
         
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -65,7 +64,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
         protected ZooKeeperClient GetZooKeeperClient()
         {
-            var settings = new ZooKeeperClientSettings(Ensemble.ConnectionString) {Timeout = DefaultZkClientTimeout};
+            var settings = new ZooKeeperClientSettings(Ensemble.ConnectionString) {Timeout = DefaultTimeout};
             return new ZooKeeperClient(settings, Log);
         }
 
