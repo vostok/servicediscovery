@@ -173,11 +173,11 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 ShouldReturn(storage, "default", expectedInfo);
             }
         }
-
+        
         [Test]
         public void Should_not_delete_environment_from_cache_when_observation_of_deleted_apps_is_disabled_and_client_disconnected()
         {
-            using (var storage = GetEnvironmentsStorage(observeNonExistentEnvironment: true))
+            using (var storage = GetEnvironmentsStorage(observeNonExistentEnvironment: false))
             {
                 CreateEnvironmentNode("default", "parent");
 
