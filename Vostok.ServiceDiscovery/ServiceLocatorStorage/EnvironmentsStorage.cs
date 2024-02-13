@@ -26,7 +26,6 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly AdHocNodeWatcher existsWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-
         public EnvironmentsStorage(
             IZooKeeperClient zooKeeperClient,
             ServiceDiscoveryPathHelper pathHelper,
@@ -125,7 +124,16 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                     var environmentData = zooKeeperClient.GetData(new GetDataRequest(environmentPath) {Watcher = nodeWatcher});
                     if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
+                    {
+                        if (!observeNonExistentEnvironments)
+                        {
+                            environments.TryRemove(name, out _);
+                            return;
+                        }
+
                         container.Clear();
+                    }
+
                     if (!environmentData.IsSuccessful)
                         return;
 

@@ -182,13 +182,13 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 CreateEnvironmentNode("default", "parent");
 
                 var expectedInfo = new EnvironmentInfo("default", "parent", null);
-                ShouldReturn(storage, "default", expectedInfo);
+                ShouldReturnImmediately(storage, "default", expectedInfo);
 
                 Ensemble.Stop();
 
                 storage.UpdateAll();
                 storage.Contains("default").Should().BeTrue();
-                ShouldReturn(storage, "default", expectedInfo);
+                ShouldReturnImmediately(storage, "default", expectedInfo);
             }
         }
 
@@ -200,14 +200,14 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                 CreateEnvironmentNode("default", "parent");
 
                 var expectedInfo = new EnvironmentInfo("default", "parent", null);
-                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+                ShouldReturnImmediately(storage, "default", expectedInfo);
 
                 DeleteEnvironmentNode("default");
                 storage.UpdateAll();
                 storage.Contains("default").Should().BeFalse();
 
                 CreateEnvironmentNode("default", "parent");
-                storage.Get("default").Should().BeEquivalentTo(expectedInfo);
+                ShouldReturnImmediately(storage, "default", expectedInfo);
             }
         }
 

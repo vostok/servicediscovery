@@ -60,7 +60,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         public void Update(out bool appExists)
         {
             appExists = true;
-            
+
             if (isDisposed)
                 return;
 
@@ -68,9 +68,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = existsWatcher});
                 if (!applicationExists.IsSuccessful)
-                {
                     return;
-                }
 
                 if (applicationExists.Stat == null)
                 {
@@ -83,7 +81,11 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 {
                     var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationNodePath) {Watcher = nodeWatcher});
                     if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
+                    {
+                        appExists = false;
                         Clear();
+                    }
+
                     if (!applicationData.IsSuccessful)
                         return;
 
@@ -96,7 +98,11 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 {
                     var applicationChildren = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationNodePath) {Watcher = nodeWatcher});
                     if (applicationChildren.Status == ZooKeeperStatus.NodeNotFound)
+                    {
+                        appExists = false;
                         Clear();
+                    }
+
                     if (!applicationChildren.IsSuccessful)
                         return;
 
