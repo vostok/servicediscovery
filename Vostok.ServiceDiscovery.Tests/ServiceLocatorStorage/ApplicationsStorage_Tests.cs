@@ -226,37 +226,47 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         [Test]
         public void Should_delete_application_from_cache_if_app_and_env_nodes_were_deleted_when_observation_of_deleted_apps_is_disabled()
         {
-            CreateEnvironmentNode("environment1");
-            CreateApplicationNode("environment1", "application1", new Dictionary<string, string> {{"key", "1/1"}});
+            const string environment = "environment1";
+            const string app = "application1";
+
+            var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
 
             using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
             {
-                var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
-                ShouldReturnImmediately(
-                    storage,
-                    "environment1",
-                    "application1",
-                    expectedTopology);
+                for (var i = 0; i < 10; i++)
+                {
+                    CreateEnvironmentNode(environment);
+                    CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
 
-                DeleteApplicationNode("environment1", "application1");
-                DeleteEnvironmentNode("environment1");
+                    envStorage.Get(environment).Should().Be(new EnvironmentInfo(environment, null, null));
 
-                envStorage.UpdateAll();
-                storage.UpdateAll();
+                    ShouldReturnImmediately(
+                        storage,
+                        environment,
+                        app,
+                        expectedTopology);
 
-                storage.Contains("environment1", "application1").Should().BeFalse();
+                    DeleteApplicationNode(environment, app);
+                    DeleteEnvironmentNode(environment);
+
+                    envStorage.UpdateAll();
+                    storage.UpdateAll();
+
+                    storage.Contains(environment, app).Should().BeFalse();
+                }
             }
         }
 
         [Test]
         public void Should_not_delete_application_from_cache_when_env_exists_and_observation_of_deleted_apps_is_disabled()
         {
-            var environment = "environment1";
-            var app = "application1";
+            const string environment = "environment1";
+            const string app = "application1";
+
             CreateEnvironmentNode(environment);
             CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
 
-            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: true))
+            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
             {
                 var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
                 ShouldReturnImmediately(
@@ -280,8 +290,8 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         [Test]
         public void Should_not_delete_application_from_cache_when_observation_of_deleted_apps_is_disabled_and_client_disconnected()
         {
-            var environment = "environment1";
-            var app = "application1";
+            const string environment = "environment1";
+            const string app = "application1";
             CreateEnvironmentNode(environment);
             CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
 

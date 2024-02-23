@@ -88,7 +88,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             if (!environments.TryGetValue(name, out var container))
             {
-                log.Warn("Failed to update '{Environment}' environment: it does not exist in local cache.", name);
+                if (observeNonExistentEnvironments)
+                    log.Warn("Failed to update '{Environment}' environment: it does not exist in local cache.", name);
+
                 return;
             }
 
@@ -109,11 +111,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                 if (environmentExists.Stat == null)
                 {
-                    if (!observeNonExistentEnvironments)
-                    {
-                        environments.TryRemove(name, out _);
+                    if (RemoveEnvironmentFromCacheIfNeeded(name))
                         return;
-                    }
 
                     container.Clear();
                 }
@@ -125,11 +124,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     var environmentData = zooKeeperClient.GetData(new GetDataRequest(environmentPath) {Watcher = nodeWatcher});
                     if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
                     {
-                        if (!observeNonExistentEnvironments)
-                        {
-                            environments.TryRemove(name, out _);
+                        if (RemoveEnvironmentFromCacheIfNeeded(name))
                             return;
-                        }
 
                         container.Clear();
                     }
@@ -145,6 +141,15 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 log.Error(error, "Failed to update '{Environment}' environment.", name);
             }
+        }
+
+        private bool RemoveEnvironmentFromCacheIfNeeded(string name)
+        {
+            if (observeNonExistentEnvironments)
+                return false;
+
+            environments.TryRemove(name, out _);
+            return true;
         }
 
         private void OnNodeEvent(NodeChangedEventType type, string path)
