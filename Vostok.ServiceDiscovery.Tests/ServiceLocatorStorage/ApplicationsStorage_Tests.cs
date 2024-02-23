@@ -238,7 +238,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                     CreateEnvironmentNode(environment);
                     CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
 
-                    envStorage.Get(environment).Should().Be(new EnvironmentInfo(environment, null, null));
+                    envStorage.Get(environment).Should().BeEquivalentTo(new EnvironmentInfo(environment, null, null));
 
                     ShouldReturnImmediately(
                         storage,
