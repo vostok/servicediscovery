@@ -29,6 +29,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsQueue;
         private readonly AdHocNodeWatcher nodeWatcher;
+        private readonly AdHocNodeWatcher existsWatcher;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
 
@@ -39,6 +40,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             IZooKeeperClient zooKeeperClient,
             ServiceDiscoveryPathHelper pathHelper,
             ActionsQueue eventsQueue,
+            bool observeNonExistentApplication,
             ILog log)
         {
             this.environmentName = environmentName;
@@ -50,25 +52,27 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             this.log = log;
 
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
+            existsWatcher = observeNonExistentApplication ? nodeWatcher : null;
             applicationContainer = new VersionedContainer<ApplicationInfo>();
             replicasContainer = new VersionedContainer<Uri[]>();
         }
 
-        public void Update()
+        public void Update(out bool appExists)
         {
+            appExists = true;
+
             if (isDisposed)
                 return;
 
             try
             {
-                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = nodeWatcher});
+                var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = existsWatcher});
                 if (!applicationExists.IsSuccessful)
-                {
                     return;
-                }
 
                 if (applicationExists.Stat == null)
                 {
+                    appExists = false;
                     Clear();
                     return;
                 }
@@ -77,7 +81,11 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 {
                     var applicationData = zooKeeperClient.GetData(new GetDataRequest(applicationNodePath) {Watcher = nodeWatcher});
                     if (applicationData.Status == ZooKeeperStatus.NodeNotFound)
+                    {
+                        appExists = false;
                         Clear();
+                    }
+
                     if (!applicationData.IsSuccessful)
                         return;
 
@@ -90,7 +98,11 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 {
                     var applicationChildren = zooKeeperClient.GetChildren(new GetChildrenRequest(applicationNodePath) {Watcher = nodeWatcher});
                     if (applicationChildren.Status == ZooKeeperStatus.NodeNotFound)
+                    {
+                        appExists = false;
                         Clear();
+                    }
+
                     if (!applicationChildren.IsSuccessful)
                         return;
 
@@ -115,7 +127,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             if (isDisposed)
                 return;
 
-            eventsQueue.Enqueue(Update);
+            eventsQueue.Enqueue(() => Update(out _));
         }
 
         private void Clear()
