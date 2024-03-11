@@ -20,18 +20,29 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsHandler;
+        private readonly bool observeNonExistentEnvironments;
         private readonly ILog log;
         private readonly AdHocNodeWatcher nodeWatcher;
+        private readonly AdHocNodeWatcher existsWatcher;
         private readonly AtomicBoolean isDisposed = new AtomicBoolean(false);
 
-        public EnvironmentsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ActionsQueue eventsHandler, ILog log)
+        public EnvironmentsStorage(
+            IZooKeeperClient zooKeeperClient,
+            ServiceDiscoveryPathHelper pathHelper,
+            ActionsQueue eventsHandler,
+            bool observeNonExistentEnvironments,
+            ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsHandler = eventsHandler;
+            this.observeNonExistentEnvironments = observeNonExistentEnvironments;
             this.log = log;
             nodeWatcher = new AdHocNodeWatcher(OnNodeEvent);
+            existsWatcher = this.observeNonExistentEnvironments ? nodeWatcher : null;
         }
+
+        public bool Contains(string environment) => environments.ContainsKey(environment);
 
         public EnvironmentInfo Get(string name)
         {
@@ -77,7 +88,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         {
             if (!environments.TryGetValue(name, out var container))
             {
-                log.Warn("Failed to update '{Environment}' environment: it does not exist in local cache.", name);
+                if (observeNonExistentEnvironments)
+                    log.Warn("Failed to update '{Environment}' environment: it does not exist in local cache.", name);
+
                 return;
             }
 
@@ -92,13 +105,15 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             try
             {
                 var environmentPath = pathHelper.BuildEnvironmentPath(name);
-
-                var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = nodeWatcher});
+                var environmentExists = zooKeeperClient.Exists(new ExistsRequest(environmentPath) {Watcher = existsWatcher});
                 if (!environmentExists.IsSuccessful)
                     return;
 
                 if (environmentExists.Stat == null)
                 {
+                    if (RemoveEnvironmentFromCacheIfNeeded(name))
+                        return;
+
                     container.Clear();
                 }
                 else
@@ -108,7 +123,13 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
 
                     var environmentData = zooKeeperClient.GetData(new GetDataRequest(environmentPath) {Watcher = nodeWatcher});
                     if (environmentData.Status == ZooKeeperStatus.NodeNotFound)
+                    {
+                        if (RemoveEnvironmentFromCacheIfNeeded(name))
+                            return;
+
                         container.Clear();
+                    }
+
                     if (!environmentData.IsSuccessful)
                         return;
 
@@ -120,6 +141,15 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             {
                 log.Error(error, "Failed to update '{Environment}' environment.", name);
             }
+        }
+
+        private bool RemoveEnvironmentFromCacheIfNeeded(string name)
+        {
+            if (observeNonExistentEnvironments)
+                return false;
+
+            environments.TryRemove(name, out _);
+            return true;
         }
 
         private void OnNodeEvent(NodeChangedEventType type, string path)

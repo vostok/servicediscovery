@@ -16,17 +16,29 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly IZooKeeperClient zooKeeperClient;
         private readonly ServiceDiscoveryPathHelper pathHelper;
         private readonly ActionsQueue eventsQueue;
+        private readonly bool observeNonExistentApplications;
+        private readonly EnvironmentsStorage environmentsStorage;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
 
-        public ApplicationsStorage(IZooKeeperClient zooKeeperClient, ServiceDiscoveryPathHelper pathHelper, ActionsQueue eventsQueue, ILog log)
+        public ApplicationsStorage(
+            IZooKeeperClient zooKeeperClient,
+            ServiceDiscoveryPathHelper pathHelper,
+            ActionsQueue eventsQueue,
+            bool observeNonExistentApplications,
+            EnvironmentsStorage environmentsStorage,
+            ILog log)
         {
             this.zooKeeperClient = zooKeeperClient;
             this.pathHelper = pathHelper;
             this.eventsQueue = eventsQueue;
+            this.observeNonExistentApplications = observeNonExistentApplications;
+            this.environmentsStorage = environmentsStorage;
             this.log = log;
         }
 
+        public bool Contains(string environment, string application) => applications.ContainsKey((environment, application));
+        
         public ApplicationWithReplicas Get(string environment, string application)
         {
             if (applications.TryGetValue((environment, application), out var lazy))
@@ -42,7 +54,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 if (isDisposed)
                     return;
 
-                kvp.Value.Value.Update();
+                kvp.Value.Value.Update(out var appExists);
+                if (!appExists && !observeNonExistentApplications && !environmentsStorage.Contains(kvp.Key.environment))
+                    applications.TryRemove(kvp.Key, out _);
             }
         }
 
@@ -64,9 +78,9 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
             lazy = new Lazy<ApplicationWithReplicas>(
                 () =>
                 {
-                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, eventsQueue, log);
+                    var container = new ApplicationWithReplicas(environment, application, pathHelper.BuildApplicationPath(environment, application), zooKeeperClient, pathHelper, eventsQueue, observeNonExistentApplications, log);
                     if (!isDisposed)
-                        container.Update();
+                        container.Update(out _);
                     return container;
                 },
                 LazyThreadSafetyMode.ExecutionAndPublication);
