@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using FluentAssertions;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
-using Vostok.ServiceDiscovery.ServiceLocatorStorage;
 using Vostok.ZooKeeper.Client.Abstractions;
 
 namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 {
     [TestFixture]
-    internal class EnvironmentsStorage_Tests : TestsBase
+    internal class EnvironmentsStorage_Tests : EnvironmentStorage_TestsBase
     {
         [Test]
         public void Should_track_environment_parent_with_properties()
@@ -153,22 +148,6 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
                     ShouldReturnImmediately(storage, "default", expected);
                 }
             }
-        }
-
-        private static void ShouldReturn(EnvironmentsStorage storage, string name, EnvironmentInfo info)
-        {
-            Action assertion = () => { ShouldReturnImmediately(storage, name, info); };
-            assertion.ShouldPassIn(DefaultTimeout);
-        }
-
-        private static void ShouldReturnImmediately(EnvironmentsStorage storage, string name, EnvironmentInfo info)
-        {
-            storage.Get(name).Should().BeEquivalentTo(info);
-        }
-
-        private EnvironmentsStorage GetEnvironmentsStorage()
-        {
-            return new EnvironmentsStorage(ZooKeeperClient, PathHelper, EventsQueue, Log);
         }
     }
 }

@@ -4,7 +4,6 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.ServiceLocatorStorage;
 using Vostok.ZooKeeper.Client.Abstractions;
 
@@ -20,7 +19,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateApplicationNode("default", "application");
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 for (var times = 0; times < 10; times++)
                 {
@@ -46,7 +45,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateEnvironmentNode("default");
             CreateApplicationNode("default", "application");
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 var expectedReplicas = new List<Uri>();
 
@@ -69,7 +68,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         {
             CreateEnvironmentNode("default");
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 ShouldReturnImmediately(storage, "default", "application", null);
 
@@ -85,7 +84,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateEnvironmentNode("default");
             CreateApplicationNode("default", "application");
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 ShouldReturnImmediately(storage, "default", "application", ServiceTopology.Build(new Uri[0], null));
 
@@ -106,7 +105,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateApplicationNode("environment2", "application1", new Dictionary<string, string> {{"key", "2/1"}});
             CreateApplicationNode("environment2", "application2", new Dictionary<string, string> {{"key", "2/2"}});
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 ShouldReturnImmediately(
                     storage,
@@ -134,7 +133,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateApplicationNode("default", "application");
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 var properties = new Dictionary<string, string>
                 {
@@ -162,7 +161,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateApplicationNode("default", "application", new Dictionary<string, string> {{"key", "value1"}});
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 var expected = ServiceTopology.Build(new List<Uri> {new Uri("https://github.com/vostok")}, new Dictionary<string, string> {{"key", "value1"}});
                 ShouldReturnImmediately(storage, "default", "application", expected);
@@ -182,7 +181,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateApplicationNode("default", "application", new Dictionary<string, string> {{"key", "value"}});
             CreateReplicaNode(new ReplicaInfo("default", "application", "https://github.com/vostok"));
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 var expected = ServiceTopology.Build(new List<Uri> {new Uri("https://github.com/vostok")}, new Dictionary<string, string> {{"key", "value"}});
                 ShouldReturnImmediately(storage, "default", "application", expected);
@@ -201,7 +200,7 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             CreateEnvironmentNode("default");
             CreateApplicationNode("default", "application");
 
-            using (var storage = GetApplicationsStorage())
+            using (var storage = GetApplicationsStorage(out _))
             {
                 var expectedReplicas = new List<Uri>();
 
@@ -224,6 +223,104 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             }
         }
 
+        [Test]
+        public void Should_delete_application_from_cache_if_app_and_env_nodes_were_deleted_when_observation_of_deleted_apps_is_disabled()
+        {
+            const string environment = "environment1";
+            const string app = "application1";
+
+            var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
+
+            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    CreateEnvironmentNode(environment);
+                    CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
+
+                    envStorage.Get(environment).Should().BeEquivalentTo(new EnvironmentInfo(environment, null, null));
+
+                    ShouldReturnImmediately(
+                        storage,
+                        environment,
+                        app,
+                        expectedTopology);
+
+                    DeleteApplicationNode(environment, app);
+                    DeleteEnvironmentNode(environment);
+
+                    envStorage.UpdateAll();
+                    storage.UpdateAll();
+
+                    storage.Contains(environment, app).Should().BeFalse();
+                }
+            }
+        }
+
+        [Test]
+        public void Should_not_delete_application_from_cache_when_env_exists_and_observation_of_deleted_apps_is_disabled()
+        {
+            const string environment = "environment1";
+            const string app = "application1";
+
+            CreateEnvironmentNode(environment);
+            CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
+
+            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
+            {
+                var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
+                ShouldReturnImmediately(
+                    storage,
+                    environment,
+                    app,
+                    expectedTopology);
+
+                envStorage.Get(environment).Should().BeEquivalentTo(new EnvironmentInfo(environment, null, null));
+
+                DeleteApplicationNode(environment, app);
+
+                envStorage.UpdateAll();
+                envStorage.Contains(environment).Should().BeTrue();
+                storage.UpdateAll();
+
+                storage.Contains(environment, app).Should().BeTrue();
+            }
+        }
+
+        [Test]
+        public void Should_not_delete_application_from_cache_when_observation_of_deleted_apps_is_disabled_and_client_disconnected()
+        {
+            const string environment = "environment1";
+            const string app = "application1";
+            CreateEnvironmentNode(environment);
+            CreateApplicationNode(environment, app, new Dictionary<string, string> {{"key", "1/1"}});
+
+            using (var storage = GetApplicationsStorage(out var envStorage, observeNonExistentApplications: false))
+            {
+                var expectedTopology = ServiceTopology.Build(new Uri[0], new Dictionary<string, string> {{"key", "1/1"}});
+                ShouldReturnImmediately(
+                    storage,
+                    environment,
+                    app,
+                    expectedTopology);
+
+                envStorage.Get(environment).Should().BeEquivalentTo(new EnvironmentInfo(environment, null, null));
+
+                Ensemble.Stop();
+
+                envStorage.UpdateAll();
+                envStorage.Contains(environment).Should().BeTrue();
+                storage.UpdateAll();
+
+                storage.Contains(environment, app).Should().BeTrue();
+                ShouldReturnImmediately(
+                    storage,
+                    environment,
+                    app,
+                    expectedTopology);
+            }
+        }
+
         private static void ShouldReturn(ApplicationsStorage storage, string environment, string application, ServiceTopology topology)
         {
             Action assertion = () => { ShouldReturnImmediately(storage, environment, application, topology); };
@@ -235,9 +332,10 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             storage.Get(environment, application).ServiceTopology.Should().BeEquivalentTo(topology);
         }
 
-        private ApplicationsStorage GetApplicationsStorage()
+        private ApplicationsStorage GetApplicationsStorage(out EnvironmentsStorage envStorage, bool observeNonExistentApplications = true)
         {
-            return new ApplicationsStorage(ZooKeeperClient, PathHelper, EventsQueue, Log);
+            envStorage = new EnvironmentsStorage(ZooKeeperClient, PathHelper, EventsQueue, observeNonExistentApplications, Log);
+            return new ApplicationsStorage(ZooKeeperClient, PathHelper, EventsQueue, observeNonExistentApplications, envStorage, Log);
         }
     }
 }
