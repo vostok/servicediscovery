@@ -1,4 +1,4 @@
-## 0.1.22 (07-02-2024)
+## 0.1.23 (11-03-2024)
 
 Added option "ServiceLocatorSettings.ObserveNonExistentApplications".
 
