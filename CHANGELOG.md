@@ -1,5 +1,9 @@
 ## 0.1.22 (07-02-2024)
 
+Added option "ServiceLocatorSettings.ObserveNonExistentApplications".
+
+## 0.1.22 (07-02-2024)
+
 Added method `SetHostnameProvider` for configuring hostname in `IReplicaInfoBuilder`
 
 ## 0.1.21 (31-08-2022):
