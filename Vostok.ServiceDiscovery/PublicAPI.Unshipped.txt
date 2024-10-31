@@ -1,0 +1,1 @@
+Vostok.ServiceDiscovery.ServiceDiscoveryManager.TrySetNewReplicaPropertiesAsync(string environment, string application, string replica, System.Collections.Generic.Dictionary<string, string> newProperties) -> System.Threading.Tasks.Task<bool>

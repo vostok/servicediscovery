@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Vostok.ServiceDiscovery.Abstractions;
 using Vostok.ServiceDiscovery.Abstractions.Models;
-using Vostok.ServiceDiscovery.Models;
 using Vostok.ServiceDiscovery.Serializers;
 
 namespace Vostok.ServiceDiscovery.Helpers
@@ -26,11 +26,16 @@ namespace Vostok.ServiceDiscovery.Helpers
 
         public static byte[] SetApplicationProperties(string environment, string application, Func<IApplicationInfoProperties, IApplicationInfoProperties> update, byte[] bytes)
         {
-            var environmentInfo = ApplicationNodeDataSerializer.Deserialize(environment, application, bytes);
+            var applicationInfo = ApplicationNodeDataSerializer.Deserialize(environment, application, bytes);
 
-            var newProperties = update(environmentInfo.Properties);
+            var newProperties = update(applicationInfo.Properties);
 
             return ApplicationNodeDataSerializer.Serialize(new ApplicationInfo(environment, application, newProperties));
+        }
+
+        public static byte[] SetReplicaProperties(string environment, string application, string replica, Dictionary<string, string> update)
+        {
+            return ReplicaNodeDataSerializer.Serialize(new ReplicaInfo(environment, application, replica, update));
         }
     }
 }
