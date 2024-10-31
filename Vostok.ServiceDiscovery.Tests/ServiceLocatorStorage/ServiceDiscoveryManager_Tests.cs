@@ -9,6 +9,7 @@ using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Telemetry;
 using Vostok.ServiceDiscovery.Telemetry.Event;
 using Vostok.ServiceDiscovery.Telemetry.EventsSender;
+using Vostok.ZooKeeper.Client.Abstractions.Model.Request;
 
 namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
 {
@@ -571,6 +572,63 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
             received.Should().BeEquivalentTo(expected, options => options.Excluding(serviceDiscoveryEvent => serviceDiscoveryEvent.Timestamp));
 
             client.Dispose();
+        }
+
+        [Test]
+        public void TrySetNewReplicaPropertiesAsync_should_rewrite_existing_replica_properties()
+        {
+            const string environment = "default";
+            const string application = "vostok";
+            const string replica = "replica";
+
+            var updatedProperties = new Dictionary<string, string>
+            {
+                ["updatedKey"] = "updatedValue"
+            };
+            
+            CreateReplicaNode(new ReplicaInfo(environment, application, replica, GetProperties()));
+            
+            var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
+            
+            serviceDiscoveryManager.TrySetNewReplicaPropertiesAsync(environment, application, replica, updatedProperties)
+                .GetAwaiter()
+                .GetResult()
+                .Should()
+                .BeTrue();
+
+            serviceDiscoveryManager.GetReplicaAsync(environment, application, replica)
+                .GetAwaiter()
+                .GetResult()
+                .Properties.Should()
+                .BeEquivalentTo(updatedProperties);
+        } 
+        
+        [Test]
+        public void TrySetNewReplicaPropertiesAsync_should_not_recreate_replica()
+        {
+            const string environment = "default";
+            const string application = "vostok";
+            const string replica = "replica";
+
+            var updatedProperties = new Dictionary<string, string>
+            {
+                ["updatedKey"] = "updatedValue"
+            };
+            
+            CreateReplicaNode(new ReplicaInfo(environment, application, replica, GetProperties()));
+            
+            var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
+            var version = ZooKeeperClient.GetDataAsync(new GetDataRequest(PathHelper.BuildApplicationPath(environment, application))).GetAwaiter().GetResult().Stat.ChildrenVersion;
+            
+            serviceDiscoveryManager.TrySetNewReplicaPropertiesAsync(environment, application, replica, updatedProperties)
+                .GetAwaiter()
+                .GetResult()
+                .Should()
+                .BeTrue();
+            
+            var version2 = ZooKeeperClient.GetDataAsync(new GetDataRequest(PathHelper.BuildApplicationPath(environment, application))).GetAwaiter().GetResult().Stat.ChildrenVersion;
+
+            version2.Should().Be(version);
         }
 
         [Test]
