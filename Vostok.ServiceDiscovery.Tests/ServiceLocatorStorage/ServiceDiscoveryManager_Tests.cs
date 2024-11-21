@@ -604,6 +604,39 @@ namespace Vostok.ServiceDiscovery.Tests.ServiceLocatorStorage
         } 
         
         [Test]
+        public void TryUpdateReplicaPropertiesAsync_should_not_rewrite_existing_replica_properties()
+        {
+            const string environment = "default";
+            const string application = "vostok";
+            const string replica = "replica";
+
+            var replicaProperties = GetProperties();
+
+            Func<Dictionary<string, string>, Dictionary<string, string>> updatedFunc = x =>
+            {
+                x["updatedKey"] = "updatedValue";
+
+                return x;
+            };
+            
+            CreateReplicaNode(new ReplicaInfo(environment, application, replica, GetProperties()));
+            
+            var serviceDiscoveryManager = new ServiceDiscoveryManager(GetZooKeeperClient(), log: Log);
+            
+            serviceDiscoveryManager.TryUpdateReplicaPropertiesAsync(environment, application, replica, updatedFunc)
+                .GetAwaiter()
+                .GetResult()
+                .Should()
+                .BeTrue();
+            
+            serviceDiscoveryManager.GetReplicaAsync(environment, application, replica)
+                .GetAwaiter()
+                .GetResult()
+                .Properties.Should()
+                .BeEquivalentTo(replicaProperties.Concat(new Dictionary<string, string> { { "updatedKey", "updatedValue" } }));
+        }
+        
+        [Test]
         public void TrySetNewReplicaPropertiesAsync_should_not_recreate_replica()
         {
             const string environment = "default";
