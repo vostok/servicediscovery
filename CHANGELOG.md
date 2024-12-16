@@ -1,3 +1,7 @@
+## 0.1.24 (16-12-2024): 
+
+Bump NuGet deps versions
+
 ## 0.1.23 (11-03-2024)
 
 Added option "ServiceLocatorSettings.ObserveNonExistentApplications".
