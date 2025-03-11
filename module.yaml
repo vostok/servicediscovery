@@ -8,6 +8,22 @@ notests *default:
   install:
     - Vostok.ServiceDiscovery/bin/Release/netstandard2.0/Vostok.ServiceDiscovery.dll
     - module vostok.servicediscovery.abstractions
+    - groups:
+        - target-framework: "netstandard2.0"
+          libraries:
+            - Vostok.ServiceDiscovery/bin/Release/netstandard2.0/Vostok.ServiceDiscovery.dll
+          modules:
+            - name: vostok.servicediscovery.abstractions
+        - target-framework: "net6.0"
+          libraries:
+            - Vostok.ServiceDiscovery/bin/Release/net6.0/Vostok.ServiceDiscovery.dll
+          modules:
+            - name: vostok.servicediscovery.abstractions
+        - target-framework: "net8.0"
+          libraries:
+            - Vostok.ServiceDiscovery/bin/Release/net8.0/Vostok.ServiceDiscovery.dll
+          modules:
+            - name: vostok.servicediscovery.abstractions
 
   deps:
     - vostok.servicediscovery.telemetry
