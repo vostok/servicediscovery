@@ -235,6 +235,20 @@ namespace Vostok.ServiceDiscovery
             return isSuccessful;
         }
 
+        public async Task<bool> TrySetNewReplicaPropertiesAsync(string environment, string application, string replica, Dictionary<string, string> newProperties)
+        {
+            var path = pathHelper.BuildReplicaPath(environment, application, replica);
+            var updateDataRequest = new UpdateDataRequest(path, _ => NodeDataHelper.SetReplicaProperties(environment, application, replica, newProperties))
+            {
+                Attempts = settings.ZooKeeperNodeUpdateAttempts
+            };
+            var isSuccessful = (await zooKeeperClient.UpdateDataAsync(updateDataRequest).ConfigureAwait(false)).IsSuccessful;
+            if (isSuccessful)
+                SendEvent(environment, application);
+
+            return isSuccessful;
+        }
+
         private void SendEvent(string environment, string application, params string[] replicas)
         {
             using (new ServiceDiscoveryEventsContextToken(builder => builder.SetEnvironment(environment).SetApplication(application).AddReplicas(replicas)))
