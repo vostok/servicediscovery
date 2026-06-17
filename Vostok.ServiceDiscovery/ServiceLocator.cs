@@ -92,14 +92,16 @@ namespace Vostok.ServiceDiscovery
                 if (environment == null)
                     return firstResolved;
 
-                var topology = applicationsStorage.Get(currentEnvironmentName, applicationName).ServiceTopology;
+                var topologyContainer = applicationsStorage.Get(currentEnvironmentName, applicationName);
+                var topology = topologyContainer.ServiceTopology;
                 firstResolved = firstResolved ?? topology;
 
                 var parentEnvironment = environment.ParentEnvironment;
                 if (parentEnvironment == null)
                     return topology ?? firstResolved;
 
-                var goToParent = topology == null || topology.Replicas.Count == 0 && environment.SkipIfEmpty();
+                var goToParent = (topologyContainer.IsInitialized && topology == null) || 
+                                 (topology != null && topology.Replicas.Count == 0 && environment.SkipIfEmpty());
                 if (!goToParent)
                     return topology;
 

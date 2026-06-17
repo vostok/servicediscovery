@@ -761,7 +761,7 @@ namespace Vostok.ServiceDiscovery.Tests
 
             var replica_warmup_env_test = new ReplicaInfo("env_test", "app_warmup", "https://github.com/vostok");
             var replica_app_test_default = new ReplicaInfo("default", "app_test", "https://github.com/One-Who-Shall-Not-Be-Named");
-            var replica_app_test_env_test = new ReplicaInfo("env_test", "app_test", "https://github.com/The-Boy-Who-Survived"); // unused, but to prove a point
+            var replica_app_test_env_test = new ReplicaInfo("env_test", "app_test", "https://github.com/The-Boy-Who-Survived");
 
             CreateReplicaNode(replica_warmup_env_test);
             CreateReplicaNode(replica_app_test_default);
@@ -788,9 +788,8 @@ namespace Vostok.ServiceDiscovery.Tests
             // since due to disconnect there is no certainty whether or not this decision is actually justified
 
             Ensemble.Start();
-            var firstAfterRestart = ZooKeeperClient.Exists("/");
-            
-            Task.Delay(1000).GetAwaiter().GetResult();
+
+            Task.Delay(1000).GetAwaiter().GetResult(); // so that an update iteration can pass
             topology = locator.Locate("env_test", "app_test");
             topology.Should().NotBeNull();
             topology.Replicas.Should().NotContain(x => x.AbsolutePath.Contains("One-Who-Shall-Not-Be-Named"))
