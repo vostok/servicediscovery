@@ -71,11 +71,12 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 var applicationExists = zooKeeperClient.Exists(new ExistsRequest(applicationNodePath) {Watcher = existsWatcher});
                 if (!applicationExists.IsSuccessful)
                     return;
-                isInitialized.SetTrue();
+
                 if (applicationExists.Stat == null)
                 {
                     appExists = false;
                     Clear();
+                    if (!isInitialized) isInitialized.SetTrue();
                     return;
                 }
 
@@ -86,6 +87,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     {
                         appExists = false;
                         Clear();
+                        if (!isInitialized) isInitialized.SetTrue();
                     }
 
                     if (!applicationData.IsSuccessful)
@@ -103,6 +105,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     {
                         appExists = false;
                         Clear();
+                        if (!isInitialized) isInitialized.SetTrue();
                     }
 
                     if (!applicationChildren.IsSuccessful)
@@ -112,6 +115,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     if (replicasContainer.Update(applicationChildren.Stat.ModifiedChildrenZxId, replicas))
                         UpdateServiceTopology();
                 }
+
+                if (!isInitialized) isInitialized.SetTrue();
             }
             catch (Exception error)
             {
