@@ -12,6 +12,7 @@ using Vostok.Commons.Testing;
 using Vostok.ServiceDiscovery.Abstractions.Models;
 using Vostok.ServiceDiscovery.Helpers;
 using Vostok.ServiceDiscovery.Models;
+using Vostok.ZooKeeper.Client;
 using Vostok.ZooKeeper.Client.Abstractions;
 using Vostok.ZooKeeper.Client.Abstractions.Model;
 
@@ -747,6 +748,52 @@ namespace Vostok.ServiceDiscovery.Tests
                 Action action = () => ReferenceEquals(topo3, locator.Locate("default", "vostok")).Should().BeFalse();
                 action.ShouldPassIn(DefaultTimeout);
             }
+        }
+
+        [Test]
+        public void Should_not_go_to_parent_if_no_topology_because_of_disconnect()
+        {
+            CreateEnvironmentNode("default");
+            CreateEnvironmentNode("env_test", "default");
+
+            CreateApplicationNode("default", "app_warmup");
+            CreateApplicationNode("default", "app_test");
+
+            var replica_warmup_env_test = new ReplicaInfo("env_test", "app_warmup", "https://github.com/vostok");
+            var replica_app_test_default = new ReplicaInfo("default", "app_test", "https://github.com/One-Who-Shall-Not-Be-Named");
+            var replica_app_test_env_test = new ReplicaInfo("env_test", "app_test", "https://github.com/The-Boy-Who-Survived");
+
+            CreateReplicaNode(replica_warmup_env_test);
+            CreateReplicaNode(replica_app_test_default);
+            CreateReplicaNode(replica_app_test_env_test);
+
+
+            // note(d.khrustalev):
+            // a specific order of events that used to lead to unexpected behaviour:
+            // if environments storage was already initialised and Locate is called,
+            // with a request for service that is not in the cache, when the ZooKeeperClient
+            // is disconnected, it is possible to get the topology of that service
+            // in a parent environment even if it exists in the request environment.
+            // Below is a recreation of said order of events.
+
+            using var locator = GetServiceLocator();
+
+            locator.Locate("env_test", "app_warmup"); // so that env cache is initialised
+            locator.Locate("default", "app_test");
+
+            Ensemble.Stop(); // simulate disconnect
+
+            var topology = locator.Locate("env_test", "app_test");
+            topology.Should().BeNull(); // we don't want it to go to parent topology in this case,
+            // since due to disconnect there is no certainty whether or not this decision is actually justified
+
+            Ensemble.Start();
+
+            Task.Delay(1000).GetAwaiter().GetResult(); // so that an update iteration can pass
+            topology = locator.Locate("env_test", "app_test");
+            topology.Should().NotBeNull();
+            topology.Replicas.Should().NotContain(x => x.AbsolutePath.Contains("One-Who-Shall-Not-Be-Named"))
+                                  .And.ContainSingle(x => x.AbsolutePath.Contains("The-Boy-Who-Survived"));
         }
 
         private static void ShouldLocate(ServiceLocator locator, string environment, string application, params string[] replicas)

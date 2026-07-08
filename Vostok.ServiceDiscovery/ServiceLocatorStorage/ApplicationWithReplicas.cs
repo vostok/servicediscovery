@@ -17,6 +17,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
     {
         [CanBeNull]
         public volatile ServiceTopology ServiceTopology;
+        public bool IsInitialized => isInitialized;
 
         private readonly string environmentName;
         private readonly string applicationName;
@@ -32,6 +33,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
         private readonly AdHocNodeWatcher existsWatcher;
         private readonly ILog log;
         private readonly AtomicBoolean isDisposed = false;
+        private readonly AtomicBoolean isInitialized = false;
 
         public ApplicationWithReplicas(
             string environmentName,
@@ -74,6 +76,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                 {
                     appExists = false;
                     Clear();
+                    if (!isInitialized) isInitialized.SetTrue();
                     return;
                 }
 
@@ -84,6 +87,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     {
                         appExists = false;
                         Clear();
+                        if (!isInitialized) isInitialized.SetTrue();
                     }
 
                     if (!applicationData.IsSuccessful)
@@ -101,6 +105,7 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     {
                         appExists = false;
                         Clear();
+                        if (!isInitialized) isInitialized.SetTrue();
                     }
 
                     if (!applicationChildren.IsSuccessful)
@@ -110,6 +115,8 @@ namespace Vostok.ServiceDiscovery.ServiceLocatorStorage
                     if (replicasContainer.Update(applicationChildren.Stat.ModifiedChildrenZxId, replicas))
                         UpdateServiceTopology();
                 }
+
+                if (!isInitialized) isInitialized.SetTrue();
             }
             catch (Exception error)
             {
